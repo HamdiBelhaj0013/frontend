@@ -16,6 +16,7 @@ import Register from "./components/Register";
 import Login from "./components/Login";
 import PasswordResetRequest from "./components/PasswordResetRequest";
 import PasswordReset from "./components/PasswordReset";
+import AuthGuard from "./components/AuthGuard"; // Import the AuthGuard
 
 function App() {
     const myWidth = 220;  // Drawer width
@@ -36,18 +37,18 @@ function App() {
                     drawerWidth={myWidth}
                     content={
                         <Routes>
-                            <Route path="/home" element={<Home />} />
-                            <Route path="/about" element={<About />} />
-                            <Route path="/CreateProject" element={<CreateProject />} />
-                            <Route path="/CreateMember" element={<CreateMember />} />
-                            <Route path="/members" element={<Members />} />
-                            <Route path="/projects" element={<Projects />} />
-                            <Route path="/finance" element={<Finance />} />
-                            <Route path="/projects/edit/:id" element={<EditProject />} />
-                            <Route path="/projects/delete/:id" element={<DeleteProject />} />
-                            <Route path="/member/edit/:id" element={<EditProject />} />
-                            <Route path="/member/delete/:id" element={<DeleteMember />} />
-                            <Route path="/member/editmember/:id" element={<EditMember />} />
+                            <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
+                            <Route path="/about" element={<AuthGuard><About /></AuthGuard>} />
+                            <Route path="/CreateProject" element={<AuthGuard><CreateProject /></AuthGuard>} />
+                            <Route path="/CreateMember" element={<AuthGuard><CreateMember /></AuthGuard>} />
+                            <Route path="/members" element={<AuthGuard><Members /></AuthGuard>} />
+                            <Route path="/projects" element={<AuthGuard><Projects /></AuthGuard>} />
+                            <Route path="/finance" element={<AuthGuard><Finance /></AuthGuard>} />
+                            <Route path="/projects/edit/:id" element={<AuthGuard><EditProject /></AuthGuard>} />
+                            <Route path="/projects/delete/:id" element={<AuthGuard><DeleteProject /></AuthGuard>} />
+                            <Route path="/member/edit/:id" element={<AuthGuard><EditProject /></AuthGuard>} />
+                            <Route path="/member/delete/:id" element={<AuthGuard><DeleteMember /></AuthGuard>} />
+                            <Route path="/member/editmember/:id" element={<AuthGuard><EditMember /></AuthGuard>} />
                         </Routes>
                     }
                 />

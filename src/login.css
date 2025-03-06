@@ -1,0 +1,151 @@
+/* 🌊 Soft Blue-Green Gradient Background */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #00c6ff, #0072ff, #00e5e5);
+    overflow: hidden;
+    position: relative;
+}
+
+/* ✨ Floating Glow Elements */
+.floating-elements::before,
+.floating-elements::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.2);
+    filter: blur(40px);
+    border-radius: 50%;
+    animation: float 6s infinite alternate ease-in-out;
+}
+
+.floating-elements::before {
+    top: 10%;
+    left: 5%;
+}
+
+.floating-elements::after {
+    bottom: 12%;
+    right: 8%;
+}
+
+@keyframes float {
+    from { transform: translateY(0); }
+    to { transform: translateY(-20px); }
+}
+
+/* 🔹 Glassmorphism Effect */
+.login-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    padding: 4rem;
+    width: 500px;
+    border-radius: 25px;
+    box-shadow: 0px 15px 40px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 📝 Enlarged Input Fields */
+.input-group {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 22px;
+    width: 100%;
+    box-shadow: inset 0px 0px 15px rgba(255, 255, 255, 0.25);
+}
+
+/* 💡 Bigger, Stylish Input Icons */
+.input-icon {
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 14px;
+}
+
+/* ✨ Improved Input Fields */
+input {
+    flex: 1;
+    font-size: 18px;
+    border: none;
+    background: none;
+    outline: none;
+    color: white;
+    font-weight: bold;
+}
+
+/* 🔵 Input Focus Glow Effect */
+input:focus {
+    border: none;
+    box-shadow: 0px 0px 18px rgba(255, 255, 255, 0.4);
+}
+
+/* 🌟 Soft Blue-Green Login Button */
+.login-btn {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    transition: all 0.4s ease-in-out;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0px 6px 25px rgba(58, 123, 213, 0.5);
+}
+
+/* 🌊 Button Hover Effect */
+.login-btn:hover {
+    background: linear-gradient(135deg, #00c6ff, #3a5fb5);
+    box-shadow: 0px 10px 35px rgba(58, 123, 213, 0.7);
+    transform: translateY(-4px);
+}
+
+/* 🔗 Clean & Elegant Links */
+.login-links {
+    margin-top: 3rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 17px;
+}
+
+.login-links a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+}
+
+.login-links a:hover {
+    color: #00c6ff;
+    text-decoration: underline;
+}
+.error-message {
+    background-color: rgba(255, 0, 0, 0.8);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 1.1em;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Optional Fade-in Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

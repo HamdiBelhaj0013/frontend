@@ -1,73 +1,54 @@
-import '../App.css'
-import {React, useState} from 'react'
-import { Box } from '@mui/material'
-import MyTextField from './forms/MyTextField'
-import MyPassField from './forms/MyPassField'
-import MyButton from './forms/MyButton'
-import {Link} from 'react-router-dom'
-import {useForm} from 'react-hook-form'
-import Axios from './Axios.jsx'
-import { useNavigate } from 'react-router-dom'
-import MyMessage from './Message'
+import '../login.css'; // Ensure consistency with Login page
+import { useState } from 'react';
+import { Box, Typography, InputAdornment } from '@mui/material';
+import { Email } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import Axios from './Axios.jsx';
+import MyTextField from './forms/MyTextField';
+import MyButton from './forms/MyButton';
+import MyMessage from './Message';
 
-const PasswordResetRequest = () =>{
-    const navigate = useNavigate()
-    const {handleSubmit, control} = useForm()
+const PasswordResetRequest = () => {
+    const { handleSubmit, control } = useForm();
+    const [showMessage, setShowMessage] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-    const [ShowMessage, setShowMessage] = useState(false)
+    const submission = async (data) => {
+        setErrorMessage(""); // Reset error state
+        try {
+            await Axios.post('auth/password_reset/', { email: data.email });
+            setShowMessage(true);
+        } catch (error) {
+            setErrorMessage("An error occurred. Please try again.");
+        }
+    };
 
+    return (
+        <div className="login-container"> {/* Same as Login Page */}
+            <div className="floating-elements"></div>
+            <form onSubmit={handleSubmit(submission)} className="login-card">
+                <Typography variant="h4" className="login-title">Forgot Password? 🔑</Typography>
+                <Typography className="login-subtitle">Enter your email to receive reset instructions</Typography>
 
-    const submission = (data) => {
-        Axios.post(`auth/password_reset/`,{
-            email: data.email,
-        })
+                {showMessage && <MyMessage text="If your email exists, you will receive a reset link." color="#69C9AB" />}
+                {errorMessage && <Typography className="error-message">{errorMessage}</Typography>}
 
-        .then((response) => {
-            setShowMessage(true)
-        })
+                <Box className="input-group">
+                    <InputAdornment position="start">
+                        <Email className="input-icon" />
+                    </InputAdornment>
+                    <MyTextField label="Email" name="email" control={control} fullWidth />
+                </Box>
 
-    }
-    return(
-        <div className={"myBackground"}>
+                <MyButton label="Send Reset Link" type="submit" className="login-btn" />
 
-        {ShowMessage ? <MyMessage text={"If your email exists you have received an email with instructions for resetting the password"}  color={'#69C9AB'}/> : null}
-        <form onSubmit={handleSubmit(submission)}>
+                <Box className="login-links">
+                    <Link to="/">Back to Login</Link>
+                </Box>
+            </form>
+        </div>
+    );
+};
 
-
-
-        <Box className={"whiteBox"}>
-
-            <Box className={"itemBox"}>
-                <Box className={"title"}> Request password reset </Box>
-            </Box>
-
-            <Box className={"itemBox"}>
-                <MyTextField
-                label={"Email"}
-                name ={"email"}
-                control={control}
-                />
-            </Box>
-
-            <Box className={"itemBox"}>
-                <MyButton
-                    label={"Request password reset"}
-                    type={"submit"}
-                />
-            </Box>
-
-            <Box className={"itemBox"} sx={{flexDirection:'column'}}>
-
-            </Box>
-
-
-        </Box>
-
-    </form>
-
-    </div>
-    )
-
-}
-
-export default PasswordResetRequest
+export default PasswordResetRequest;
