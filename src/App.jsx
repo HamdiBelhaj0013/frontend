@@ -16,19 +16,28 @@ import Register from "./components/Register";
 import Login from "./components/Login";
 import PasswordResetRequest from "./components/PasswordResetRequest";
 import PasswordReset from "./components/PasswordReset";
-import AuthGuard from "./components/AuthGuard"; // Import the AuthGuard
+import AuthGuard from "./components/AuthGuard";
+import AssociationRegister from "./components/AssociationRegister.jsx";
 
 function App() {
     const myWidth = 220;  // Drawer width
     const location = useLocation();
-    const noNavbar = location.pathname === "/" || location.pathname === "/register" || location.pathname.includes("password");
+    const noNavbar = ["/", "/associationregister", "/login", "/register", "/request/password_reset"].includes(location.pathname) ||
+        location.pathname.includes("password-reset");
 
     return (
         <div className="App">
             {noNavbar ? (
                 <Routes>
+                    {/* Association registration */}
+
+
+                    {/* User authentication */}
                     <Route path="/" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route path='/register' element={<Register />} />
+                    <Route path="/associationregister" element={<AssociationRegister />} />
+
+                    {/* Password reset */}
                     <Route path="/request/password_reset" element={<PasswordResetRequest />} />
                     <Route path="/password-reset/:token" element={<PasswordReset />} />
                 </Routes>
@@ -46,7 +55,7 @@ function App() {
                             <Route path="/finance" element={<AuthGuard><Finance /></AuthGuard>} />
                             <Route path="/projects/edit/:id" element={<AuthGuard><EditProject /></AuthGuard>} />
                             <Route path="/projects/delete/:id" element={<AuthGuard><DeleteProject /></AuthGuard>} />
-                            <Route path="/member/edit/:id" element={<AuthGuard><EditProject /></AuthGuard>} />
+                            <Route path="/member/edit/:id" element={<AuthGuard><EditMember /></AuthGuard>} />
                             <Route path="/member/delete/:id" element={<AuthGuard><DeleteMember /></AuthGuard>} />
                             <Route path="/member/editmember/:id" element={<AuthGuard><EditMember /></AuthGuard>} />
                         </Routes>
