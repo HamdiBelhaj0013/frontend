@@ -7,7 +7,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import { Controller } from "react-hook-form";
 
 export default function MySelectField(props) {
-    const { label, name, control, width = '100%' } = props; // Default width to '100%' if not provided
+    const { label, name, control, width = '100%', options = [] } = props; // Add options prop
 
     return (
         <FormControl variant="standard" sx={{ width }}>
@@ -23,16 +23,18 @@ export default function MySelectField(props) {
                         <Select
                             labelId={`${name}-label`}
                             id={`${name}-select`}
-                            value={value || ''} // Ensure value is not undefined
+                            value={value || ''}
                             onChange={onChange}
                             error={!!error}
                         >
                             <MenuItem value="">
                                 <em>None</em>
                             </MenuItem>
-                            <MenuItem value="Active">Active</MenuItem>
-                            <MenuItem value="Completed">Completed</MenuItem>
-                            <MenuItem value="In progress">In progress</MenuItem>
+                            {options.map((option, index) => (
+                                <MenuItem key={index} value={option.value}>
+                                    {option.label}
+                                </MenuItem>
+                            ))}
                         </Select>
                         {error && <FormHelperText>{error.message}</FormHelperText>}
                     </>

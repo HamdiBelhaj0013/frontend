@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, React } from 'react';
 import { Box, Typography, InputAdornment, IconButton, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,7 +9,8 @@ import AxiosInstance from './Axios';
 import MyTextField from './forms/MyTextField';
 import MyPassField from './forms/MyPassField';
 import MyButton from './forms/MyButton';
-import '../login.css';
+import './Register.css'
+import backgroundImage from "../assets/blue-stationery-table.jpg";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -49,95 +50,55 @@ const Register = () => {
 
     const { handleSubmit, control, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
-        defaultValues: {
-            association: null
-        }
+        defaultValues: { association: null }
     });
 
     const handleRegister = async (data) => {
-        setRegisterError(""); // Clear any previous errors
-
-        // Log data to ensure it's formatted correctly
+        setRegisterError("");
         console.log("Form data being sent:", data);
-
         try {
-            const response = await AxiosInstance.post('/users/register/', {
+            await AxiosInstance.post('/users/register/', {
                 email: data.email,
                 password: data.password,
-                association_id: data.association?.id, // Send only the association ID
+                association_id: data.association?.id,
             });
-
-            navigate('/'); // Redirect to homepage on successful registration
+            navigate('/');
         } catch (error) {
             console.error("Registration error:", error);
-
-            // Handle errors returned from the backend
-            if (error.response) {
-                setRegisterError(error.response.data.message || "Registration failed");
-            } else {
-                setRegisterError("An unexpected error occurred");
-            }
+            setRegisterError(error.response?.data.message || "An unexpected error occurred");
         }
     };
 
     return (
         <div className="login-container">
+            <div className="background-image" style={{ backgroundImage: `url(${backgroundImage})` }} />
             <div className="floating-elements"></div>
             <form onSubmit={handleSubmit(handleRegister)} className="login-card">
                 <Typography variant="h4" className="login-title">Create an Account 🚀</Typography>
                 <Typography className="login-subtitle">Sign up and explore amazing features</Typography>
-
                 {registerError && <Typography className="error-message">{registerError}</Typography>}
 
                 <Box className="input-group">
-                    <InputAdornment position="start">
-                        <Email className="input-icon" />
-                    </InputAdornment>
-                    <MyTextField
-                        label="Email"
-                        name="email"
-                        control={control}
-                        fullWidth
-                        error={!!errors.email}
-                        helperText={errors.email?.message}
+                    <InputAdornment position="start"><Email className="input-icon" /></InputAdornment>
+                    <MyTextField label="Email" name="email" control={control} fullWidth error={!!errors.email} helperText={errors.email?.message} />
+                </Box>
+
+                <Box className="input-group">
+                    <InputAdornment position="start"><Lock className="input-icon" /></InputAdornment>
+                    <MyPassField label="Password" name="password" control={control} fullWidth error={!!errors.password} helperText={errors.password?.message}
+                                 InputProps={{ endAdornment: (
+                                         <InputAdornment position="end">
+                                             <IconButton onClick={togglePasswordVisibility}>
+                                                 {showPassword ? <VisibilityOff /> : <Visibility />}
+                                             </IconButton>
+                                         </InputAdornment>
+                                     )}}
                     />
                 </Box>
 
                 <Box className="input-group">
-                    <InputAdornment position="start">
-                        <Lock className="input-icon" />
-                    </InputAdornment>
-                    <MyPassField
-                        label="Password"
-                        name="password"
-                        control={control}
-                        fullWidth
-                        error={!!errors.password}
-                        helperText={errors.password?.message}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton onClick={togglePasswordVisibility}>
-                                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                </Box>
-
-                <Box className="input-group">
-                    <InputAdornment position="start">
-                        <Lock className="input-icon" />
-                    </InputAdornment>
-                    <MyPassField
-                        label="Confirm Password"
-                        name="password2"
-                        control={control}
-                        fullWidth
-                        error={!!errors.password2}
-                        helperText={errors.password2?.message}
-                    />
+                    <InputAdornment position="start"><Lock className="input-icon" /></InputAdornment>
+                    <MyPassField label="Confirm Password" name="password2" control={control} fullWidth error={!!errors.password2} helperText={errors.password2?.message} />
                 </Box>
 
                 <Box className="input-group">
@@ -147,35 +108,20 @@ const Register = () => {
                             name="association"
                             control={control}
                             render={({ field }) => (
-                                <Select
-                                    {...field}
-                                    value={field.value?.id || ''} // Ensuring association is valid
-                                    onChange={(e) => {
-                                        const selectedAssoc = associations.find(
-                                            assoc => assoc.id === e.target.value
-                                        );
-                                        field.onChange(selectedAssoc);
-                                    }}
-                                    label="Association"
-                                >
+                                <Select {...field} value={field.value?.id || ''}
+                                        onChange={(e) => field.onChange(associations.find(assoc => assoc.id === e.target.value))}
+                                        label="Association">
                                     {associations.map((association) => (
-                                        <MenuItem key={association.id} value={association.id}>
-                                            {association.name}
-                                        </MenuItem>
+                                        <MenuItem key={association.id} value={association.id}>{association.name}</MenuItem>
                                     ))}
                                 </Select>
                             )}
                         />
-                        {errors.association && (
-                            <Typography color="error" variant="body2">
-                                {errors.association.message}
-                            </Typography>
-                        )}
+                        {errors.association && <Typography color="error" variant="body2">{errors.association.message}</Typography>}
                     </FormControl>
                 </Box>
 
                 <MyButton label="Sign Up" type="submit" className="login-btn" />
-
                 <Box className="login-links">
                     <Link to="/">Already have an account? Log in</Link>
                 </Box>

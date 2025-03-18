@@ -1,5 +1,5 @@
 /* 🚀 Futuristic Neon Background */
-.login-container {
+.container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -37,17 +37,17 @@
   to { transform: translateY(-20px); }
 }
 
-/* 🔮 Glassmorphic Login Card */
-.login-card {
+/* 🔮 Glassmorphic Card */
+.card {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   padding: 3rem;
   width: 400px;
   border-radius: 18px;
-  box-shadow: 0px 15px 50px rgba(0, 255, 255, 0.4);
   text-align: center;
   animation: fadeInUp 0.8s ease-out;
   border: 2px solid rgba(0, 255, 255, 0.3);
+  box-shadow: none;
 }
 
 /* ✨ Fade & Slide Up Animation */
@@ -61,33 +61,8 @@
     transform: translateY(0);
   }
 }
-
-/* 🔲 Input Fields with 3D Neon Glow */
-.input-group {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 15px;
-  box-shadow: inset 0px 0px 10px rgba(0, 255, 255, 0.4);
-}
-
-/* 🔷 Neon Input Icon */
-.input-icon {
-  color: cyan;
-  margin-right: 10px;
-}
-
-/* 🔵 Neon Focus Effect */
-.input-group input:focus {
-  border: none;
-  box-shadow: 0px 0px 20px cyan;
-  outline: none;
-}
-
-/* 🚀 Animated Login Button */
-.login-btn {
+/* 🚀 Animated Button */
+.button {
   width: 100%;
   padding: 14px;
   border: none;
@@ -104,31 +79,32 @@
 }
 
 /* ✨ Hover Glow Effect */
-.login-btn:hover {
+.button:hover {
   background: linear-gradient(135deg, cyan, #6BCAF5);
   box-shadow: 0px 0px 25px rgba(0, 255, 255, 0.8);
 }
 
 /* 🌟 Ripple Effect */
-.login-btn:active {
+.button:active {
   transform: scale(0.95);
 }
 
 /* 🔗 Stylish Links */
-.login-links {
+.links {
   margin-top: 1.5rem;
   display: flex;
   justify-content: space-between;
   font-size: 14px;
 }
 
-.login-links a {
+.links a {
   color: cyan;
   text-decoration: none;
   transition: color 0.3s;
 }
 
-.login-links a:hover {
+.links a:hover {
   color: white;
   text-decoration: underline;
 }
+

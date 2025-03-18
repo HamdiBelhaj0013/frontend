@@ -1,151 +1,278 @@
-/* 🌊 Soft Blue-Green Gradient Background */
+/* Ensure the body and html take full height */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Container for the full login page with fade-in animation */
 .login-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Background Image */
+.background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    z-index: 1;
+}
+
+/* Gradient Overlay */
+.gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 2;
+}
+
+/* Left Panel with slide-in animation */
+.left-panel {
+    width: 50%;
+    color: #fff;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+    z-index: 3;
+    animation: slideInLeft 1s ease-out;
+}
+
+.left-panel h3 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.left-panel h6 {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+/* Right Panel with slide-in animation */
+.right-panel {
+    width: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: linear-gradient(135deg, #00c6ff, #0072ff, #00e5e5);
-    overflow: hidden;
-    position: relative;
+    z-index: 3;
+    animation: slideInRight 1s ease-out;
 }
 
-/* ✨ Floating Glow Elements */
-.floating-elements::before,
-.floating-elements::after {
-    content: "";
-    position: absolute;
-    width: 180px;
-    height: 180px;
-    background: rgba(255, 255, 255, 0.2);
-    filter: blur(40px);
-    border-radius: 50%;
-    animation: float 6s infinite alternate ease-in-out;
-}
-
-.floating-elements::before {
-    top: 10%;
-    left: 5%;
-}
-
-.floating-elements::after {
-    bottom: 12%;
-    right: 8%;
-}
-
-@keyframes float {
-    from { transform: translateY(0); }
-    to { transform: translateY(-20px); }
-}
-
-/* 🔹 Glassmorphism Effect */
+/* Transparent Login Form without glow effect */
 .login-card {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    padding: 4rem;
-    width: 500px;
-    border-radius: 25px;
-    box-shadow: 0px 15px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    animation: fadeInUp 1s ease-out;
+    box-shadow: none;
+}
+
+/* Form Title */
+.login-title {
     text-align: center;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: #fff;
 }
 
-/* 📝 Enlarged Input Fields */
-.input-group {
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    padding: 16px;
-    margin-bottom: 22px;
-    width: 100%;
-    box-shadow: inset 0px 0px 15px rgba(255, 255, 255, 0.25);
+/* Form Subtitle */
+.login-subtitle {
+    text-align: center;
+    color: #ccc;
+    margin-bottom: 20px;
 }
 
-/* 💡 Bigger, Stylish Input Icons */
-.input-icon {
-    color: white;
-    font-size: 1.5rem;
-    margin-right: 14px;
-}
-
-/* ✨ Improved Input Fields */
-input {
-    flex: 1;
-    font-size: 18px;
-    border: none;
-    background: none;
-    outline: none;
-    color: white;
-    font-weight: bold;
-}
-
-/* 🔵 Input Focus Glow Effect */
-input:focus {
-    border: none;
-    box-shadow: 0px 0px 18px rgba(255, 255, 255, 0.4);
-}
-
-/* 🌟 Soft Blue-Green Login Button */
-.login-btn {
-    width: 100%;
-    padding: 18px;
-    border: none;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #00d2ff, #3a7bd5);
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    transition: all 0.4s ease-in-out;
-    cursor: pointer;
-    text-transform: uppercase;
-    box-shadow: 0px 6px 25px rgba(58, 123, 213, 0.5);
-}
-
-/* 🌊 Button Hover Effect */
-.login-btn:hover {
-    background: linear-gradient(135deg, #00c6ff, #3a5fb5);
-    box-shadow: 0px 10px 35px rgba(58, 123, 213, 0.7);
-    transform: translateY(-4px);
-}
-
-/* 🔗 Clean & Elegant Links */
-.login-links {
-    margin-top: 3rem;
-    display: flex;
-    justify-content: space-between;
-    font-size: 17px;
-}
-
-.login-links a {
-    color: white;
-    text-decoration: none;
-    transition: color 0.3s ease-in-out;
-}
-
-.login-links a:hover {
-    color: #00c6ff;
-    text-decoration: underline;
-}
+/* Error Message */
 .error-message {
     background-color: rgba(255, 0, 0, 0.8);
-    color: white;
+    color: #fff;
     font-weight: bold;
     text-align: center;
     padding: 10px;
     border-radius: 8px;
     margin: 10px 0;
-    font-size: 1.1em;
-    animation: fadeIn 0.5s ease-in-out;
 }
 
-/* Optional Fade-in Animation */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Input Group Styling - transparent fields */
+.input-group {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    transition: none;
 }
+
+/* Input Icon */
+.input-icon {
+    color: #fff;
+    margin-right: 10px;
+}
+
+/* Input Field Styling */
+input {
+    border: none;
+    background: transparent;
+    outline: none;
+    color: #fff;
+    font-size: 1rem;
+    flex-grow: 1;
+}
+
+/* Remove any focus glow from the input fields */
+.input-group input:focus {
+    box-shadow: none;
+    border: none;
+    outline: none;
+}
+
+/* For WebKit browsers */
+.input-group input::-webkit-focus-inner {
+    border: 0;
+}
+
+/* Button Styling - transparent with white border */
+.login-btn {
+    background: transparent;
+    color: #fff;
+    padding: 12px;
+    border-radius: 25px;
+    border: 1px solid #fff;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    width: 100%;
+    transition: none;
+}
+
+/* Button Hover Effect */
+.login-btn:hover {
+    background: #fff;
+    color: #0072ff;
+    transition: none;
+}
+
+/* Links at the bottom */
+.login-links {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-top: 20px;
+}
+
+.login-links a {
+    color: #fff;
+    text-decoration: none;
+    transition: none;
+}
+
+.login-links a:hover {
+    color: #ccc;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+/* Add styling for the association register link */
+.register-link {
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 10px 20px;
+    background-color: #1976d2;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.register-link:hover {
+    background-color: #1565c0;
+}
+
+.register-link:focus {
+    outline: none;
+}
+/* Center the "OR" text */
+.or-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    text-align: center; /* Ensure text is centered */
+}
+
+/* Styling for the "OR" text */
+.or-text {
+    font-size: 1rem;
+    color: #ccc;
+    margin-bottom: 10px; /* Space between OR text and the link */
+}
+
+/* Center the Register Button */
+.register-link-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Register button styling */
+.register-link {
+    text-decoration: none;
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #1976d2;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.register-link:hover {
+    background-color: #1565c0;
+}
+
+.register-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.5);
+}
+
