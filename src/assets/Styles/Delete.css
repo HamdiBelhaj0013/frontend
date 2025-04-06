@@ -1,0 +1,253 @@
+/* Delete.css - Enhanced styling for the Delete component */
+
+/* Container animations and styling */
+.delete-container {
+    background-color: #fff;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.delete-container:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Loading animation */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 0;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #d32f2f;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Warning icon pulse animation */
+@keyframes warningPulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.warning-icon {
+    animation: warningPulse 2s infinite;
+    filter: drop-shadow(0 2px 4px rgba(211, 47, 47, 0.3));
+}
+
+/* Text styling for the member name and confirmation */
+.member-name {
+    color: #d32f2f;
+    font-weight: bold;
+    text-decoration: underline;
+    position: relative;
+}
+
+.member-info {
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin: 1rem 0;
+    border-left: 4px solid #d32f2f;
+}
+
+.member-detail {
+    margin: 0.25rem 0;
+    color: #555;
+}
+
+.confirmation-text {
+    font-style: italic;
+    margin: 1.25rem 0;
+    line-height: 1.6;
+    color: #555;
+}
+
+.confirmation-text strong {
+    color: #d32f2f;
+    font-weight: 700;
+}
+
+/* Input field styling */
+.delete-input {
+    transition: all 0.3s ease;
+}
+
+.delete-input .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(211, 47, 47, 0.5);
+}
+
+.delete-input .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #d32f2f;
+    border-width: 2px;
+}
+
+.delete-input .MuiInputLabel-root.Mui-focused {
+    color: #d32f2f;
+}
+
+/* Delete button and animations */
+.delete-button {
+    position: relative;
+    transition: all 0.3s ease !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px !important;
+    padding: 0.75rem !important;
+}
+
+.delete-button:hover {
+    background-color: #b71c1c !important;
+    box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3) !important;
+    transform: translateY(-2px);
+}
+
+.delete-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(211, 47, 47, 0.3) !important;
+}
+
+/* Cancel button styling */
+.cancel-button {
+    transition: all 0.3s ease !important;
+    color: #666 !important;
+}
+
+.cancel-button:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: #333 !important;
+}
+
+/* Loading spinner for delete button */
+.button-spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Error and not found states */
+.error-container, .not-found-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+}
+
+.error-icon, .not-found-icon {
+    font-size: 50px !important;
+    color: #d32f2f;
+    margin-bottom: 1rem;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.error-message {
+    background-color: #ffebee;
+    border-left: 4px solid #d32f2f;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0 4px 4px 0;
+    width: 100%;
+    text-align: left;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.back-button {
+    margin-top: 1rem !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .delete-container {
+        padding: 1.5rem !important;
+        margin: 0 1rem !important;
+    }
+
+    .confirmation-text {
+        font-size: 0.9rem !important;
+    }
+
+    .member-info {
+        padding: 0.5rem;
+    }
+}
+
+/* Focus visible styles for accessibility */
+.delete-button:focus-visible,
+.cancel-button:focus-visible,
+.back-button:focus-visible {
+    outline: 2px solid #d32f2f;
+    outline-offset: 2px;
+}
+/* Add these styles to your existing Delete.css file */
+
+/* Fallback TextField styling for when MyTextField isn't loaded properly */
+.fallback-text-field {
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.fallback-text-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+    text-align: left;
+}
+
+.fallback-text-field input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.23);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.fallback-text-field input:focus {
+    outline: none;
+    border-color: #d32f2f;
+    box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2);
+}
+
+.fallback-text-field input.error {
+    border-color: #d32f2f;
+}
+
+.fallback-text-field .helper-text {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.fallback-text-field .helper-text.error {
+    color: #d32f2f;
+}
+
+.fallback-text-field input:disabled {
+    background-color: rgba(0, 0, 0, 0.12);
+    cursor: not-allowed;
+}

@@ -1,5 +1,6 @@
-import '../login.css'; // Ensure consistency with Login page
-import { useState } from 'react';
+import '../assets/Styles/PasswordReset.css';
+import backgroundImage from '../assets/blue-stationery-table.jpg';
+import {React, useState} from 'react';
 import { Box, Typography, InputAdornment } from '@mui/material';
 import { Email } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
@@ -26,6 +27,7 @@ const PasswordResetRequest = () => {
 
     return (
         <div className="login-container"> {/* Same as Login Page */}
+            <div className="background-image" style={{ backgroundImage: `url(${backgroundImage})` }} />
             <div className="floating-elements"></div>
             <form onSubmit={handleSubmit(submission)} className="login-card">
                 <Typography variant="h4" className="login-title">Forgot Password? 🔑</Typography>

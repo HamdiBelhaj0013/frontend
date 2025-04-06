@@ -9,7 +9,7 @@ import * as yup from "yup";
 import MyDatePickerField from "./forms/MyDatePickerField.jsx";
 import MyTextField from "./forms/MyTextField.jsx";
 import MySelectField from "./forms/MySelectField.jsx";
-import './CreateMember.css';
+import '../assets/Styles/CreateMember.css';
 
 const EditMember = () => {
     const { id: MyId } = useParams();

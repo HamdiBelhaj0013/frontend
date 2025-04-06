@@ -1,110 +1,129 @@
-/* 🚀 Futuristic Neon Background */
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: radial-gradient(circle at center, #1a1a2e, #16213e);
-  overflow: hidden;
-  position: relative;
+/* App.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* ✨ Floating Neon Shapes */
-.floating-shapes::before,
-.floating-shapes::after {
-  content: "";
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  background: rgba(0, 255, 255, 0.6);
-  filter: blur(15px);
-  border-radius: 50%;
-  animation: float 8s infinite alternate ease-in-out;
+/* Global transitions for dark mode */
+body, html, .App, .MuiPaper-root, .MuiCard-root, .MuiDrawer-paper, .MuiAppBar-root {
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.floating-shapes::before {
-  top: 20%;
-  left: 10%;
+.App {
+    text-align: center;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
 }
 
-.floating-shapes::after {
-  bottom: 15%;
-  right: 10%;
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: rgba(255, 255, 255, 0.87);
+    }
 }
 
-@keyframes float {
-  from { transform: translateY(0); }
-  to { transform: translateY(-20px); }
+/* Loading spinner animation */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
 }
 
-/* 🔮 Glassmorphic Card */
-.card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  padding: 3rem;
-  width: 400px;
-  border-radius: 18px;
-  text-align: center;
-  animation: fadeInUp 0.8s ease-out;
-  border: 2px solid rgba(0, 255, 255, 0.3);
-  box-shadow: none;
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(0, 137, 123, 0.2);
+    border-radius: 50%;
+    border-top-color: #00897B;
+    animation: spin 1s ease-in-out infinite;
 }
 
-/* ✨ Fade & Slide Up Animation */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-/* 🚀 Animated Button */
-.button {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, cyan, blue);
-  color: white;
-  font-weight: bold;
-  font-size: 16px;
-  transition: all 0.3s ease-in-out;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  text-transform: uppercase;
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-/* ✨ Hover Glow Effect */
-.button:hover {
-  background: linear-gradient(135deg, cyan, #6BCAF5);
-  box-shadow: 0px 0px 25px rgba(0, 255, 255, 0.8);
+/* Transition helpers */
+.fade-in {
+    animation: fadeIn 0.5s ease-in forwards;
 }
 
-/* 🌟 Ripple Effect */
-.button:active {
-  transform: scale(0.95);
+.slide-in {
+    animation: slideIn 0.5s ease-out forwards;
 }
 
-/* 🔗 Stylish Links */
-.links {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
-.links a {
-  color: cyan;
-  text-decoration: none;
-  transition: color 0.3s;
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
-.links a:hover {
-  color: white;
-  text-decoration: underline;
+/* Add responsive styles */
+@media (max-width: 767px) {
+    .responsive-padding {
+        padding: 12px !important;
+    }
+
+    .responsive-margin {
+        margin: 12px !important;
+    }
 }
 
+/* Dark mode custom scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 137, 123, 0.5);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 137, 123, 0.7);
+}
+
+body[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(0, 137, 123, 0.7);
+}
+
+/* Fix iOS rubber banding scrolling issues */
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}

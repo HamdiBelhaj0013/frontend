@@ -1,0 +1,460 @@
+/* Enhanced Login Component Styles with Better Visibility */
+
+.login-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Background styling */
+.background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(2px);
+    z-index: -2;
+}
+
+.gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 20, 80, 0.85) 100%);
+    z-index: -1;
+}
+
+/* Left panel styling - improved contrast for white text */
+.left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    color: white;
+    animation: fadeIn 1s ease-in-out;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Enhanced text shadow for better readability */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-content {
+    max-width: 600px;
+    text-align: center;
+}
+
+.welcome-title {
+    font-size: 3rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 2rem !important;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.5px;
+}
+
+.brand-container {
+    margin: 2rem 0;
+    display: flex;
+    justify-content: center;
+    /* Add drop shadow to logo for better visibility against any background */
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.welcome-subtitle {
+    font-size: 1.2rem !important;
+    opacity: 1; /* Changed from 0.9 for better visibility */
+    line-height: 1.6 !important;
+    margin-bottom: 2rem !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Feature highlights section - improved contrast */
+.feature-highlights {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.highlight-text {
+    font-style: italic;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.5rem !important;
+    font-weight: 500;
+}
+
+.highlight-author {
+    text-align: right;
+    opacity: 0.9; /* Increased from 0.8 for better visibility */
+    font-weight: 500;
+}
+
+/* Right panel styling - improved background for better contrast with white components */
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(63, 81, 181, 0.15); /* Indigo tinted background for better contrast */
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+    position: relative;
+    animation: slideIn 0.8s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(50px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Login card - improved for better visibility and contrast */
+.login-card {
+    width: 100%;
+    max-width: 450px;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    background-color: #e8eaf6; /* Light indigo background for better contrast */
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    margin: 2rem;
+    border: 1px solid #c5cae9;
+}
+
+.login-title {
+    font-weight: 700 !important;
+    color: #000000; /* Pure black for maximum contrast */
+    margin-bottom: 0.5rem !important;
+    font-size: 1.9rem !important;
+}
+
+.login-subtitle {
+    color: #000000; /* Pure black for maximum contrast */
+    margin-bottom: 1.5rem !important;
+    font-weight: 500;
+}
+
+/* Error message styling - improved visibility */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(255, 0, 0, 0.15);
+    color: #c62828; /* Darker red for better contrast */
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    border-left: 4px solid #c62828;
+    font-weight: 500;
+}
+
+.error-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #c62828;
+    color: white;
+    font-weight: bold;
+}
+
+/* Input fields styling - improved visibility */
+.input-group {
+    position: relative;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    color: #0d47a1; /* Darker blue for better contrast */
+    margin-right: 10px;
+}
+
+/* Custom styles for input fields to ensure text is visible */
+.MuiInputBase-input {
+    color: #000000 !important; /* Pure black text for maximum visibility */
+    font-weight: 500 !important;
+}
+
+.MuiInputLabel-root {
+    color: #000000 !important; /* Pure black labels for maximum visibility */
+    font-weight: 500 !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+    border-color: #3f51b5 !important; /* More visible indigo border */
+    border-width: 1.5px !important;
+}
+
+/* Remember me and forgot password section - improved contrast */
+.remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.forgot-link {
+    color: #000000; /* Black text for maximum visibility */
+    text-decoration: underline; /* Add underline to make it clearly a link */
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.forgot-link:hover {
+    color: #01257a;
+    text-decoration: underline;
+}
+
+/* Login button styling - improved visibility */
+.login-btn {
+    margin: 1rem 0 !important;
+    height: 48px !important;
+    background-color: #0d47a1 !important; /* Darker blue for better contrast */
+    color: white !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    font-size: 1rem !important;
+    border-radius: 8px !important;
+    transition: background-color 0.3s ease !important;
+    box-shadow: 0 4px 8px rgba(13, 71, 161, 0.3) !important;
+}
+
+.login-btn:hover {
+    background-color: #072f6b !important;
+    box-shadow: 0 6px 12px rgba(13, 71, 161, 0.4) !important;
+}
+
+/* Separator styling - improved visibility */
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1rem 0;
+    color: #000000; /* Black text for maximum visibility */
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.separator::before,
+.separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px solid #000000; /* Bold black line for maximum visibility */
+}
+
+.separator span {
+    padding: 0 1rem;
+}
+
+/* Social login buttons - improved visibility */
+.social-login-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 0.5rem 0 1.5rem;
+}
+
+.social-login-btn {
+    background-color: #f0f0f0 !important; /* Slightly darker background */
+    border-radius: 50% !important;
+    padding: 12px !important;
+    transition: all 0.3s ease !important;
+    color: #333 !important; /* Darker icon color */
+    border: 1px solid #ddd !important;
+}
+
+.social-login-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.social-login-btn.google:hover {
+    background-color: #fafafa !important;
+    color: #db4437 !important;
+    border-color: #db4437 !important;
+}
+
+.social-login-btn.facebook:hover {
+    background-color: #fafafa !important;
+    color: #4267B2 !important;
+    border-color: #4267B2 !important;
+}
+
+.social-login-btn.linkedin:hover {
+    background-color: #fafafa !important;
+    color: #0077b5 !important;
+    border-color: #0077b5 !important;
+}
+
+/* Sign up prompt styling - improved contrast */
+.signup-prompt {
+    text-align: center;
+    margin: 1rem 0 !important;
+    font-size: 0.95rem !important;
+    color: #000000 !important; /* Pure black text for maximum visibility */
+    font-weight: 500 !important;
+}
+
+.signup-link {
+    color: #000000; /* Black for maximum visibility */
+    text-decoration: underline; /* Add underline to make it clearly a link */
+    font-weight: 700;
+    margin-left: 5px;
+    transition: color 0.2s ease;
+}
+
+.signup-link:hover {
+    color: #072f6b;
+    text-decoration: underline;
+}
+
+/* Association link styling - improved visibility */
+.association-link-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.association-link {
+    display: flex;
+    align-items: center;
+    color: #000000; /* Black text for maximum visibility */
+    text-decoration: none;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 2px solid #000000; /* Bold black border */
+    transition: all 0.3s ease;
+    background-color: #c5cae9; /* Indigo-tinted background for better visibility */
+}
+
+.association-link:hover {
+    background-color: #e3f2fd;
+    border-color: #0d47a1;
+    transform: translateY(-2px);
+}
+
+/* Footer styling - improved visibility */
+.login-footer {
+    position: absolute;
+    bottom: 1rem;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.footer-link {
+    color: #444; /* Darker for better visibility */
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+    font-weight: 500;
+}
+
+.footer-link:hover {
+    color: #111;
+    text-decoration: underline;
+}
+
+/* Responsive styling - maintained and improved */
+@media (max-width: 1024px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .left-panel {
+        flex: 0 0 35%;
+        padding: 2rem 1rem;
+    }
+
+    .welcome-title {
+        font-size: 2.2rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .welcome-subtitle {
+        font-size: 1rem !important;
+    }
+
+    .feature-highlights {
+        margin-top: 1.5rem;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .left-panel {
+        flex: 0 0 25%;
+        padding: 1.5rem 1rem;
+    }
+
+    .welcome-title {
+        font-size: 1.8rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .brand-container {
+        margin: 1rem 0;
+    }
+
+    .login-card {
+        padding: 1.5rem 1rem;
+        margin: 1rem;
+    }
+
+    .remember-forgot {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    /* Ensure form is more visible on small screens */
+    .right-panel {
+        background-color: rgba(240, 242, 245, 0.98);
+    }
+}
+
+/* Accessibility improvements */
+:focus {
+    outline: 3px solid #0d47a1 !important;
+    outline-offset: 2px !important;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+    .login-btn,
+    .social-login-btn,
+    .association-link {
+        forced-color-adjust: none;
+    }
+}
+
+/* Animation for form submission */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(13, 71, 161, 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(13, 71, 161, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(13, 71, 161, 0); }
+}
+
+.login-btn:active {
+    animation: pulse 0.3s;
+}

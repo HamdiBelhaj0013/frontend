@@ -9,8 +9,7 @@ import * as yup from "yup";
 import MyDatePickerField from "./forms/MyDatePickerField.jsx";
 import MyTextField from "./forms/MyTextField.jsx";
 import MySelectField from "./forms/MySelectField.jsx";
-import './CreateMember.css';
-import { Person, Email, Home, Work, Public, Cake, Event } from '@mui/icons-material';
+import '../assets/Styles/CreateMember.css';
 
 const CreateMember = () => {
     const [loading, setLoading] = useState(false);
@@ -283,248 +282,171 @@ const CreateMember = () => {
             { label: "Joining Date", name: "joining_date", width: '30%', component: MyDatePickerField },
         ]
     ];
-    const fieldIcons = {
-        name: <Person sx={{ color: '#1a237e', fontSize: 28 }} />,
-        email: <Email sx={{ color: '#1a237e', fontSize: 28 }} />,
-        address: <Home sx={{ color: '#1a237e', fontSize: 28 }} />,
-        job: <Work sx={{ color: '#1a237e', fontSize: 28 }} />,
-        nationality: <Public sx={{ color: '#1a237e', fontSize: 28 }} />,
-        birth_date: <Cake sx={{ color: '#1a237e', fontSize: 28 }} />,
-        joining_date: <Event sx={{ color: '#1a237e', fontSize: 28 }} />,
-        role: <Work sx={{ color: '#1a237e', fontSize: 28 }} />,
-    };
 
 
     return (
         <form onSubmit={handleSubmit(submission)}>
             <Box sx={{
-                minHeight: '100vh',
-                background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                padding: 10,
+                maxWidth: 1200,
+                margin: '0 auto',
+                padding: 3,
             }}>
-                <Box sx={{
-                    maxWidth: 1500,
-                    margin: '0 auto',
-                    transform: 'translateY(50px)',
-                    animation: 'slideUp 0.6s ease-out forwards',
-                    '@keyframes slideUp': {
-                        from: { transform: 'translateY(50px)', opacity: 0 },
-                        to: { transform: 'translateY(0)', opacity: 1 }
+                {/* Animated Header */}
+                <Box className="header-animation" sx={{
+                    display: "flex",
+                    backgroundColor: '#1a237e',
+                    marginBottom: 3,
+                    padding: 3,
+                    borderRadius: 2,
+                    boxShadow: 4,
+                    position: 'relative',
+                    '&:after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: -8,
+                        left: '5%',
+                        width: '90%',
+                        height: 8,
+                        backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                        borderRadius: '0 0 4px 4px'
                     }
                 }}>
-                    {/* Enhanced Header */}
-                    <Box className="header-animation" sx={{
-                        display: "flex",
-                        alignItems: 'center',
-                        background: 'linear-gradient(135deg, #1a237e 0%, #303f9f 100%)',
-                        marginBottom: 4,
-                        padding: 3,
-                        borderRadius: 3,
-                        boxShadow: 6,
-                        position: 'relative',
-                        overflow: 'hidden',
-                        '&:before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%)'
-                        }
+                    <Typography variant="h5" sx={{
+                        color: "white",
+                        fontWeight: 'bold',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
                     }}>
-                        <Typography variant="h4" sx={{
-                            color: "white",
-                            fontWeight: 800,
-                            letterSpacing: 1.2,
-                            textShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                            position: 'relative',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 2
-                        }}>
-                            <Person sx={{ fontSize: 36, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
-                            Create New Member
-                        </Typography>
-                    </Box>
+                        Create New Member
+                    </Typography>
+                </Box>
 
-                    {/* Enhanced Form Container */}
-                    <Box className="form-container" sx={{
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        borderRadius: 4,
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                        padding: { xs: 3, md: 4 },
-                        position: 'relative',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                        '&:before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '4px',
-                            height: '100%',
-                            background: 'linear-gradient(180deg, #1a237e 0%, #303f9f 100%)',
-                            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-                        },
-                        '&:hover:before': {
-                            width: '6px',
-                            boxShadow: '2px 0 8px rgba(26, 35, 126, 0.3)'
-                        }
-                    }}>
-                        {formFields.map((row, rowIndex) => (
-                            <Box key={rowIndex} sx={{
-                                display: "flex",
-                                gap: 3,
-                                flexWrap: 'wrap',
-                                marginBottom: 4,
-                                '&:last-child': { marginBottom: 0 }
-                            }}>
-                                {row.map((field) => (
-                                    <Box key={field.name} sx={{
-                                        width: { xs: '100%', md: field.width },
-                                        transition: 'all 0.3s ease',
-                                        position: 'relative',
-                                        '&:hover': {
-                                            transform: 'translateX(8px)',
-                                            '& .field-icon': {
-                                                transform: 'scale(1.1) rotate(-5deg)'
-                                            }
-                                        }
-                                    }}>
-                                        <Box sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1.5,
-                                            mb: 1,
-                                            paddingLeft: 1
-                                        }}>
-                                            <Box className="field-icon" sx={{
-                                                transition: 'transform 0.3s ease',
-                                                display: 'flex',
-                                                alignItems: 'center'
-                                            }}>
-                                                {fieldIcons[field.name]}
-                                            </Box>
-                                            <Typography variant="subtitle1" sx={{
-                                                color: '#1a237e',
-                                                fontWeight: 600,
-                                                letterSpacing: 0.5
-                                            }}>
-                                                {field.label}
-                                            </Typography>
-                                        </Box>
-                                        <field.component
-                                            name={field.name}
-                                            control={control}
-                                            placeholder={`Enter ${field.label.toLowerCase()}`}
-                                            options={field.options || []}
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: 2,
-                                                    boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                                                    transition: 'all 0.3s ease',
-                                                    '&:hover': {
-                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
-                                                    },
-                                                    '&.Mui-focused': {
-                                                        boxShadow: '0 4px 12px rgba(26, 35, 126, 0.2)',
-                                                        transform: 'scale(1.02)'
-                                                    }
-                                                }
-                                            }}
-                                        />
-                                    </Box>
-                                ))}
-                            </Box>
-                        ))}
-
-                        {/* Enhanced Submit Button */}
-                        <Box sx={{
-                            textAlign: "right",
-                            marginTop: 6,
-                            position: 'relative'
+                {/* Enhanced Form Container */}
+                <Box className="form-container" sx={{
+                    backgroundColor: 'background.paper',
+                    borderRadius: 4,
+                    boxShadow: 3,
+                    padding: { xs: 2, md: 4 },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '4px',
+                        height: '100%',
+                        backgroundColor: '#1976d2',
+                        transition: 'all 0.3s ease'
+                    },
+                    '&:hover:before': {
+                        width: '6px',
+                        backgroundColor: '#1565c0'
+                    }
+                }}>
+                    {formFields.map((row, rowIndex) => (
+                        <Box key={rowIndex} sx={{
+                            display: "flex",
+                            gap: 3,
+                            flexWrap: 'wrap',
+                            marginBottom: 4,
+                            '&:last-child': { marginBottom: 0 }
                         }}>
-                            <Button
-                                variant="contained"
-                                type="submit"
-                                disabled={loading}
-                                sx={{
-                                    minWidth: 180,
-                                    padding: '14px 40px',
-                                    fontSize: 16,
-                                    fontWeight: 600,
-                                    borderRadius: 2,
-                                    background: 'linear-gradient(135deg, #1a237e 0%, #303f9f 100%)',
-                                    boxShadow: '0 4px 12px rgba(26, 35, 126, 0.3)',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px) scale(1.05)',
-                                        boxShadow: '0 6px 16px rgba(26, 35, 126, 0.4)'
-                                    },
-                                    '&:active': {
-                                        transform: 'translateY(0) scale(0.98)'
-                                    },
-                                    '&.Mui-disabled': {
-                                        background: 'linear-gradient(135deg, #7986cb 0%, #9fa8da 100%)'
-                                    }
-                                }}
-                            >
-                                {loading ? (
-                                    <CircularProgress
-                                        size={24}
+                            {row.map((field) => (
+                                <Box key={field.name} sx={{
+                                    width: { xs: '100%', md: field.width },
+                                    transition: 'transform 0.3s ease',
+                                    '&:hover': { transform: 'translateX(8px)' }
+                                }}>
+                                    <field.component
+                                        label={field.label}
+                                        name={field.name}
+                                        control={control}
+                                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                                        options={field.options || []}
                                         sx={{
-                                            color: 'white',
-                                            animation: 'pulse 1.5s infinite'
+                                            '& .Mui-focused': {
+                                                transform: 'scale(1.02)',
+                                                transition: 'transform 0.3s ease'
+                                            }
                                         }}
                                     />
-                                ) : (
-                                    'Create Member'
-                                )}
-                            </Button>
+                                </Box>
+                            ))}
                         </Box>
-                    </Box>
+                    ))}
 
-                    {/* Enhanced Success/Error Notification */}
-                    <Snackbar
-                        open={!!error}
-                        autoHideDuration={6000}
-                        onClose={() => setError(null)}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                        TransitionProps={{
-                            direction: 'up',
-                            timeout: { enter: 500, exit: 300 }
-                        }}
-                    >
-                        <Alert
-                            severity="error"
+                    {/* Enhanced Submit Button */}
+                    <Box sx={{
+                        textAlign: "right",
+                        marginTop: 4,
+                        position: 'relative'
+                    }}>
+                        <Button
+                            variant="contained"
+                            type="submit"
+                            disabled={loading}
+                            className="transition-all"
                             sx={{
-                                width: '100%',
-                                borderRadius: 2,
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                animation: 'slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                '@keyframes slideIn': {
-                                    from: { transform: 'translateY(100%)', opacity: 0 },
-                                    to: { transform: 'translateY(0)', opacity: 1 }
+                                minWidth: 140,
+                                padding: '12px 30px',
+                                fontSize: 16,
+                                backgroundColor: '#1976d2',
+                                transformOrigin: 'center',
+                                '&:hover': {
+                                    backgroundColor: '#1565c0',
+                                    transform: 'translateY(-2px) scale(1.05)',
+                                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                                },
+                                '&:active': {
+                                    transform: 'translateY(0) scale(0.98)'
+                                },
+                                '&.Mui-disabled': {
+                                    backgroundColor: '#90caf9',
+                                    color: 'white'
                                 }
                             }}
-                            icon={false}
                         >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                <Box sx={{
-                                    background: 'rgba(255,255,255,0.2)',
-                                    borderRadius: '50%',
-                                    padding: 1,
-                                    display: 'flex',
-                                    alignItems: 'center'
-                                }}>
-                                    <Person sx={{ fontSize: 24 }} />
-                                </Box>
-                                {error}
-                            </Box>
-                        </Alert>
-                    </Snackbar>
+                            {loading ? (
+                                <CircularProgress
+                                    size={24}
+                                    sx={{
+                                        color: 'white',
+                                        animation: 'pulse 1.5s infinite'
+                                    }}
+                                />
+                            ) : 'Create Member'}
+                        </Button>
+                    </Box>
                 </Box>
+
+                {/* Enhanced Error Notification */}
+                <Snackbar
+                    open={!!error}
+                    autoHideDuration={6000}
+                    onClose={() => setError(null)}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    TransitionProps={{
+                        direction: 'left',
+                        timeout: { enter: 500, exit: 300 }
+                    }}
+                >
+                    <Alert
+                        severity="error"
+                        sx={{
+                            width: '100%',
+                            boxShadow: 3,
+                            transform: 'translateX(100%)',
+                            animation: 'slideIn 0.5s forwards',
+                            '@keyframes slideIn': {
+                                from: { transform: 'translateX(100%)' },
+                                to: { transform: 'translateX(0)' }
+                            }
+                        }}
+                        variant="filled"
+                    >
+                        {error}
+                    </Alert>
+                </Snackbar>
             </Box>
         </form>
     );

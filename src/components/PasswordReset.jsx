@@ -1,5 +1,5 @@
-import '../login.css'; // Use the same styling as Login
-import { useState } from 'react';
+import '../assets/Styles/PasswordReset.css';
+import {React, useState} from 'react';
 import { Box, Typography } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -7,6 +7,7 @@ import Axios from './Axios.jsx';
 import MyPassField from './forms/MyPassField';
 import MyButton from './forms/MyButton';
 import MyMessage from './Message';
+import backgroundImage from "../assets/blue-stationery-table.jpg";
 
 const PasswordReset = () => {
     const navigate = useNavigate();
@@ -45,6 +46,7 @@ const PasswordReset = () => {
 
     return (
         <div className="login-container">
+            <div className="background-image" style={{ backgroundImage: `url(${backgroundImage})` }} />
             <div className="floating-elements"></div>
             <form onSubmit={handleSubmit(submission)} className="login-card">
                 <Typography variant="h4" className="login-title">Reset Your Password 🔑</Typography>

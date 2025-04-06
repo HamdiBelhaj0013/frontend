@@ -1,19 +1,28 @@
-// src/components/forms/MyFileField.jsx
 import React from 'react';
 import { TextField } from '@mui/material';
+import { Controller } from 'react-hook-form';
 
-const MyFileField = ({ label, name, control, ...props }) => {
+const MyTextField = ({ name, control, label, defaultValue = '', rules = {}, ...props }) => {
     return (
-        <TextField
-            {...props}
-            type="file"
+        <Controller
             name={name}
-            label={label}
-            fullWidth
-            variant="outlined"
-            InputLabelProps={{ shrink: true }}
+            control={control}
+            defaultValue={defaultValue}
+            rules={rules}
+            render={({ field, fieldState: { error } }) => (
+                <TextField
+                    {...field}
+                    label={label}
+                    error={!!error}
+                    helperText={error ? error.message : ''}
+                    fullWidth
+                    margin="normal"
+                    variant="outlined"
+                    {...props}
+                />
+            )}
         />
     );
 };
 
-export default MyFileField;
+export default MyTextField;

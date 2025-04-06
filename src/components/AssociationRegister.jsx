@@ -7,7 +7,7 @@ import * as yup from 'yup';
 import AxiosInstance from './Axios';
 import MyTextField from './forms/MyTextField';
 import MyButton from './forms/MyButton';
-import '../login.css';
+import '../assets/Styles/AssociationRegister.css';
 import backgroundImage from '../assets/blue-stationery-table.jpg';
 
 const schema = yup.object({
