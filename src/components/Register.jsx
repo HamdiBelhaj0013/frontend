@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, InputAdornment, IconButton, MenuItem, Select, FormControl, InputLabel, Snackbar, Alert, Stepper, Step, StepLabel } from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock, AlternateEmail, Person, ArrowForward, ArrowBack } from '@mui/icons-material';
+import { Box, Typography, InputAdornment, IconButton, CircularProgress, Snackbar, Alert, Stepper, Step, StepLabel, Autocomplete, Divider, Paper, Tooltip } from '@mui/material';
+import { Visibility, VisibilityOff, Email, Lock, AlternateEmail, Person, ArrowForward, ArrowBack, Dashboard, Assignment, Assessment, AutoAwesome, Info, HelpOutline } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { motion } from 'framer-motion';
 import AxiosInstance from './Axios';
-import MyTextField from './forms/MyTextField';
-import MyPassField from './forms/MyPassField';
-import MyButton from './forms/MyButton';
+import FormField from './forms/FormField';
 import '../assets/Styles/Register.css';
 import backgroundImage from "../assets/blue-stationery-table.jpg";
 import logo from '../assets/logowhite.png';
@@ -22,55 +21,58 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
     const [activeStep, setActiveStep] = useState(0);
+    const [featureIndex, setFeatureIndex] = useState(0);
+
+    // Platform features for the dynamic display
+    const platformFeatures = [
+        {
+            icon: <Dashboard sx={{ fontSize: 32, color: '#fff', mb: 1 }} />,
+            title: "Tableau de bord personnalisé",
+            description: "Accédez rapidement à vos projets, tâches et documents dans une interface intuitive."
+        },
+        {
+            icon: <Assignment sx={{ fontSize: 32, color: '#fff', mb: 1 }} />,
+            title: "Gestion des projets",
+            description: "Création, suivi et validation des projets avec attribution des responsabilités."
+        },
+        {
+            icon: <Assessment sx={{ fontSize: 32, color: '#fff', mb: 1 }} />,
+            title: "Rapports financiers",
+            description: "Générez automatiquement des rapports financiers conformes à la législation tunisienne."
+        },
+        {
+            icon: <AutoAwesome sx={{ fontSize: 32, color: '#fff', mb: 1 }} />,
+            title: "Assistant administratif",
+            description: "Chatbot intelligent pour vous guider dans vos tâches administratives quotidiennes."
+        }
+    ];
 
     // Steps for the registration process
-    const steps = ['Account Details', 'Association'];
-
-    // Fetch associations on component mount
-    useEffect(() => {
-        const fetchAssociations = async () => {
-            try {
-                const response = await AxiosInstance.get('/users/associations/');
-                setAssociations(response.data);
-            } catch (error) {
-                console.error('Error fetching associations:', error);
-                setRegisterError("Error fetching associations. Please try again later.");
-            }
-        };
-        fetchAssociations();
-    }, []);
-
-    // UI event handlers
-    const togglePasswordVisibility = () => setShowPassword(!showPassword);
-
-    const handleCloseNotification = (event, reason) => {
-        if (reason === 'clickaway') return;
-        setNotification({ ...notification, open: false });
-    };
+    const steps = ['Détails du compte', 'Association'];
 
     // Form validation schema
     const schema = yup.object({
         fullName: yup.string()
-            .required('Full name is required')
-            .min(3, 'Full name must be at least 3 characters'),
+            .required('Le nom complet est requis')
+            .min(3, 'Le nom complet doit contenir au moins 3 caractères'),
         email: yup.string()
-            .email('Invalid email address')
-            .required('Email is required'),
+            .email('Format email invalide')
+            .required('Email est requis'),
         password: yup.string()
-            .required('Password is required')
-            .min(8, 'Password must be at least 8 characters')
-            .matches(/[A-Z]/, 'Must contain at least one uppercase letter')
-            .matches(/[a-z]/, 'Must contain at least one lowercase letter')
-            .matches(/[0-9]/, 'Must contain at least one number')
-            .matches(/[!@#$%^&*(),.?":;{}|<>+]/, 'Must contain at least one special character'),
+            .required('Mot de passe est requis')
+            .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+            .matches(/[A-Z]/, 'Doit contenir au moins une lettre majuscule')
+            .matches(/[a-z]/, 'Doit contenir au moins une lettre minuscule')
+            .matches(/[0-9]/, 'Doit contenir au moins un chiffre')
+            .matches(/[!@#$%^&*(),.?":;{}|<>+]/, 'Doit contenir au moins un caractère spécial'),
         password2: yup.string()
-            .required('Password confirmation is required')
-            .oneOf([yup.ref('password'), null], 'Passwords must match'),
-        association: yup.number().nullable().required('Association is required'),
+            .required('La confirmation du mot de passe est requise')
+            .oneOf([yup.ref('password'), null], 'Les mots de passe doivent correspondre'),
+        association: yup.number().nullable().required('L\'association est requise'),
     });
 
     // Initialize form with react-hook-form
-    const { control, handleSubmit, setValue, getValues, formState: { errors }, trigger } = useForm({
+    const { control, handleSubmit, trigger, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             fullName: '',
@@ -80,6 +82,35 @@ const Register = () => {
             association: null
         }
     });
+
+    // Fetch associations on component mount
+    useEffect(() => {
+        const fetchAssociations = async () => {
+            try {
+                const response = await AxiosInstance.get('/users/associations/');
+                setAssociations(response.data);
+            } catch (error) {
+                console.error('Error fetching associations:', error);
+                setRegisterError("Erreur lors de la récupération des associations. Veuillez réessayer plus tard.");
+            }
+        };
+        fetchAssociations();
+
+        // Rotate through features every 6 seconds
+        const featureInterval = setInterval(() => {
+            setFeatureIndex(prev => (prev + 1) % platformFeatures.length);
+        }, 6000);
+
+        return () => clearInterval(featureInterval);
+    }, []);
+
+    // UI event handlers
+    const togglePasswordVisibility = () => setShowPassword(!showPassword);
+
+    const handleCloseNotification = (event, reason) => {
+        if (reason === 'clickaway') return;
+        setNotification({ ...notification, open: false });
+    };
 
     // Step navigation handlers
     const moveToNextStep = async () => {
@@ -118,7 +149,7 @@ const Register = () => {
 
             setNotification({
                 open: true,
-                message: 'Registration successful! Redirecting to login...',
+                message: 'Inscription réussie! Redirection vers la page de connexion...',
                 severity: 'success'
             });
 
@@ -126,7 +157,7 @@ const Register = () => {
             setTimeout(() => {
                 navigate('/', {
                     state: {
-                        message: 'Registration successful! Please log in.',
+                        message: 'Inscription réussie! Veuillez vous connecter.',
                         status: 'success'
                     }
                 });
@@ -136,7 +167,7 @@ const Register = () => {
             setLoading(false);
             console.error("Registration error:", error);
 
-            const errorMessage = error.response?.data.message || "An unexpected error occurred";
+            const errorMessage = error.response?.data.message || "Une erreur inattendue s'est produite";
             setRegisterError(errorMessage);
 
             setNotification({
@@ -147,9 +178,37 @@ const Register = () => {
         }
     };
 
+    // Get the current feature for display
+    const currentFeature = platformFeatures[featureIndex];
+
+    // Password strength indicator
+    const getPasswordStrength = (password) => {
+        if (!password) return { strength: 0, color: '#e0e0e0', text: '' };
+
+        let strength = 0;
+        if (password.length >= 8) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[a-z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[!@#$%^&*(),.?":;{}|<>+]/.test(password)) strength += 1;
+
+        const strengthMap = {
+            1: { color: '#f44336', text: 'Très faible' },
+            2: { color: '#ff9800', text: 'Faible' },
+            3: { color: '#ffeb3b', text: 'Moyen' },
+            4: { color: '#4caf50', text: 'Fort' },
+            5: { color: '#2e7d32', text: 'Très fort' }
+        };
+
+        return {
+            strength: (strength / 5) * 100,
+            color: strengthMap[strength]?.color || '#e0e0e0',
+            text: strengthMap[strength]?.text || ''
+        };
+    };
+
     return (
         <div className="login-container">
-            {/* Notification system */}
             <Snackbar
                 open={notification.open}
                 autoHideDuration={6000}
@@ -165,226 +224,554 @@ const Register = () => {
                 </Alert>
             </Snackbar>
 
-            {/* Background and overlay */}
             <div className="background-image" style={{ backgroundImage: `url(${backgroundImage})` }} />
             <div className="gradient-overlay" />
 
-            {/* Left panel with branding */}
             <div className="left-panel">
                 <div className="welcome-content">
-                    <Typography variant="h3" className="welcome-title">Create Your Account</Typography>
-                    <div className="brand-container">
-                        <img src={logo} alt="Company Logo" style={{ width: '80%', maxWidth: '500px', height: 'auto' }} />
-                    </div>
-                    <Typography variant="h6" className="welcome-subtitle">
-                        Join our platform and unlock powerful features for your association
-                    </Typography>
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <Typography variant="h3" className="welcome-title">Créez votre compte</Typography>
+                    </motion.div>
+                    <motion.div
+                        className="brand-container"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                    >
+                        <img src={logo} alt="Logo" style={{ width: '75%', maxWidth: '400px', height: 'auto' }} />
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.6 }}
+                    >
+                        <Typography variant="h6" className="welcome-subtitle">
+                            Rejoignez notre plateforme pour la gestion des associations en Tunisie
+                        </Typography>
+                    </motion.div>
 
-                    {/* Feature highlights */}
-                    <div className="feature-highlights">
-                        <Typography variant="body1" className="highlight-text">
-                            "A platform designed to streamline association management"
-                        </Typography>
-                        <Typography variant="body2" className="highlight-author">
-                            - John Doe, Association Manager
-                        </Typography>
-                    </div>
+                    {/* Dynamic Feature Showcase */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.9 }}
+                    >
+                        <Box
+                            sx={{
+                                mt: 4,
+                                p: 3,
+                                borderRadius: '12px',
+                                backgroundColor: 'rgba(13, 71, 161, 0.4)',
+                                backdropFilter: 'blur(10px)',
+                                minHeight: '180px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textAlign: 'center',
+                                overflow: 'hidden',
+                                position: 'relative'
+                            }}
+                        >
+                            <motion.div
+                                key={featureIndex}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.5 }}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    width: '100%'
+                                }}
+                            >
+                                <motion.div
+                                    initial={{ scale: 0.8 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{
+                                        duration: 0.5,
+                                        type: "spring",
+                                        stiffness: 200
+                                    }}
+                                >
+                                    {currentFeature.icon}
+                                </motion.div>
+                                <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
+                                    {currentFeature.title}
+                                </Typography>
+                                <Typography variant="body1" sx={{ color: '#fff' }}>
+                                    {currentFeature.description}
+                                </Typography>
+                            </motion.div>
+                        </Box>
+                    </motion.div>
+
+                    {/* Dots indicator for features */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 1.2 }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                            {platformFeatures.map((_, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    whileHover={{ scale: 1.2 }}
+                                    animate={{
+                                        scale: idx === featureIndex ? 1.2 : 1,
+                                        backgroundColor: idx === featureIndex ? '#fff' : 'rgba(255,255,255,0.5)'
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                    style={{
+                                        width: '8px',
+                                        height: '8px',
+                                        borderRadius: '50%',
+                                        margin: '0 4px',
+                                        cursor: 'pointer'
+                                    }}
+                                    onClick={() => setFeatureIndex(idx)}
+                                />
+                            ))}
+                        </Box>
+                    </motion.div>
+
+                    {/* Compliance notice */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 1.5 }}
+                    >
+                        <Box
+                            sx={{
+                                mt: 3,
+                                p: 2,
+                                borderRadius: '8px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                backdropFilter: 'blur(5px)',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                            }}
+                        >
+                            <Typography variant="body2" sx={{ color: '#fff', fontStyle: 'italic', textAlign: 'center' }}>
+                                Plateforme conforme à la législation tunisienne pour la gestion des associations
+                            </Typography>
+                        </Box>
+                    </motion.div>
                 </div>
             </div>
 
-            {/* Right panel with registration form */}
             <div className="right-panel">
-                <form onSubmit={handleSubmit(onSubmit)} className="login-card" data-testid="register-form" noValidate>
-                    <Typography variant="h4" className="login-title">Sign Up 🚀</Typography>
-                    <Typography className="login-subtitle" sx={{ mb: 3 }}>Complete the steps below to get started</Typography>
+                <motion.form
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="login-card"
+                    data-testid="register-form"
+                    noValidate
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 100 }}
+                    style={{ maxWidth: '380px', padding: '2rem 1.8rem' }} // Reduced size
+                >
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                    >
+                        <Typography variant="h5" className="login-title" style={{ color: '#000', marginBottom: '0.5rem' }}>
+                            Inscription
+                        </Typography>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.7 }}
+                    >
+                        <Typography className="login-subtitle" style={{ color: '#000', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                            Complétez les étapes ci-dessous pour commencer
+                        </Typography>
+                    </motion.div>
 
                     {registerError && (
-                        <div className="error-message">
+                        <motion.div
+                            className="error-message"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            style={{ marginBottom: '1rem' }}
+                        >
                             <span className="error-icon">!</span>
                             <span>{registerError}</span>
-                        </div>
+                        </motion.div>
                     )}
 
                     {/* Stepper component */}
-                    <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+                    <Stepper activeStep={activeStep} sx={{ mb: 2, mt: 1 }}>
                         {steps.map((label, index) => (
                             <Step key={index}>
                                 <StepLabel>
-                                    <Typography sx={{ color: 'white', fontSize: '0.875rem' }}>{label}</Typography>
+                                    <Typography style={{ color: '#000000', fontWeight: 500, fontSize: '0.8rem' }}>
+                                        {label}
+                                    </Typography>
                                 </StepLabel>
                             </Step>
                         ))}
                     </Stepper>
 
+                    {/* Progress guide */}
+                    <Box
+                        sx={{
+                            mb: 2,
+                            p: 1.5,
+                            backgroundColor: 'rgba(13, 71, 161, 0.1)',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <Info sx={{ mr: 1, color: '#0d47a1', fontSize: '1rem' }} />
+                        <Typography style={{ color: '#000', fontSize: '0.8rem' }}>
+                            {activeStep === 0
+                                ? "Remplissez vos informations personnelles"
+                                : "Choisissez votre association"}
+                        </Typography>
+                    </Box>
+
                     {/* Step 1: Account Details */}
                     {activeStep === 0 && (
-                        <Box>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.9 }}
+                            style={{ width: '100%', margin: '0 auto' }}
+                        >
                             {/* Full Name field */}
-                            <Box className="input-group">
-                                <MyTextField
-                                    label="Full Name"
+                            <Box className="input-group" style={{ marginBottom: '16px' }}>
+                                <FormField
+                                    label="Nom complet"
                                     name="fullName"
                                     control={control}
                                     fullWidth
-                                    placeholder="John Doe"
+                                    placeholder="Votre Nom et Prénom"
                                     error={!!errors.fullName}
                                     helperText={errors.fullName?.message}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <Person style={{ color: '#fff' }} />
+                                                <Person style={{ color: '#0d47a1' }} />
                                             </InputAdornment>
                                         ),
+                                        style: { fontSize: '0.9rem' }
                                     }}
+                                    sx={{ '& .MuiInputLabel-root': { fontSize: '0.9rem' } }}
                                 />
                             </Box>
 
                             {/* Email field */}
-                            <Box className="input-group">
-                                <MyTextField
-                                    label="Email address"
+                            <Box className="input-group" style={{ marginBottom: '16px' }}>
+                                <FormField
+                                    label="Adresse email"
                                     name="email"
+                                    type="email"
                                     control={control}
                                     fullWidth
-                                    placeholder="your.email@example.com"
+                                    placeholder="votre.email@exemple.com"
                                     error={!!errors.email}
                                     helperText={errors.email?.message}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <Email style={{ color: '#fff' }} />
+                                                <Email style={{ color: '#0d47a1' }} />
                                             </InputAdornment>
                                         ),
+                                        style: { fontSize: '0.9rem' }
+                                    }}
+                                    sx={{ '& .MuiInputLabel-root': { fontSize: '0.9rem' } }}
+                                />
+                            </Box>
+
+                            {/* Password guidance */}
+                            <Box
+                                sx={{
+                                    mt: 1,
+                                    mb: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between'
+                                }}
+                            >
+                                <Typography variant="subtitle2" style={{ color: '#000', fontWeight: 500, fontSize: '0.8rem' }}>
+                                    Exigences du mot de passe:
+                                </Typography>
+                                <Tooltip title="Le mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial">
+                                    <HelpOutline sx={{ color: '#0d47a1', fontSize: '0.9rem', cursor: 'pointer' }} />
+                                </Tooltip>
+                            </Box>
+
+                            {/* Password field */}
+                            <Box className="input-group" style={{ marginBottom: '8px' }}>
+                                <Controller
+                                    name="password"
+                                    control={control}
+                                    render={({ field }) => {
+                                        const passwordStrength = getPasswordStrength(field.value);
+                                        return (
+                                            <>
+                                                <FormField
+                                                    {...field}
+                                                    label="Mot de passe"
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="Créez un mot de passe fort"
+                                                    error={!!errors.password}
+                                                    helperText={errors.password?.message}
+                                                    InputProps={{
+                                                        startAdornment: (
+                                                            <InputAdornment position="start">
+                                                                <Lock style={{ color: '#0d47a1' }} />
+                                                            </InputAdornment>
+                                                        ),
+                                                        endAdornment: (
+                                                            <InputAdornment position="end">
+                                                                <IconButton
+                                                                    onClick={togglePasswordVisibility}
+                                                                    edge="end"
+                                                                    aria-label="toggle password visibility"
+                                                                    style={{ color: '#000000' }}
+                                                                    size="small"
+                                                                >
+                                                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                                </IconButton>
+                                                            </InputAdornment>
+                                                        ),
+                                                        style: { fontSize: '0.9rem' }
+                                                    }}
+                                                    sx={{ '& .MuiInputLabel-root': { fontSize: '0.9rem' } }}
+                                                />
+                                            </>
+                                        );
                                     }}
                                 />
                             </Box>
 
-                            {/* Password field */}
+                            {/* Password strength indicator below the field */}
+                            <Controller
+                                name="password"
+                                control={control}
+                                render={({ field }) => {
+                                    const passwordStrength = getPasswordStrength(field.value);
+                                    return field.value ? (
+                                        <Box sx={{ mb: 2, width: '100%' }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <Box sx={{ width: '70%', height: '3px', bgcolor: '#e0e0e0', borderRadius: '2px' }}>
+                                                    <Box
+                                                        sx={{
+                                                            width: `${passwordStrength.strength}%`,
+                                                            height: '100%',
+                                                            bgcolor: passwordStrength.color,
+                                                            borderRadius: '2px',
+                                                            transition: 'width 0.3s ease'
+                                                        }}
+                                                    />
+                                                </Box>
+                                                <Typography variant="caption" sx={{ color: passwordStrength.color, fontWeight: 600, fontSize: '0.7rem' }}>
+                                                    {passwordStrength.text}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    ) : null;
+                                }}
+                            />
+
+                            {/* Confirm Password field */}
                             <Box className="input-group">
-                                <MyPassField
-                                    label="Password"
-                                    name="password"
+                                <FormField
+                                    label="Confirmer le mot de passe"
+                                    name="password2"
                                     control={control}
                                     fullWidth
                                     type={showPassword ? "text" : "password"}
-                                    error={!!errors.password}
-                                    helperText={errors.password?.message}
+                                    placeholder="Confirmez votre mot de passe"
+                                    error={!!errors.password2}
+                                    helperText={errors.password2?.message}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <Lock style={{ color: '#fff' }} />
+                                                <Lock style={{ color: '#0d47a1' }} />
                                             </InputAdornment>
                                         ),
                                         endAdornment: (
                                             <InputAdornment position="end">
                                                 <IconButton
                                                     onClick={togglePasswordVisibility}
-                                                    className="visibility-toggle"
                                                     edge="end"
-                                                    aria-label="toggle password visibility"
-                                                    style={{ color: '#ffffff' }}
+                                                    aria-label="toggle confirm password visibility"
+                                                    style={{ color: '#000000' }}
+                                                    size="small"
                                                 >
                                                     {showPassword ? <VisibilityOff /> : <Visibility />}
                                                 </IconButton>
                                             </InputAdornment>
                                         ),
+                                        style: { fontSize: '0.9rem' }
                                     }}
+                                    sx={{ '& .MuiInputLabel-root': { fontSize: '0.9rem' } }}
                                 />
                             </Box>
-
-                            {/* Confirm Password field */}
-                            <Box className="input-group">
-                                <MyPassField
-                                    label="Confirm Password"
-                                    name="password2"
-                                    control={control}
-                                    fullWidth
-                                    type={showPassword ? "text" : "password"}
-                                    error={!!errors.password2}
-                                    helperText={errors.password2?.message}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Lock style={{ color: '#fff' }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Box>
-                        </Box>
+                        </motion.div>
                     )}
 
-                    {/* Step 2: Association */}
+                    {/* Step 2: Association - Using Autocomplete for better UX */}
                     {activeStep === 1 && (
-                        <Box>
-                            {/* Association field */}
-                            <Box className="input-group">
-                                <FormControl fullWidth error={!!errors.association}>
-                                    <InputLabel style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Association</InputLabel>
-                                    <Controller
-                                        name="association"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Select
-                                                {...field}
-                                                label="Association"
-                                                style={{ color: '#fff' }}
-                                                MenuProps={{
-                                                    PaperProps: {
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.9 }}
+                            style={{ width: '100%' }}
+                        >
+                            {/* Improved Association search */}
+                            <Paper elevation={0} sx={{ p: 1.5, bgcolor: 'rgba(13, 71, 161, 0.05)', borderRadius: '8px', mb: 2 }}>
+                                <Typography variant="subtitle2" sx={{ color: '#000', fontSize: '0.8rem', display: 'flex', alignItems: 'center' }}>
+                                    <Info sx={{ fontSize: '0.9rem', mr: 1, color: '#0d47a1' }} />
+                                    Recherchez votre association par nom ou emplacement
+                                </Typography>
+                            </Paper>
+
+                            {/* Association field with enhanced Autocomplete - Increased size */}
+                            <Box className="input-group" sx={{ mb: 2 }}>
+                                <Controller
+                                    name="association"
+                                    control={control}
+                                    render={({ field: { onChange, value } }) => (
+                                        <Autocomplete
+                                            id="association-autocomplete"
+                                            options={associations}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                            value={value ? associations.find(assoc => assoc.id === value) || null : null}
+                                            onChange={(_, newValue) => onChange(newValue ? newValue.id : null)}
+                                            filterOptions={(options, state) => {
+                                                const inputValue = state.inputValue.toLowerCase().trim();
+                                                return options.filter(option =>
+                                                    option.name.toLowerCase().includes(inputValue) ||
+                                                    (option.location && option.location.toLowerCase().includes(inputValue))
+                                                );
+                                            }}
+                                            ListboxProps={{
+                                                style: {
+                                                    maxHeight: '220px' // Increased height
+                                                }
+                                            }}
+                                            renderOption={(props, option) => (
+                                                <Box component="li" {...props} sx={{ borderBottom: '1px solid #f0f0f0' }}>
+                                                    <Box>
+                                                        <Typography fontWeight="500" fontSize="0.9rem">{option.name}</Typography>
+                                                        {option.location && (
+                                                            <Typography variant="caption" color="text.secondary" fontSize="0.75rem">
+                                                                {option.location}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            )}
+                                            renderInput={(params) => (
+                                                <FormField
+                                                    {...params}
+                                                    label="Association"
+                                                    placeholder="Tapez pour rechercher votre association"
+                                                    error={!!errors.association}
+                                                    helperText={errors.association?.message}
+                                                    fullWidth
+                                                    InputLabelProps={{
+                                                        ...params.InputLabelProps,
+                                                        style: { fontSize: '0.9rem' }
+                                                    }}
+                                                    InputProps={{
+                                                        ...params.InputProps,
+                                                        startAdornment: (
+                                                            <InputAdornment position="start">
+                                                                <AlternateEmail style={{ color: '#0d47a1', fontSize: '1.1rem' }} />
+                                                                {params.InputProps.startAdornment}
+                                                            </InputAdornment>
+                                                        ),
                                                         style: {
-                                                            backgroundColor: '#fff',
-                                                            color: '#333'
+                                                            fontSize: '0.9rem',
+                                                            padding: '10px 8px 10px 0'
                                                         }
-                                                    }
-                                                }}
-                                            >
-                                                {associations.map((association) => (
-                                                    <MenuItem key={association.id} value={association.id}>
-                                                        {association.name}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        )}
-                                    />
-                                    {errors.association && <Typography color="error" variant="body2">{errors.association.message}</Typography>}
-                                </FormControl>
+                                                    }}
+                                                    sx={{
+                                                        '& .MuiInputLabel-root': { fontSize: '0.9rem' },
+                                                        '& .MuiOutlinedInput-root': {
+                                                            '& fieldset': {
+                                                                borderColor: errors.association ? '#d32f2f' : '#3f51b5',
+                                                                borderWidth: '1.5px'
+                                                            },
+                                                            '&:hover fieldset': {
+                                                                borderColor: '#1a237e'
+                                                            },
+                                                            '&.Mui-focused fieldset': {
+                                                                borderColor: '#0d47a1'
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    )}
+                                />
                             </Box>
 
-                            {/* Association registration link */}
-                            <Box className="association-link-container" sx={{ mt: 2, mb: 2 }}>
-                                <Typography variant="body2" color="white" sx={{ mb: 1 }}>
-                                    Don't see your association?
+                            {/* Notice about adding new association */}
+                            <Box
+                                sx={{
+                                    mt: 2,
+                                    p: 1.5,
+                                    borderRadius: '8px',
+                                    border: '1px dashed #0d47a1',
+                                    bgcolor: 'rgba(13, 71, 161, 0.05)',
+                                    width: '100%'
+                                }}
+                            >
+                                <Typography variant="body2" style={{ color: '#000', marginBottom: '8px', fontSize: '0.8rem' }}>
+                                    <b>Vous ne trouvez pas votre association?</b> Vous pouvez l'ajouter en quelques étapes simples.
                                 </Typography>
-                                <Link to="/associationregister" className="association-link">
-                                    <AlternateEmail style={{ marginRight: '8px', fontSize: '1rem' }} />
-                                    Register Your Association
+
+                                <Link to="/associationregister" className="association-link" style={{ marginTop: '8px', fontSize: '0.8rem' }}>
+                                    <AlternateEmail style={{ marginRight: '8px', fontSize: '0.9rem' }} />
+                                    Enregistrer votre association
                                 </Link>
                             </Box>
-                        </Box>
+                        </motion.div>
                     )}
 
                     {/* Navigation buttons */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
                         {activeStep === 0 ? (
-                            <div style={{ width: '100px' }}></div> // Empty space for alignment
+                            <Box style={{ width: '100px' }}></Box> // Empty space for alignment
                         ) : (
                             <button
                                 type="button"
                                 onClick={moveToPreviousStep}
-                                className="back-button"
+                                className="back-btn"
                                 style={{
-                                    padding: '8px 16px',
+                                    padding: '8px 12px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     background: 'transparent',
-                                    color: 'white',
-                                    border: '1px solid white',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
+                                    color: '#0d47a1',
+                                    border: '1px solid #0d47a1',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    height: '40px',
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem'
                                 }}
                             >
-                                <ArrowBack style={{ marginRight: '8px' }} />
-                                Back
+                                <ArrowBack style={{ marginRight: '4px', fontSize: '1rem' }} />
+                                Retour
                             </button>
                         )}
 
@@ -392,56 +779,132 @@ const Register = () => {
                             <button
                                 type="button"
                                 onClick={moveToNextStep}
-                                className="next-button"
+                                className="login-btn"
                                 style={{
-                                    padding: '8px 16px',
+                                    padding: '8px 12px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    background: '#1976d2',
+                                    background: '#0d47a1',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    height: '40px',
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem'
                                 }}
                             >
-                                Next
-                                <ArrowForward style={{ marginLeft: '8px' }} />
+                                Suivant
+                                <ArrowForward style={{ marginLeft: '4px', fontSize: '1rem' }} />
                             </button>
                         ) : (
                             <button
                                 type="submit"
-                                className="submit-button"
+                                className="login-btn"
                                 disabled={loading}
                                 style={{
-                                    padding: '8px 24px',
-                                    background: '#1976d2',
+                                    padding: '8px 16px',
+                                    background: '#0d47a1',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '4px',
+                                    borderRadius: '8px',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    opacity: loading ? 0.7 : 1
+                                    opacity: loading ? 0.7 : 1,
+                                    height: '40px',
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem'
                                 }}
                             >
-                                {loading ? "Signing Up..." : "Sign Up"}
+                                {loading ? (
+                                    <>
+                                        <CircularProgress size={16} color="inherit" style={{ marginRight: '8px' }} />
+                                        En cours...
+                                    </>
+                                ) : "S'inscrire"}
                             </button>
                         )}
                     </Box>
 
-                    {/* Login link */}
-                    <div className="login-links" style={{ marginTop: '20px' }}>
-                        <Link to="/">Already have an account? Log in</Link>
-                    </div>
-                </form>
+                    <Divider sx={{ my: 2 }} />
 
-                {/* Footer links */}
-                <div className="login-footer">
-                    <Link to="/help" className="footer-link">Help</Link>
-                    <Link to="/privacy" className="footer-link">Privacy</Link>
-                    <Link to="/terms" className="footer-link">Terms</Link>
-                </div>
+                    <Typography className="signup-prompt" sx={{ textAlign: 'center', fontSize: '0.8rem' }} style={{ color: '#000' }}>
+                        Vous avez déjà un compte? <Link to="/" className="signup-link">Se connecter</Link>
+                    </Typography>
+                </motion.form>
             </div>
+
+            {/* Floating animation elements - Smaller and less distracting */}
+            <motion.div
+                style={{
+                    position: 'absolute',
+                    bottom: 20,
+                    right: 20,
+                    width: 40, // Reduced size
+                    height: 40, // Reduced size
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(13, 71, 161, 0.7), rgba(33, 150, 243, 0.7))',
+                    zIndex: 1,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                }}
+                animate={{
+                    y: [0, -10, 0], // Smaller movement
+                    rotate: [0, 5, -5, 0] // Less rotation
+                }}
+                transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                }}
+            />
+
+            {/* Add smaller floating elements */}
+            <motion.div
+                style={{
+                    position: 'absolute',
+                    top: '25%',
+                    left: '15%',
+                    width: 15, // Reduced size
+                    height: 15, // Reduced size
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.3)',
+                    zIndex: 1
+                }}
+                animate={{
+                    y: [0, -20, 0], // Smaller movement
+                    x: [0, 10, 0], // Smaller movement
+                    opacity: [0.3, 0.7, 0.3]
+                }}
+                transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                }}
+            />
+
+            <motion.div
+                style={{
+                    position: 'absolute',
+                    bottom: '30%',
+                    left: '60%',
+                    width: 20, // Reduced size
+                    height: 20, // Reduced size
+                    borderRadius: '50%',
+                    background: 'rgba(13, 71, 161, 0.3)',
+                    zIndex: 1
+                }}
+                animate={{
+                    y: [0, 25, 0], // Smaller movement
+                    x: [0, -15, 0], // Smaller movement
+                    opacity: [0.3, 0.5, 0.3]
+                }}
+                transition={{
+                    duration: 7,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                }}
+            />
         </div>
     );
 };
 
-export default Register;
+export default Register

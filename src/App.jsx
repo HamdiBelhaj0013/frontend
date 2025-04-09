@@ -22,6 +22,7 @@ const Login = lazy(() => import("./components/Login"));
 const PasswordResetRequest = lazy(() => import("./components/PasswordResetRequest"));
 const PasswordReset = lazy(() => import("./components/PasswordReset"));
 const AssociationRegister = lazy(() => import("./components/AssociationRegister"));
+const AssociationStatusCheck = lazy(() => import("./components/AssociationStatusCheck"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -41,6 +42,7 @@ function App() {
     const isAuthRoute = [
         "/",
         "/associationregister",
+        "/association-status",
         "/login",
         "/register",
         "/request/password_reset"
@@ -56,6 +58,7 @@ function App() {
                             <Route path="/" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/associationregister" element={<AssociationRegister />} />
+                            <Route path="/association-status" element={<AssociationStatusCheck />} />
                             <Route path="/request/password_reset" element={<PasswordResetRequest />} />
                             <Route path="/password-reset/:token" element={<PasswordReset />} />
                         </Routes>

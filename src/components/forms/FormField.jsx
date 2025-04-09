@@ -1,85 +1,83 @@
-import React from "react";
-import TextField from "@mui/material/TextField";
-import { Controller } from "react-hook-form";
+import React, { forwardRef } from 'react';
+import { TextField, MenuItem } from '@mui/material';
+import { Controller } from 'react-hook-form';
 
 /**
- * FormField - A unified form field component that handles both text and password inputs
- *
- * @param {Object} props - Component props
- * @param {string} props.label - Input field label
- * @param {string} props.name - Field name for form control
- * @param {Object} props.control - React Hook Form control object
- * @param {boolean} props.fullWidth - Whether the field should take full width
- * @param {string} props.placeholder - Placeholder text
- * @param {boolean} props.error - Error state
- * @param {string} props.helperText - Helper text or error message
- * @param {Object} props.InputProps - Props for the Input component
- * @param {Object} props.sx - Style overrides
- * @param {string} props.type - Input type (text, password, email, etc)
+ * FormField component for handling text, password, email and select inputs
+ * Using forwardRef to fix the ref warning
  */
-export default function FormField({
-                                      label,
-                                      name,
-                                      control,
-                                      fullWidth = true,
-                                      placeholder = "",
-                                      error,
-                                      helperText,
-                                      InputProps = {},
-                                      sx = {},
-                                      type = "text",
-                                      ...rest
-                                  }) {
+const FormField = forwardRef(({
+                                  name,
+                                  label,
+                                  control, // This is crucial for the Controller
+                                  type = 'text',
+                                  placeholder,
+                                  fullWidth = true,
+                                  required = false,
+                                  error = false,
+                                  helperText = '',
+                                  InputProps = {},
+                                  disabled = false,
+                                  select = false,
+                                  children,
+                                  ...rest
+                              }, ref) => {
+    // Check if control is provided, if not, just render a normal TextField
+    if (!control) {
+        return (
+            <TextField
+                name={name}
+                label={label}
+                type={type}
+                placeholder={placeholder}
+                variant="outlined"
+                fullWidth={fullWidth}
+                required={required}
+                error={error}
+                helperText={helperText}
+                disabled={disabled}
+                InputLabelProps={{ shrink: true }}
+                InputProps={InputProps}
+                select={select}
+                ref={ref}
+                {...rest}
+            >
+                {children}
+            </TextField>
+        );
+    }
+
+    // If control is provided, use Controller
     return (
         <Controller
             name={name}
             control={control}
-            render={({ field: { onChange, value }, fieldState: { error: fieldError } }) => (
+            render={({ field }) => (
                 <TextField
-                    onChange={onChange}
-                    value={value || ''}
+                    {...field}
+                    {...rest}
                     label={label}
+                    type={type}
+                    placeholder={placeholder}
                     variant="outlined"
                     fullWidth={fullWidth}
-                    placeholder={placeholder}
-                    className="form-field"
-                    error={error || !!fieldError}
-                    helperText={helperText || fieldError?.message}
-                    type={type}
-                    size="medium"
-                    InputProps={{
-                        sx: {
-                            '& input': {
-                                padding: '12px 14px',
-                            },
-                            ...InputProps.sx
-                        },
-                        ...InputProps
-                    }}
-                    sx={{
-                        '& .MuiInputBase-root': {
-                            borderRadius: '8px',
-                        },
-                        '& .MuiInputBase-input': {
-                            color: '#111',
-                        },
-                        '& .MuiInputLabel-root': {
-                            color: '#555',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#bdbdbd',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#0d47a1',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#0d47a1',
-                        },
-                        ...sx
-                    }}
-                    {...rest}
-                />
+                    required={required}
+                    error={error}
+                    helperText={helperText}
+                    disabled={disabled}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={InputProps}
+                    select={select}
+                    ref={ref}
+                >
+                    {children}
+                </TextField>
             )}
         />
     );
-}
+});
+
+// Add display name for debugging
+FormField.displayName = 'FormField';
+
+export default FormField;
