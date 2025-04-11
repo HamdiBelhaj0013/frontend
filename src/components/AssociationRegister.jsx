@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -16,7 +16,14 @@ import {
     Fade,
     Chip,
     Badge,
-    LinearProgress
+    LinearProgress,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails, IconButton
 } from '@mui/material';
 import {
     Email,
@@ -32,7 +39,13 @@ import {
     AutoAwesome,
     FindInPage,
     GradingOutlined,
-    InfoOutlined
+    InfoOutlined,
+    Help,
+    ExpandMore,
+    WarningAmber,
+    DeleteOutline,
+    RestartAlt,
+    HelpOutline
 } from '@mui/icons-material';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -46,17 +59,51 @@ import '../assets/Styles/login.css';
 import backgroundImage from '../assets/blue-stationery-table.jpg';
 import logo from '../assets/logowhite.png';
 
-// Form validation schema
+// Advanced file validation
+const SUPPORTED_FORMATS = ['application/pdf'];
+const FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+// Form validation schema with enhanced file validation
 const schema = yup.object({
-    name: yup.string().required('Association name is required'),
-    email: yup.string().email('Invalid email').required('Email is required'),
-    matricule_fiscal: yup.string().required('Matricule fiscal is required'),
-    cin_recto: yup.mixed().required('CIN Recto is required'),
-    cin_verso: yup.mixed().required('CIN Verso is required'),
-    rne_document: yup.mixed().required('RNE Document is required')
+    name: yup.string().required('Le nom de l\'association est obligatoire')
+        .min(3, 'Le nom doit contenir au moins 3 caractères')
+        .max(100, 'Le nom ne peut pas dépasser 100 caractères'),
+
+    email: yup.string()
+        .email('Format d\'email invalide')
+        .required('L\'email est obligatoire'),
+
+    matricule_fiscal: yup.string()
+        .required('Le matricule fiscal est obligatoire')
+        .matches(
+            /^[0-9]{7}[A-Za-z]$/,
+            'Format invalide. Le matricule fiscal doit contenir 7 chiffres suivis d\'une lettre'
+        ),
+
+    cin_recto: yup.mixed()
+        .required('Le recto de la CIN est obligatoire')
+        .test('fileSize', 'Le fichier est trop volumineux (10MB max)',
+            value => !value || value.size <= FILE_SIZE)
+        .test('fileType', 'Format non supporté. Utilisez PDF uniquement',
+            value => !value || SUPPORTED_FORMATS.includes(value.type)),
+
+    cin_verso: yup.mixed()
+        .required('Le verso de la CIN est obligatoire')
+        .test('fileSize', 'Le fichier est trop volumineux (10MB max)',
+            value => !value || value.size <= FILE_SIZE)
+        .test('fileType', 'Format non supporté. Utilisez PDF uniquement',
+            value => !value || SUPPORTED_FORMATS.includes(value.type)),
+
+    rne_document: yup.mixed()
+        .required('Le document RNE est obligatoire')
+        .test('fileSize', 'Le fichier est trop volumineux (10MB max)',
+            value => !value || value.size <= FILE_SIZE)
+        .test('fileType', 'Format non supporté. Utilisez PDF uniquement',
+            value => !value || SUPPORTED_FORMATS.includes(value.type))
 });
 
 const RegisterAssociation = () => {
+    // Form state management
     const [registerError, setRegisterError] = useState("");
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
@@ -71,14 +118,28 @@ const RegisterAssociation = () => {
         rne_document: null
     });
 
-    const { handleSubmit, control, formState: { errors }, watch, reset } = useForm({
+    // Additional UX enhancements
+    const [networkError, setNetworkError] = useState(false);
+    const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+    const [helpTopic, setHelpTopic] = useState('');
+    const [documentErrorDialog, setDocumentErrorDialog] = useState(false);
+    const [retryAttempt, setRetryAttempt] = useState(0);
+    const [verificationTimeoutMessage, setVerificationTimeoutMessage] = useState(false);
+
+    // Refs for timeout management
+    const verificationTimeoutRef = useRef(null);
+    const verificationAttemptRef = useRef(0);
+
+    const { handleSubmit, control, formState: { errors }, watch, reset, clearErrors, setValue, setError } = useForm({
         resolver: yupResolver(schema),
+        mode: 'onChange'
     });
 
     // Watch for file uploads to update UI
     const cinRecto = watch("cin_recto");
     const cinVerso = watch("cin_verso");
     const rneDocument = watch("rne_document");
+    const matriculeFiscal = watch("matricule_fiscal");
 
     // Update uploaded files state when form values change
     useEffect(() => {
@@ -89,32 +150,73 @@ const RegisterAssociation = () => {
         });
     }, [cinRecto, cinVerso, rneDocument]);
 
+    // Reset error when matricule format changes
+    useEffect(() => {
+        if (matriculeFiscal && /^[0-9]{7}[A-Za-z]$/.test(matriculeFiscal)) {
+            clearErrors("matricule_fiscal");
+        }
+    }, [matriculeFiscal, clearErrors]);
+
     const handleCloseNotification = (event, reason) => {
         if (reason === 'clickaway') return;
         setNotification({ ...notification, open: false });
     };
 
-    // Function to check the verification status of an association
-// Function to check the verification status of an association
+// Update this function in AssociationRegister.jsx
     const checkVerificationStatus = async (associationId) => {
         try {
-            const response = await AxiosInstance.get(`/verification/association-verification/${associationId}/`);
+            console.log(`Checking verification status for association ${associationId}`);
+            // Updated URL to match the correct endpoint
+            const response = await AxiosInstance.get(`/users/association-verification/${associationId}/`);
+            console.log('Verification status response:', response.data);
+
             // Update state with the new status
             setVerificationStatus(response.data);
+
+            // Log the status received to help with debugging
+            if (response.data?.verification_status) {
+                console.log(`Current verification status: ${response.data.verification_status}`);
+            }
+
             return response.data;
         } catch (error) {
             console.error("Error checking verification status:", error);
+
+            // Provide more detailed error logging
+            if (error.response) {
+                console.error("Response status:", error.response.status);
+                console.error("Response data:", error.response.data);
+            } else if (error.request) {
+                console.error("No response received:", error.request);
+            } else {
+                console.error("Error message:", error.message);
+            }
+
+            if (verificationAttemptRef.current > 3) {
+                setVerificationTimeoutMessage(true);
+            }
             return null;
         }
     };
 
-    // Effect to check verification status periodically if we have a registered association
-// Effect to check verification status periodically if it's pending
+// Improved effect to check verification status periodically
     useEffect(() => {
         let statusCheckInterval;
         let progressInterval;
 
         if (registeredAssociation && showVerificationStatus) {
+            // Clear any existing timeout
+            if (verificationTimeoutRef.current) {
+                clearTimeout(verificationTimeoutRef.current);
+            }
+
+            // Set timeout for verification (2 minutes)
+            verificationTimeoutRef.current = setTimeout(() => {
+                if (verificationStatus?.verification_status === 'pending') {
+                    setVerificationTimeoutMessage(true);
+                }
+            }, 120000); // 2 minutes timeout
+
             // If verification status is already failed or verified, set progress accordingly
             if (verificationStatus?.verification_status === 'failed' ||
                 verificationStatus?.verification_status === 'verified') {
@@ -122,7 +224,7 @@ const RegisterAssociation = () => {
                 return; // Don't set up intervals for checking
             }
 
-            // Only for pending status: simulate verification progress
+            // Only for pending or undefined status: simulate verification progress
             progressInterval = setInterval(() => {
                 setVerificationProgress(prev => {
                     if (prev < 95) return prev + 5; // Only go up to 95% for pending
@@ -131,17 +233,53 @@ const RegisterAssociation = () => {
                 });
             }, 700);
 
-            // Only check periodically if status is pending
-            if (verificationStatus?.verification_status === 'pending') {
+            // Check initially regardless of status to ensure we have the latest status
+            const initialCheck = async () => {
+                try {
+                    console.log("Initial verification status check");
+                    const result = await checkVerificationStatus(registeredAssociation.id);
+
+                    // If verification is complete after initial check, update UI
+                    if (result && result.verification_status !== 'pending') {
+                        clearInterval(statusCheckInterval);
+                        clearInterval(progressInterval);
+                        clearTimeout(verificationTimeoutRef.current);
+                        setVerificationProgress(100);
+
+                        // Update notification based on verification result
+                        setNotification({
+                            open: true,
+                            message: result.verification_status === 'verified' ?
+                                'Vérification réussie!' :
+                                'La vérification a échoué. Veuillez consulter les détails.',
+                            severity: result.verification_status === 'verified' ? 'success' : 'error'
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error in initial status check:", error);
+                }
+            };
+
+            // Call the initial check
+            initialCheck();
+
+            // Only check periodically if status is pending or undefined
+            if (!verificationStatus || verificationStatus.verification_status === 'pending') {
+                console.log("Setting up periodic status checking");
                 // Set up interval for checking pending status
                 statusCheckInterval = setInterval(async () => {
                     try {
+                        verificationAttemptRef.current += 1;
+                        console.log(`Verification attempt ${verificationAttemptRef.current}`);
+
                         const result = await checkVerificationStatus(registeredAssociation.id);
 
                         // If verification is complete, stop checking
                         if (result && result.verification_status !== 'pending') {
+                            console.log(`Verification completed with status: ${result.verification_status}`);
                             clearInterval(statusCheckInterval);
                             clearInterval(progressInterval);
+                            clearTimeout(verificationTimeoutRef.current);
                             setVerificationProgress(100);
 
                             // Update notification based on verification result
@@ -154,21 +292,70 @@ const RegisterAssociation = () => {
                             });
                         }
                     } catch (error) {
-                        console.error("Error checking verification status:", error);
+                        console.error("Error in status check interval:", error);
+                        if (verificationAttemptRef.current > 5) {
+                            console.log("Max verification attempts reached, stopping checks");
+                            clearInterval(statusCheckInterval);
+                            setVerificationTimeoutMessage(true);
+                        }
                     }
                 }, 5000); // Check every 5 seconds
             }
 
+            // Cleanup function
             return () => {
+                console.log("Cleaning up verification status checking");
                 if (statusCheckInterval) clearInterval(statusCheckInterval);
                 if (progressInterval) clearInterval(progressInterval);
+                if (verificationTimeoutRef.current) clearTimeout(verificationTimeoutRef.current);
             };
         }
     }, [registeredAssociation, showVerificationStatus, verificationStatus]);
+    // Handle common errors before submission
+    const validateDocumentsBeforeSubmit = () => {
+        let hasError = false;
+
+        // Check PDF quality
+        if (cinRecto && cinRecto.size < 50000) {
+            setError("cin_recto", {
+                type: "manual",
+                message: "Le fichier semble être de trop faible qualité. Utilisez un document plus clair."
+            });
+            hasError = true;
+        }
+
+        if (cinVerso && cinVerso.size < 50000) {
+            setError("cin_verso", {
+                type: "manual",
+                message: "Le fichier semble être de trop faible qualité. Utilisez un document plus clair."
+            });
+            hasError = true;
+        }
+
+        if (rneDocument && rneDocument.size < 100000) {
+            setError("rne_document", {
+                type: "manual",
+                message: "Le document RNE semble être de trop faible qualité. Il pourrait être difficile à lire par notre système."
+            });
+            hasError = true;
+        }
+
+        if (hasError) {
+            setDocumentErrorDialog(true);
+        }
+
+        return !hasError;
+    };
 
     const handleRegister = async (data) => {
+        // Pre-submission validation
+        if (!validateDocumentsBeforeSubmit()) {
+            return;
+        }
+
         setLoading(true);
         setRegisterError("");
+        setNetworkError(false);
         setActiveStep(4); // Move to the submission step
 
         const formDataObj = new FormData();
@@ -185,7 +372,8 @@ const RegisterAssociation = () => {
 
         try {
             const response = await AxiosInstance.post('/users/register-association/', formDataObj, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                timeout: 60000 // 60 sec timeout for large files
             });
 
             // Store the registered association data from response
@@ -202,6 +390,9 @@ const RegisterAssociation = () => {
 
             // Show verification status panel
             setShowVerificationStatus(true);
+
+            // Reset verification attempt counter
+            verificationAttemptRef.current = 0;
 
             // Set appropriate notification based on verification status
             if (associationData.verification_status === 'failed') {
@@ -233,17 +424,80 @@ const RegisterAssociation = () => {
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            console.error("Registration error:", error.response?.data || error);
+            console.error("Registration error:", error);
+
+            // Network error handling
+            if (error.code === 'ECONNABORTED' || !error.response) {
+                setNetworkError(true);
+                setRegisterError("Erreur de connexion ou délai d'attente dépassé. Vérifiez votre connexion internet et réessayez.");
+                setActiveStep(3); // Go back to files step
+                return;
+            }
 
             // More detailed error message
-            const errorMessage = error.response?.data?.detail ||
-                error.response?.data?.error ||
-                error.message ||
-                "Failed to register association. Please try again.";
+            let errorMessage = "Échec de l'enregistrement. Veuillez réessayer.";
+
+            // Handle specific error cases
+            if (error.response?.status === 400) {
+                if (error.response.data?.name) {
+                    errorMessage = `Erreur: ${error.response.data.name[0]}`;
+                } else if (error.response.data?.email) {
+                    errorMessage = `Erreur: ${error.response.data.email[0]}`;
+                } else if (error.response.data?.matricule_fiscal) {
+                    errorMessage = `Erreur: ${error.response.data.matricule_fiscal[0]}`;
+                } else if (error.response.data?.detail) {
+                    errorMessage = error.response.data.detail;
+                } else if (error.response.data?.error) {
+                    errorMessage = error.response.data.error;
+                }
+            } else if (error.response?.status === 413) {
+                errorMessage = "Fichiers trop volumineux. Veuillez réduire la taille des fichiers et réessayer.";
+            } else if (error.response?.status >= 500) {
+                errorMessage = "Erreur serveur. Notre équipe technique a été notifiée, veuillez réessayer plus tard.";
+            }
 
             setRegisterError(`❌ ${errorMessage}`);
             setActiveStep(3); // Go back to files step on error
+            setRetryAttempt(prev => prev + 1);
         }
+    };
+
+    // Manual file validation before upload
+    const validateFile = (file, fieldName) => {
+        if (!file) return true;
+
+        // Check file type
+        if (!SUPPORTED_FORMATS.includes(file.type)) {
+            setError(fieldName, {
+                type: "manual",
+                message: "Format non supporté. Utilisez PDF uniquement."
+            });
+            return false;
+        }
+
+        // Check file size
+        if (file.size > FILE_SIZE) {
+            setError(fieldName, {
+                type: "manual",
+                message: "Fichier trop volumineux (10MB max)."
+            });
+            return false;
+        }
+
+        clearErrors(fieldName);
+        return true;
+    };
+
+    const handleFileChange = (fieldName, file) => {
+        if (validateFile(file, fieldName)) {
+            setValue(fieldName, file);
+        }
+    };
+
+    // Handle file removal
+    const handleRemoveFile = (fieldName) => {
+        setValue(fieldName, null);
+        clearErrors(fieldName);
     };
 
     // Helper function to get color based on verification status
@@ -355,8 +609,19 @@ const RegisterAssociation = () => {
                             ⏳ Vérification en cours
                         </Typography>
                         <Typography variant="body2">
-                            Votre demande est en cours de vérification. Vous serez notifié une fois le processus terminé.
+                            Votre demande est en cours de vérification. Le processus utilise notre technologie d'IA
+                            pour analyser vos documents et extraire le matricule fiscal pour validation.
+                            Cela peut prendre quelques instants.
                         </Typography>
+                        {verificationTimeoutMessage && (
+                            <Box sx={{ mt: 2, p: 2, backgroundColor: '#fff3e0', borderRadius: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+                                    <WarningAmber sx={{ mr: 1, color: '#ff9800' }} />
+                                    Le processus prend plus de temps que prévu. Si le statut ne change pas dans les
+                                    prochaines minutes, essayez de rafraîchir la page ou contactez notre support.
+                                </Typography>
+                            </Box>
+                        )}
                     </Alert>
                 );
 
@@ -365,15 +630,16 @@ const RegisterAssociation = () => {
         }
     };
 
-
     // Component for retry button functionality
     const RetryRegistrationButton = () => {
-        if (verificationStatus?.verification_status !== 'failed') return null;
+        if (verificationStatus?.verification_status !== 'failed' && !verificationTimeoutMessage) return null;
 
         return (
             <Box sx={{ mt: 4, textAlign: 'center' }}>
                 <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                    Pour réessayer avec de nouveaux documents :
+                    {verificationStatus?.verification_status === 'failed'
+                        ? 'Pour réessayer avec de nouveaux documents :'
+                        : 'Pour recommencer le processus :'}
                 </Typography>
                 <MyButton
                     label="Nouvelle demande"
@@ -383,54 +649,354 @@ const RegisterAssociation = () => {
                         setVerificationStatus(null);
                         setVerificationProgress(0);
                         setActiveStep(0);
+                        setVerificationTimeoutMessage(false);
+                        if (verificationTimeoutRef.current) {
+                            clearTimeout(verificationTimeoutRef.current);
+                        }
+                        verificationAttemptRef.current = 0;
                         reset(); // clear form data
                     }}
                     sx={{
                         minWidth: 220,
-                        backgroundColor: '#d32f2f',
+                        backgroundColor: verificationStatus?.verification_status === 'failed' ? '#d32f2f' : '#ff9800',
                         color: '#fff',
                         fontWeight: 600,
                         '&:hover': {
-                            backgroundColor: '#b71c1c',
+                            backgroundColor: verificationStatus?.verification_status === 'failed' ? '#b71c1c' : '#e65100',
                         }
                     }}
-                    endIcon={<AutoAwesome />}
+                    startIcon={verificationStatus?.verification_status === 'failed' ? <RestartAlt /> : <AutoAwesome />}
                 />
             </Box>
         );
     };
 
+    // Help dialog content based on topic
+    const getHelpContent = () => {
+        switch(helpTopic) {
+            case 'matricule':
+                return (
+                    <>
+                        <DialogTitle>
+                            Qu'est-ce que le Matricule Fiscal ?
+                            <IconButton
+                                aria-label="close"
+                                onClick={() => setHelpDialogOpen(false)}
+                                sx={{ position: 'absolute', right: 8, top: 8 }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </DialogTitle>
+                        <DialogContent dividers>
+                            <Typography variant="body1" paragraph>
+                                Le Matricule Fiscal est un identifiant unique attribué à votre association par l'administration fiscale tunisienne.
+                            </Typography>
+                            <Typography variant="body1" paragraph>
+                                <strong>Format standard :</strong> 7 chiffres suivis d'une lettre (ex: 1234567A)
+                            </Typography>
+                            <Typography variant="body1" paragraph>
+                                <strong>Où le trouver :</strong> Vous pouvez trouver votre matricule fiscal sur :
+                            </Typography>
+                            <Box component="ul" sx={{ pl: 3 }}>
+                                <li>Votre document RNE</li>
+                                <li>Votre attestation fiscale</li>
+                                <li>Votre carte d'identité fiscale</li>
+                            </Box>
+                            <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                                    Important :
+                                </Typography>
+                                <Typography variant="body2">
+                                    Le matricule fiscal que vous entrez ici sera automatiquement vérifié par rapport à celui qui figure dans votre document RNE. Assurez-vous qu'ils correspondent parfaitement.
+                                </Typography>
+                            </Box>
+                        </DialogContent>
+                    </>
+                );
 
-    // Registration steps
+            case 'verification':
+                return (
+                    <>
+                        <DialogTitle>
+                            Processus de Vérification
+                            <IconButton
+                                aria-label="close"
+                                onClick={() => setHelpDialogOpen(false)}
+                                sx={{ position: 'absolute', right: 8, top: 8 }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </DialogTitle>
+                        <DialogContent dividers>
+                            <Typography variant="body1" paragraph>
+                                Notre système utilise une technologie d'intelligence artificielle avancée pour vérifier vos documents et confirmer l'authenticité de votre association.
+                            </Typography>
+
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+                                Le processus comprend les étapes suivantes :
+                            </Typography>
+
+                            <Box sx={{ ml: 2 }}>
+                                <Typography variant="body2" paragraph sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <CheckCircle sx={{ mr: 1, fontSize: 16, color: '#4caf50' }} />
+                                    <strong>Extraction de données</strong> : Notre système OCR extrait automatiquement le matricule fiscal de votre document RNE.
+                                </Typography>
+
+                                <Typography variant="body2" paragraph sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <CheckCircle sx={{ mr: 1, fontSize: 16, color: '#4caf50' }} />
+                                    <strong>Vérification</strong> : Nous comparons le matricule extrait avec celui que vous avez fourni.
+                                </Typography>
+
+                                <Typography variant="body2" paragraph sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <CheckCircle sx={{ mr: 1, fontSize: 16, color: '#4caf50' }} />
+                                    <strong>Validation</strong> : Si les deux correspondent, votre compte est immédiatement validé.
+                                </Typography>
+                            </Box>
+
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 3, mb: 1 }}>
+                                Conseils pour une vérification réussie :
+                            </Typography>
+
+                            <Box component="ul" sx={{ pl: 3 }}>
+                                <li>Assurez-vous que tous les documents sont clairs et bien scannés</li>
+                                <li>Vérifiez que le matricule fiscal est clairement visible sur le document RNE</li>
+                                <li>Utilisez des fichiers PDF de bonne qualité (et non des photos de documents)</li>
+                                <li>Assurez-vous que le matricule entré correspond exactement à celui du document</li>
+                            </Box>
+
+                            <Alert severity="info" variant="outlined" sx={{ mt: 3 }}>
+                                <Typography variant="body2">
+                                    Si la vérification échoue, vous recevrez un message détaillant les raisons et pourrez effectuer une nouvelle demande avec des documents corrigés.
+                                </Typography>
+                            </Alert>
+                        </DialogContent>
+                    </>
+                );
+
+            case 'documents':
+                return (
+                    <>
+                        <DialogTitle>
+                            Documents Requis
+                            <IconButton
+                                aria-label="close"
+                                onClick={() => setHelpDialogOpen(false)}
+                                sx={{ position: 'absolute', right: 8, top: 8 }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </DialogTitle>
+                        <DialogContent dividers>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                                Carte d'Identité Nationale (CIN)
+                            </Typography>
+
+                            <Typography variant="body2" paragraph>
+                                Nous demandons le recto et le verso de la CIN du représentant légal de l'association pour vérifier son identité.
+                            </Typography>
+
+                            <Box sx={{ mt: 1, mb: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+                                <Typography variant="body2">
+                                    <strong>Format requis :</strong> PDF uniquement<br />
+                                    <strong>Taille maximale :</strong> 10 Mo par fichier<br />
+                                    <strong>Qualité :</strong> Le document doit être clairement lisible
+                                </Typography>
+                            </Box>
+
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                                Document RNE (Registre National des Entreprises)
+                            </Typography>
+
+                            <Typography variant="body2" paragraph>
+                                Ce document officiel contient les informations légales de votre association, dont le matricule fiscal qui sera vérifié automatiquement.
+                            </Typography>
+
+                            <Box sx={{ mt: 1, mb: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+                                <Typography variant="body2">
+                                    <strong>Format requis :</strong> PDF uniquement<br />
+                                    <strong>Taille maximale :</strong> 10 Mo<br />
+                                    <strong>Éléments importants :</strong> Le matricule fiscal doit être clairement visible
+                                </Typography>
+                            </Box>
+
+                            <Alert severity="warning" sx={{ mt: 2 }}>
+                                <Typography variant="body2">
+                                    <strong>Confidentialité des données :</strong> Tous les documents que vous téléchargez sont traités de manière sécurisée et confidentielle conformément à la législation en vigueur.
+                                </Typography>
+                            </Alert>
+                        </DialogContent>
+                    </>
+                );
+
+            default:
+                return (
+                    <>
+                        <DialogTitle>Aide Générale</DialogTitle>
+                        <DialogContent dividers>
+                            <Typography variant="body1">
+                                Si vous avez besoin d'aide supplémentaire, veuillez contacter notre service d'assistance.
+                            </Typography>
+                        </DialogContent>
+                    </>
+                );
+        }
+    };
+
+    // Documentation dialog component
+    const HelpDialog = () => (
+        <Dialog
+            open={helpDialogOpen}
+            onClose={() => setHelpDialogOpen(false)}
+            maxWidth="md"
+            fullWidth
+            scroll="paper"
+        >
+            {getHelpContent()}
+            <DialogActions>
+                <MyButton
+                    label="Fermer"
+                    onClick={() => setHelpDialogOpen(false)}
+                />
+            </DialogActions>
+        </Dialog>
+    );
+
+    // Document quality warning dialog
+    const DocumentQualityDialog = () => (
+        <Dialog
+            open={documentErrorDialog}
+            onClose={() => setDocumentErrorDialog(false)}
+            maxWidth="sm"
+            fullWidth
+        >
+            <DialogTitle sx={{ backgroundColor: '#fff3e0', color: '#e65100' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <WarningAmber sx={{ mr: 1 }} />
+                    Attention: Problème potentiel de qualité
+                </Box>
+            </DialogTitle>
+            <DialogContent dividers>
+                <Typography variant="body1" paragraph>
+                    Certains de vos documents semblent être de qualité insuffisante pour notre système de reconnaissance automatique.
+                </Typography>
+
+                <Typography variant="body1" paragraph>
+                    <strong>Recommandations :</strong>
+                </Typography>
+
+                <Box component="ul" sx={{ pl: 3 }}>
+                    <li>Assurez-vous que tous les documents sont clairement scannés, non flous et bien cadrés</li>
+                    <li>Les fichiers PDF doivent avoir une résolution suffisante pour être lisibles</li>
+                    <li>Le matricule fiscal doit être parfaitement visible sur le document RNE</li>
+                    <li>Évitez les documents trop compressés ou de mauvaise qualité</li>
+                </Box>
+
+                <Typography variant="body1" paragraph sx={{ mt: 2 }}>
+                    Vous pouvez continuer avec les documents actuels ou les remplacer par des documents de meilleure qualité.
+                </Typography>
+            </DialogContent>
+            <DialogActions>
+                <MyButton
+                    label="Annuler et corriger"
+                    onClick={() => {
+                        setDocumentErrorDialog(false);
+                        setActiveStep(1); // Return to document upload
+                    }}
+                    sx={{ color: '#d32f2f' }}
+                />
+                <MyButton
+                    label="Continuer quand même"
+                    onClick={() => {
+                        setDocumentErrorDialog(false);
+                        handleSubmit(handleRegister)();
+                    }}
+                    className="login-btn"
+                />
+            </DialogActions>
+        </Dialog>
+    );
+
+    // Network error dialog
+    const NetworkErrorAlert = () => {
+        if (!networkError) return null;
+
+        return (
+            <Alert
+                severity="error"
+                sx={{
+                    mb: 3,
+                    backgroundColor: '#ffebee',
+                    borderLeft: '4px solid #d32f2f',
+                    '& .MuiAlert-icon': {
+                        fontSize: '2rem'
+                    }
+                }}
+                icon={<WarningAmber fontSize="inherit" />}
+                action={
+                    <MyButton
+                        label="Réessayer"
+                        onClick={() => {
+                            setNetworkError(false);
+                            handleSubmit(handleRegister)();
+                        }}
+                        sx={{ color: '#d32f2f' }}
+                    />
+                }
+            >
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Problème de connexion détecté
+                </Typography>
+                <Typography variant="body2">
+                    La connexion au serveur a échoué ou le délai d'attente a été dépassé.
+                    Cela peut être dû à une connexion Internet instable ou à des fichiers volumineux.
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                    Veuillez vérifier votre connexion et réessayer.
+                </Typography>
+            </Alert>
+        );
+    };
+
+    // Registration steps with enhanced help tooltips
     const steps = [
         {
             label: 'Informations de base',
             description: 'Entrez les informations de base de votre association',
             fields: ['name', 'email', 'matricule_fiscal'],
-            icon: <Business />
+            icon: <Business />,
+            helpTopic: 'matricule',
+            helpText: "Qu'est-ce que le matricule fiscal et où le trouver?"
         },
         {
             label: 'Carte d\'identité (Recto)',
             description: 'Téléchargez le recto de votre carte d\'identité',
             fields: ['cin_recto'],
-            icon: <ArticleOutlined />
+            icon: <ArticleOutlined />,
+            helpTopic: 'documents',
+            helpText: "Quels formats sont acceptés et comment préparer mes documents?"
         },
         {
             label: 'Carte d\'identité (Verso)',
             description: 'Téléchargez le verso de votre carte d\'identité',
             fields: ['cin_verso'],
-            icon: <ArticleOutlined />
+            icon: <ArticleOutlined />,
+            helpTopic: 'documents',
+            helpText: "Quels formats sont acceptés et comment préparer mes documents?"
         },
         {
             label: 'Document RNE',
             description: 'Téléchargez votre document RNE pour la vérification',
             fields: ['rne_document'],
-            icon: <FactCheck />
+            icon: <FactCheck />,
+            helpTopic: 'documents',
+            helpText: "Qu'est-ce que le document RNE et pourquoi est-il nécessaire?"
         },
         {
             label: 'Soumission',
             description: 'Vérification des documents et enregistrement',
-            icon: <GradingOutlined />
+            icon: <GradingOutlined />,
+            helpTopic: 'verification',
+            helpText: "Comment fonctionne le processus de vérification automatique?"
         }
     ];
 
@@ -440,10 +1006,15 @@ const RegisterAssociation = () => {
         return currentFields.every(field => !errors[field] && watch(field));
     };
 
-    // Custom file input component
+    // Enhanced file input component with error handling and delete option
     const FileInput = ({ name, label, description, control, errors }) => (
         <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>{label}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{label}</Typography>
+                <Tooltip title="Format PDF uniquement, max 10MB" arrow>
+                    <InfoOutlined sx={{ ml: 1, fontSize: 16, color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+            </Box>
             <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>{description}</Typography>
 
             <Controller
@@ -470,17 +1041,31 @@ const RegisterAssociation = () => {
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <CheckCircle sx={{ fontSize: 40, color: '#4caf50', mb: 1 }} />
-                                <Typography>{value.name}</Typography>
-                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                    {(value.size / 1024).toFixed(2)} KB
-                                </Typography>
-                                <Box sx={{ mt: 2 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                    <CheckCircle sx={{ fontSize: 30, color: '#4caf50', mr: 1 }} />
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                                        Document téléchargé
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ p: 1, backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: 1, mb: 2 }}>
+                                    <Typography>{value.name}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                        {(value.size / 1024 / 1024).toFixed(2)} MB
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
                                     <Chip
-                                        label="Changer le fichier"
+                                        label="Changer"
                                         onClick={() => document.getElementById(`file-input-${name}`).click()}
                                         icon={<CloudUpload />}
                                         color="primary"
+                                        variant="outlined"
+                                    />
+                                    <Chip
+                                        label="Supprimer"
+                                        onClick={() => handleRemoveFile(name)}
+                                        icon={<DeleteOutline />}
+                                        color="error"
                                         variant="outlined"
                                     />
                                 </Box>
@@ -489,12 +1074,21 @@ const RegisterAssociation = () => {
                             <>
                                 <CloudUpload sx={{ fontSize: 40, color: '#0d47a1', mb: 1 }} />
                                 <Typography>Déposez votre fichier ici ou cliquez pour parcourir</Typography>
+                                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                                    Format PDF uniquement • Taille maximale: 10MB
+                                </Typography>
                             </>
                         )}
                         <input
                             id={`file-input-${name}`}
                             type="file"
-                            onChange={(e) => onChange(e.target.files[0])}
+                            accept="application/pdf"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    handleFileChange(name, file);
+                                }
+                            }}
                             style={{
                                 opacity: 0,
                                 position: 'absolute',
@@ -509,14 +1103,16 @@ const RegisterAssociation = () => {
                 )}
             />
             {errors[name] && (
-                <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
-                    {errors[name].message}
-                </Typography>
+                <Alert severity="error" variant="outlined" sx={{ mt: 1 }}>
+                    <Typography variant="caption">
+                        {errors[name].message}
+                    </Typography>
+                </Alert>
             )}
         </Box>
     );
 
-    // Verification dashboard - more advanced and interactive
+    // Enhanced verification dashboard with more user feedback
     const VerificationDashboard = () => (
         <motion.div
             initial={{ opacity: 0 }}
@@ -669,10 +1265,10 @@ const RegisterAssociation = () => {
                 {/* Add retry button for failed verifications */}
                 <RetryRegistrationButton />
 
-                {verificationStatus?.verification_status === 'pending' && (
+                {verificationStatus?.verification_status === 'pending' && !verificationTimeoutMessage && (
                     <Box sx={{ textAlign: 'center', mt: 3 }}>
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                            Notre IA analyse vos documents... Cette opération peut prendre quelques minutes.
+                            Notre IA analyse vos documents... Cette opération peut prendre quelques instants.
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 2 }}>
                             <FindInPage sx={{ color: '#0d47a1', mr: 1 }} />
@@ -692,6 +1288,29 @@ const RegisterAssociation = () => {
                 </Box>
             </Paper>
 
+            <Accordion sx={{ mb: 3, boxShadow: 'none', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px !important' }}>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Typography sx={{ display: 'flex', alignItems: 'center' }}>
+                        <HelpOutline sx={{ mr: 1, fontSize: 20, color: '#0d47a1' }} />
+                        Comment fonctionne le processus de vérification ?
+                    </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ backgroundColor: '#f5f9ff' }}>
+                    <Typography variant="body2" paragraph>
+                        Notre système utilise une technologie OCR (Reconnaissance Optique de Caractères) avancée pour
+                        analyser vos documents et extraire automatiquement le matricule fiscal figurant sur votre RNE.
+                    </Typography>
+                    <Typography variant="body2" paragraph>
+                        Ce matricule est ensuite comparé à celui que vous avez saisi lors de l'inscription. Si les deux
+                        correspondent, votre compte est vérifié instantanément.
+                    </Typography>
+                    <Typography variant="body2">
+                        Le processus est entièrement automatisé et sécurisé, garantissant une vérification rapide
+                        et fiable de votre association.
+                    </Typography>
+                </AccordionDetails>
+            </Accordion>
+
             <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'text.secondary' }}>
                 La vérification est effectuée par notre système d'intelligence artificielle qui extrait les informations
                 de vos documents et valide leur conformité avec les exigences légales.
@@ -699,7 +1318,7 @@ const RegisterAssociation = () => {
         </motion.div>
     );
 
-    // AI document verification animation component
+    // AI document verification animation component - enhanced with better visualization
     const AiVerificationAnimation = () => (
         <Box sx={{ position: 'relative', mt: 3, mb: 3, height: 60 }}>
             <motion.div
@@ -778,6 +1397,7 @@ const RegisterAssociation = () => {
         </Box>
     );
 
+    // Render the main component
     return (
         <div className="login-container">
             <Snackbar
@@ -799,6 +1419,10 @@ const RegisterAssociation = () => {
 
             <div className="background-image" style={{ backgroundImage: `url(${backgroundImage})` }} />
             <div className="gradient-overlay" />
+
+            {/* Help Dialogs */}
+            <HelpDialog />
+            <DocumentQualityDialog />
 
             {/* Left Panel */}
             <div className="left-panel">
@@ -1006,6 +1630,9 @@ const RegisterAssociation = () => {
                             </motion.div>
                         )}
 
+                        {/* Network error alert */}
+                        <NetworkErrorAlert />
+
                         <form onSubmit={handleSubmit(handleRegister)}>
                             <Stepper activeStep={activeStep} orientation="vertical" sx={{ mb: 3 }}>
                                 {steps.map((step, index) => (
@@ -1016,7 +1643,26 @@ const RegisterAssociation = () => {
                                                 completed: index < activeStep
                                             }}
                                         >
-                                            {step.label}
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                {step.label}
+                                                {step.helpTopic && (
+                                                    <Tooltip title={step.helpText} arrow>
+                                                        <Help
+                                                            sx={{
+                                                                ml: 1,
+                                                                fontSize: 16,
+                                                                color: 'text.secondary',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setHelpTopic(step.helpTopic);
+                                                                setHelpDialogOpen(true);
+                                                            }}
+                                                        />
+                                                    </Tooltip>
+                                                )}
+                                            </Box>
                                         </StepLabel>
                                         <StepContent>
                                             <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
@@ -1066,14 +1712,14 @@ const RegisterAssociation = () => {
                                                         />
                                                     </Box>
 
-                                                    {/* Matricule Fiscal Field */}
+                                                    {/* Matricule Fiscal Field with enhanced help */}
                                                     <Box className="input-group">
                                                         <FormField
                                                             label="Matricule Fiscal"
                                                             name="matricule_fiscal"
                                                             control={control}
                                                             fullWidth
-                                                            placeholder="Format: ABC123E"
+                                                            placeholder="Format: 1234567A"
                                                             error={!!errors.matricule_fiscal}
                                                             helperText={errors.matricule_fiscal?.message}
                                                             InputProps={{
@@ -1084,11 +1730,11 @@ const RegisterAssociation = () => {
                                                                 ),
                                                             }}
                                                         />
-
                                                     </Box>
-                                                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
-                                                        Ce matricule sera vérifié automatiquement dans votre document RNE.
-                                                    </Typography>
+                                                    <Alert severity="info" sx={{ mt: 2, fontSize: '0.85rem' }}>
+                                                        Le matricule fiscal sera automatiquement vérifié dans votre document RNE.
+                                                        Assurez-vous qu'il soit identique.
+                                                    </Alert>
                                                 </>
                                             )}
 
@@ -1113,13 +1759,25 @@ const RegisterAssociation = () => {
                                             )}
 
                                             {index === 3 && (
-                                                <FileInput
-                                                    name="rne_document"
-                                                    label="Document RNE"
-                                                    description="Téléchargez votre document du Registre National des Entreprises pour vérification"
-                                                    control={control}
-                                                    errors={errors}
-                                                />
+                                                <>
+                                                    <FileInput
+                                                        name="rne_document"
+                                                        label="Document RNE"
+                                                        description="Téléchargez votre document du Registre National des Entreprises pour vérification"
+                                                        control={control}
+                                                        errors={errors}
+                                                    />
+
+                                                    <Alert
+                                                        severity="warning"
+                                                        sx={{ mt: 2, fontSize: '0.85rem' }}
+                                                        icon={<WarningAmber />}
+                                                    >
+                                                        <Typography variant="body2" fontWeight="medium">
+                                                            Important : Le matricule fiscal doit être clairement visible sur ce document
+                                                        </Typography>
+                                                    </Alert>
+                                                </>
                                             )}
 
                                             {index === 4 && (
@@ -1134,21 +1792,45 @@ const RegisterAssociation = () => {
                                                                 Téléchargement et analyse des documents
                                                             </Typography>
                                                             <AiVerificationAnimation />
+                                                            <Typography variant="caption" sx={{ mt: 2, color: 'text.secondary', fontStyle: 'italic' }}>
+                                                                Cela peut prendre quelques instants selon la taille des fichiers
+                                                            </Typography>
                                                         </Box>
                                                     ) : (
-                                                        <Alert
-                                                            severity="info"
-                                                            variant="filled"
-                                                            icon={<InfoOutlined fontSize="large" />}
-                                                            sx={{
-                                                                mb: 2,
-                                                                fontWeight: 'bold',
-                                                                fontSize: '1rem',
-                                                                borderLeft: '4px solid #0d47a1'
-                                                            }}
-                                                        >
-                                                            <strong>IMPORTANT:</strong> Vérifiez que toutes les informations sont correctes avant de soumettre.
-                                                        </Alert>
+                                                        <>
+                                                            <Alert
+                                                                severity="info"
+                                                                variant="filled"
+                                                                icon={<InfoOutlined fontSize="large" />}
+                                                                sx={{
+                                                                    mb: 2,
+                                                                    fontWeight: 'bold',
+                                                                    fontSize: '1rem',
+                                                                    borderLeft: '4px solid #0d47a1'
+                                                                }}
+                                                            >
+                                                                <strong>IMPORTANT:</strong> Vérifiez que toutes les informations sont correctes avant de soumettre.
+                                                            </Alert>
+
+                                                            <Typography variant="body2" paragraph sx={{ textAlign: 'left', color: 'text.secondary' }}>
+                                                                En soumettant ce formulaire :
+                                                            </Typography>
+
+                                                            <Box sx={{ textAlign: 'left', mb: 2 }}>
+                                                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                    <CheckCircle sx={{ mr: 1, fontSize: 16, color: '#4caf50' }} />
+                                                                    Nous vérifierons automatiquement votre document RNE
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                    <CheckCircle sx={{ mr: 1, fontSize: 16, color: '#4caf50' }} />
+                                                                    Si la vérification réussit, votre compte sera activé immédiatement
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                    <CheckCircle sx={{ mr: 1, fontSize: 16, color: '#4caf50' }} />
+                                                                    Vous recevrez un retour détaillé sur la vérification
+                                                                </Typography>
+                                                            </Box>
+                                                        </>
                                                     )}
                                                 </Box>
                                             )}

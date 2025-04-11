@@ -21,7 +21,7 @@ const Register = lazy(() => import("./components/Register"));
 const Login = lazy(() => import("./components/Login"));
 const PasswordResetRequest = lazy(() => import("./components/PasswordResetRequest"));
 const PasswordReset = lazy(() => import("./components/PasswordReset"));
-const AssociationRegister = lazy(() => import("./components/AssociationRegister"));
+const AssociationRegister = lazy(() => import("./components/AssociationRegister.jsx"));
 const AssociationStatusCheck = lazy(() => import("./components/AssociationStatusCheck"));
 
 // Loading fallback component
