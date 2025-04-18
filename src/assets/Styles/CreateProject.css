@@ -1,140 +1,69 @@
-/* CreateProject.css */
+/* === CREATE PROJECT STYLES === */
 
-/* Main container animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideIn {
-    from { transform: translateY(-20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes fadeInText {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeInUp {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* Container styles */
-.create-project-container {
-    width: 100%;
-    animation: fadeIn 1s ease-in-out;
-    color: #333; /* Default text color for the container */
-}
-
-/* Header styles */
-.create-project-header {
-    display: flex;
-    width: 100%;
-    background-color: #1a237e;
-    margin-bottom: 10px;
-    padding: 16px;
-    border-radius: 5px;
-    animation: slideIn 0.8s ease-out;
-}
-
-.header-text {
-    margin-left: 20px;
-    font-size: 18px;
-    font-weight: bold;
-    color: white;
-    opacity: 0;
-    animation: fadeInText 1s forwards;
-}
-
-/* Form container styles */
-.form-container {
-    width: 100%;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
-    padding: 32px;
-    display: flex;
-    flex-direction: column;
-    animation: fadeInUp 1s ease-out;
-    background-color: #f8f9fa; /* Light gray background for better contrast */
-    border-radius: 5px;
-}
-
-/* Form row styles */
-.form-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    animation: fadeInUp 1s ease-out;
-}
-
-/* Input field and label styles - these will be applied to the Material-UI components */
-/* These need to be more specific to override MUI defaults */
-.form-container .MuiFormLabel-root {
-    color: #424242 !important; /* Dark gray color for labels */
-    font-weight: 500;
-}
-
-.form-container .MuiInputBase-input {
-    color: #212121 !important; /* Very dark gray, almost black for input text */
-}
-
-.form-container .MuiOutlinedInput-root {
-    background-color: white; /* White background for input fields */
+/* Basic styling */
+.MuiOutlinedInput-root {
     border-radius: 4px;
 }
 
-.form-container .MuiOutlinedInput-notchedOutline {
-    border-color: #bdbdbd !important; /* Medium gray border */
+.MuiFormLabel-root {
+    color: #00897B;
 }
 
-.form-container .MuiInputBase-root:hover .MuiOutlinedInput-notchedOutline {
-    border-color: #757575 !important; /* Darker gray on hover */
+.MuiInputBase-input::placeholder {
+    opacity: 0.7;
 }
 
-.form-container .Mui-focused .MuiOutlinedInput-notchedOutline {
-    border-color: #1976d2 !important; /* Primary blue when focused */
+/* Custom focus styling */
+.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #00897B !important;
+    border-width: 2px !important;
 }
 
-.form-container .MuiFormHelperText-root {
-    color: #d32f2f !important; /* Error text in red */
+.MuiFormLabel-root.Mui-focused {
+    color: #00897B !important;
 }
 
-/* Submit button container */
-.submit-button-container {
-    text-align: right;
-    margin-top: 16px;
-    animation: fadeInUp 1s ease-out;
+/* Form field transitions */
+.MuiFormControl-root {
+    transition: transform 0.2s ease;
 }
 
-/* Submit button styles */
-.submit-button {
-    background-color: #1976d2 !important;
-    color: white !important;
-    padding: 10px 25px !important;
-    font-size: 16px !important;
-    transition: transform 0.2s ease-in-out !important;
+/* Multiline field (description) styling */
+.MuiOutlinedInput-multiline {
+    padding: 12px !important;
 }
 
-.submit-button:hover {
-    background-color: #1565c0 !important;
-    transform: scale(1.1);
+/* Accessibility focus state */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #00897B !important;
+    outline-offset: 2px !important;
 }
 
-/* Responsive styles */
-@media (max-width: 768px) {
-    .form-row {
-        flex-direction: column;
+/* Loading animation */
+@keyframes spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Date picker styles */
+.MuiInputAdornment-root .MuiButtonBase-root {
+    color: #00897B !important;
+}
+
+.MuiPickersDay-root.Mui-selected {
+    background-color: #00897B !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .MuiFormControl-root {
+        margin-bottom: 0.5rem;
     }
 
-    .form-row > * {
-        width: 100% !important;
-        margin-bottom: 15px;
+    .MuiButton-root {
+        width: 100%;
     }
 }

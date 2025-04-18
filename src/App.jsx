@@ -23,6 +23,7 @@ const PasswordResetRequest = lazy(() => import("./components/PasswordResetReques
 const PasswordReset = lazy(() => import("./components/PasswordReset"));
 const AssociationRegister = lazy(() => import("./components/AssociationRegister.jsx"));
 const AssociationStatusCheck = lazy(() => import("./components/AssociationStatusCheck"));
+const NGOChatbot = lazy(() => import("./components/NGOChatbot")); // Import the NGO chatbot component
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -45,7 +46,8 @@ function App() {
         "/association-status",
         "/login",
         "/register",
-        "/request/password_reset"
+        "/request/password_reset",
+        "/chatbot" // Added chatbot to auth routes so it's accessible without the main app navbar
     ].includes(location.pathname) || location.pathname.includes("password-reset");
 
     return (
@@ -54,13 +56,16 @@ function App() {
                 <Suspense fallback={<LoadingFallback />}>
                     {isAuthRoute ? (
                         <Routes>
-                            {/* Authentication routes without navbar */}
+                            {/* Authentication routes and public chatbot without navbar */}
                             <Route path="/" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/associationregister" element={<AssociationRegister />} />
                             <Route path="/association-status" element={<AssociationStatusCheck />} />
                             <Route path="/request/password_reset" element={<PasswordResetRequest />} />
                             <Route path="/password-reset/:token" element={<PasswordReset />} />
+
+                            {/* Public chatbot route that doesn't require authentication */}
+                            <Route path="/chatbot" element={<NGOChatbot />} />
                         </Routes>
                     ) : (
                         <NavBar

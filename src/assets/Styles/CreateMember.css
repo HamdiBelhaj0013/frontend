@@ -1,44 +1,50 @@
-/* Enhanced Animations */
-@keyframes slideUp {
-    0% { transform: translateY(50px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-}
+/* === CREATE MEMBER STYLES === */
 
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-4px); }
-    100% { transform: translateY(0px); }
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.form-container:hover {
-    animation: float 3s ease-in-out infinite;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-}
-
-::-webkit-scrollbar-thumb {
-    background: #1a237e;
+/* Basic styling */
+.MuiOutlinedInput-root {
     border-radius: 4px;
 }
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+
+.MuiFormLabel-root {
+    color: #00897B;
 }
 
+.MuiInputBase-input::placeholder {
+    opacity: 0.7;
+}
+
+/* Custom focus styling */
 .Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #00897B !important;
     border-width: 2px !important;
+}
+
+.MuiFormLabel-root.Mui-focused {
+    color: #00897B !important;
+}
+
+/* Form field transitions */
+.MuiFormControl-root {
+    transition: transform 0.2s ease;
+}
+
+/* Accessibility focus state */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid #00897B !important;
+    outline-offset: 2px !important;
+}
+
+/* Loading animation */
+@keyframes spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .MuiFormControl-root {
+        margin-bottom: 0.5rem;
+    }
 }

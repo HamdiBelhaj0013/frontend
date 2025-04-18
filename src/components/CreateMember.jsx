@@ -1,20 +1,93 @@
 import { React, useState } from 'react';
-import { Box, Typography, Button, CircularProgress, Snackbar, Alert } from "@mui/material";
+import {
+    Box,
+    Typography,
+    Button,
+    CircularProgress,
+    Snackbar,
+    Alert,
+    Grid,
+    Paper,
+    Container
+} from "@mui/material";
 import { useForm } from 'react-hook-form';
 import AxiosInstance from './Axios.jsx';
 import Dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { styled, useTheme } from '@mui/material/styles';
 import MyDatePickerField from "./forms/MyDatePickerField.jsx";
 import MyTextField from "./forms/MyTextField.jsx";
 import MySelectField from "./forms/MySelectField.jsx";
+
+// Icons
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import HomeIcon from '@mui/icons-material/Home';
+import PublicIcon from '@mui/icons-material/Public';
+import WorkIcon from '@mui/icons-material/Work';
+import CakeIcon from '@mui/icons-material/Cake';
+import EventIcon from '@mui/icons-material/Event';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+
 import '../assets/Styles/CreateMember.css';
+
+// Styled components
+const FormContainer = styled(Paper)(({ theme }) => ({
+    borderRadius: '8px',
+    padding: theme.spacing(3),
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+    backgroundColor: '#fff',
+    borderLeft: '4px solid #00897B',
+    margin: '0 auto',
+    maxWidth: '100%',
+    position: 'relative'
+}));
+
+const HeaderContainer = styled(Box)(({ theme }) => ({
+    backgroundColor: '#00897B',
+    color: '#fff',
+    padding: theme.spacing(2, 3),
+    borderRadius: '4px',
+    marginBottom: theme.spacing(3),
+    display: 'flex',
+    alignItems: 'center'
+}));
+
+const SubmitButton = styled(Button)(({ theme }) => ({
+    backgroundColor: '#00897B',
+    '&:hover': {
+        backgroundColor: '#00695C',
+    },
+    borderRadius: '4px',
+}));
+
+const ResetButton = styled(Button)(({ theme }) => ({
+    borderRadius: '4px',
+    border: '1px solid #e0e0e0',
+    color: '#757575',
+    backgroundColor: '#fff',
+    '&:hover': {
+        backgroundColor: '#f5f5f5',
+    },
+}));
+
+const FormBox = styled(Box)(({ theme }) => ({
+    marginBottom: theme.spacing(3),
+    '& .MuiFormControl-root': {
+        width: '100%',
+    },
+    '& .MuiOutlinedInput-root': {
+        borderRadius: '4px',
+    }
+}));
 
 const CreateMember = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const theme = useTheme();
 
     const schema = yup.object({
         name: yup.string().required('Name is required'),
@@ -27,7 +100,7 @@ const CreateMember = () => {
         role: yup.string().required('Role is required'),
     });
 
-    const { handleSubmit, control, reset } = useForm({
+    const { handleSubmit, control, reset, formState: { errors, isValid } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             name: '',
@@ -39,6 +112,7 @@ const CreateMember = () => {
             joining_date: null,
             role: '',
         },
+        mode: 'onChange'
     });
 
     const submission = async (data) => {
@@ -265,190 +339,194 @@ const CreateMember = () => {
         { value: "Zimbabwe", label: "Zimbabwe" }
     ];
 
-
-    const formFields = [
-        [
-            { label: "Full Name", name: "name", width: '30%', component: MyTextField },
-            { label: "Address", name: "address", width: '30%', component: MyTextField },
-            { label: "Email", name: "email", width: '30%', component: MyTextField },
-        ],
-        [
-            { label: "Nationality", name: "nationality", width: '30%', component: MySelectField, options: countries },
-            { label: "Job", name: "job", width: '30%', component: MyTextField },
-            { label: "Role", name: "role", width: '30%', component: MySelectField, options: roleOptions },
-        ],
-        [
-            { label: "Birth Date", name: "birth_date", width: '30%', component: MyDatePickerField },
-            { label: "Joining Date", name: "joining_date", width: '30%', component: MyDatePickerField },
-        ]
-    ];
-
-
     return (
-        <form onSubmit={handleSubmit(submission)}>
-            <Box sx={{
-                maxWidth: 1200,
-                margin: '0 auto',
-                padding: 3,
-            }}>
-                {/* Animated Header */}
-                <Box className="header-animation" sx={{
-                    display: "flex",
-                    backgroundColor: '#1a237e',
-                    marginBottom: 3,
-                    padding: 3,
-                    borderRadius: 2,
-                    boxShadow: 4,
-                    position: 'relative',
-                    '&:after': {
-                        content: '""',
-                        position: 'absolute',
-                        bottom: -8,
-                        left: '5%',
-                        width: '90%',
-                        height: 8,
-                        backgroundColor: 'rgba(25, 118, 210, 0.2)',
-                        borderRadius: '0 0 4px 4px'
-                    }
-                }}>
-                    <Typography variant="h5" sx={{
-                        color: "white",
-                        fontWeight: 'bold',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }}>
-                        Create New Member
-                    </Typography>
-                </Box>
-
-                {/* Enhanced Form Container */}
-                <Box className="form-container" sx={{
-                    backgroundColor: 'background.paper',
-                    borderRadius: 4,
-                    boxShadow: 3,
-                    padding: { xs: 2, md: 4 },
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&:before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '4px',
-                        height: '100%',
-                        backgroundColor: '#1976d2',
-                        transition: 'all 0.3s ease'
-                    },
-                    '&:hover:before': {
-                        width: '6px',
-                        backgroundColor: '#1565c0'
-                    }
-                }}>
-                    {formFields.map((row, rowIndex) => (
-                        <Box key={rowIndex} sx={{
-                            display: "flex",
-                            gap: 3,
-                            flexWrap: 'wrap',
-                            marginBottom: 4,
-                            '&:last-child': { marginBottom: 0 }
-                        }}>
-                            {row.map((field) => (
-                                <Box key={field.name} sx={{
-                                    width: { xs: '100%', md: field.width },
-                                    transition: 'transform 0.3s ease',
-                                    '&:hover': { transform: 'translateX(8px)' }
-                                }}>
-                                    <field.component
-                                        label={field.label}
-                                        name={field.name}
-                                        control={control}
-                                        placeholder={`Enter ${field.label.toLowerCase()}`}
-                                        options={field.options || []}
-                                        sx={{
-                                            '& .Mui-focused': {
-                                                transform: 'scale(1.02)',
-                                                transition: 'transform 0.3s ease'
-                                            }
-                                        }}
-                                    />
-                                </Box>
-                            ))}
-                        </Box>
-                    ))}
-
-                    {/* Enhanced Submit Button */}
-                    <Box sx={{
-                        textAlign: "right",
-                        marginTop: 4,
-                        position: 'relative'
-                    }}>
-                        <Button
-                            variant="contained"
-                            type="submit"
-                            disabled={loading}
-                            className="transition-all"
-                            sx={{
-                                minWidth: 140,
-                                padding: '12px 30px',
-                                fontSize: 16,
-                                backgroundColor: '#1976d2',
-                                transformOrigin: 'center',
-                                '&:hover': {
-                                    backgroundColor: '#1565c0',
-                                    transform: 'translateY(-2px) scale(1.05)',
-                                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
-                                },
-                                '&:active': {
-                                    transform: 'translateY(0) scale(0.98)'
-                                },
-                                '&.Mui-disabled': {
-                                    backgroundColor: '#90caf9',
-                                    color: 'white'
-                                }
-                            }}
-                        >
-                            {loading ? (
-                                <CircularProgress
-                                    size={24}
-                                    sx={{
-                                        color: 'white',
-                                        animation: 'pulse 1.5s infinite'
-                                    }}
-                                />
-                            ) : 'Create Member'}
-                        </Button>
+        <Container maxWidth="lg">
+            <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
+                {/* Header */}
+                <HeaderContainer>
+                    <PersonIcon sx={{ mr: 1 }} />
+                    <Box>
+                        <Typography variant="h6" component="h1">
+                            Create New Member
+                        </Typography>
+                        <Typography variant="subtitle2">
+                            Add a new member to your organization
+                        </Typography>
                     </Box>
-                </Box>
+                </HeaderContainer>
 
-                {/* Enhanced Error Notification */}
-                <Snackbar
-                    open={!!error}
-                    autoHideDuration={6000}
-                    onClose={() => setError(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    TransitionProps={{
-                        direction: 'left',
-                        timeout: { enter: 500, exit: 300 }
-                    }}
-                >
-                    <Alert
-                        severity="error"
-                        sx={{
-                            width: '100%',
-                            boxShadow: 3,
-                            transform: 'translateX(100%)',
-                            animation: 'slideIn 0.5s forwards',
-                            '@keyframes slideIn': {
-                                from: { transform: 'translateX(100%)' },
-                                to: { transform: 'translateX(0)' }
-                            }
-                        }}
-                        variant="filled"
-                    >
-                        {error}
-                    </Alert>
-                </Snackbar>
+                <FormContainer elevation={0}>
+                    <form onSubmit={handleSubmit(submission)}>
+                        <Grid container spacing={3}>
+                            {/* Personal Information Row */}
+                            <Grid item xs={12} md={6}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <PersonIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Full Name</Typography>
+                                    </Box>
+                                    <MyTextField
+                                        name="name"
+                                        control={control}
+                                        placeholder="Enter full name"
+                                        error={!!errors.name}
+                                        helperText={errors.name?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <EmailIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Email</Typography>
+                                    </Box>
+                                    <MyTextField
+                                        name="email"
+                                        control={control}
+                                        placeholder="Enter email address"
+                                        error={!!errors.email}
+                                        helperText={errors.email?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <HomeIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Address</Typography>
+                                    </Box>
+                                    <MyTextField
+                                        name="address"
+                                        control={control}
+                                        placeholder="Enter address"
+                                        error={!!errors.address}
+                                        helperText={errors.address?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            {/* Work Information Row */}
+                            <Grid item xs={12} sm={6}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <PublicIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Nationality</Typography>
+                                    </Box>
+                                    <MySelectField
+                                        name="nationality"
+                                        control={control}
+                                        options={countries}
+                                        error={!!errors.nationality}
+                                        helperText={errors.nationality?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <WorkIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Job</Typography>
+                                    </Box>
+                                    <MyTextField
+                                        name="job"
+                                        control={control}
+                                        placeholder="Enter job title"
+                                        error={!!errors.job}
+                                        helperText={errors.job?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <AdminPanelSettingsIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Role</Typography>
+                                    </Box>
+                                    <MySelectField
+                                        name="role"
+                                        control={control}
+                                        options={roleOptions}
+                                        error={!!errors.role}
+                                        helperText={errors.role?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            {/* Date Information Row */}
+                            <Grid item xs={12} sm={6}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <CakeIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Birth Date</Typography>
+                                    </Box>
+                                    <MyDatePickerField
+                                        name="birth_date"
+                                        control={control}
+                                        error={!!errors.birth_date}
+                                        helperText={errors.birth_date?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <FormBox>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <EventIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
+                                        <Typography variant="subtitle2">Joining Date</Typography>
+                                    </Box>
+                                    <MyDatePickerField
+                                        name="joining_date"
+                                        control={control}
+                                        error={!!errors.joining_date}
+                                        helperText={errors.joining_date?.message}
+                                    />
+                                </FormBox>
+                            </Grid>
+
+                            {/* Action Buttons */}
+                            <Grid item xs={12}>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                                    <ResetButton
+                                        onClick={() => reset()}
+                                        variant="outlined"
+                                    >
+                                        Reset
+                                    </ResetButton>
+                                    <SubmitButton
+                                        variant="contained"
+                                        type="submit"
+                                        disabled={loading || !isValid}
+                                        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                                    >
+                                        {loading ? 'Creating...' : 'Create Member'}
+                                    </SubmitButton>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </form>
+                </FormContainer>
             </Box>
-        </form>
+
+            {/* Error Notification */}
+            <Snackbar
+                open={!!error}
+                autoHideDuration={6000}
+                onClose={() => setError(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    severity="error"
+                    onClose={() => setError(null)}
+                    sx={{ width: '100%' }}
+                >
+                    {error}
+                </Alert>
+            </Snackbar>
+        </Container>
     );
 };
 
