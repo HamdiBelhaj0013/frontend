@@ -99,7 +99,7 @@ const Finance = () => {
                 setLoading(true);
 
                 // Fetch financial statistics
-                const statsResponse = await AxiosInstance.get('/finances/dashboard/statistics/');
+                const statsResponse = await AxiosInstance.get('/finances/dashboard/');
                 setStatistics(statsResponse.data);
 
                 // Fetch transactions

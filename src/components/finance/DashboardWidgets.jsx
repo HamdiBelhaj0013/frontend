@@ -47,7 +47,7 @@ import {
     LineChart,
     Line
 } from 'recharts';
-
+import { useNavigate } from 'react-router-dom';
 // Helper function to format amount with currency
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-TN', {
@@ -237,17 +237,25 @@ const BudgetProgress = ({ project, utilization, allocated, used }) => {
         </Box>
     );
 };
-
 // Main dashboard component
 const DashboardWidgets = ({ statistics, recentTransactions }) => {
     const theme = useTheme();
+    const navigate = useNavigate(); // Move this inside the component
     const [incomeChartData, setIncomeChartData] = useState([]);
     const [expenseChartData, setExpenseChartData] = useState([]);
     const [monthlyTrendData, setMonthlyTrendData] = useState([]);
 
-    // Process chart data when statistics change
+    // Define the handler inside the component
+    const handleViewAllTransactions = () => {
+        navigate('/finances/transactions');
+    };
+
+// In DashboardWidgets.jsx, modify the useEffect to include console logging:
     useEffect(() => {
         if (!statistics) return;
+
+        console.log("Income categories:", statistics.income_by_category);
+        console.log("Expense categories:", statistics.expenses_by_category);
 
         // Process income by category data for pie chart
         const incomeData = Object.entries(statistics.income_by_category || {}).map(([name, value]) => ({
@@ -263,15 +271,8 @@ const DashboardWidgets = ({ statistics, recentTransactions }) => {
         }));
         setExpenseChartData(expenseData);
 
-        // Generate dummy monthly trend data for line chart
-        // In a real app, this would come from the backend
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-        const trendData = months.map((month) => ({
-            name: month,
-            income: Math.random() * statistics.total_income / months.length,
-            expense: Math.random() * statistics.total_expenses / months.length
-        }));
-        setMonthlyTrendData(trendData);
+        console.log("Income chart data:", incomeData);
+        console.log("Expense chart data:", expenseData);
     }, [statistics]);
 
     // Generate colors for charts
@@ -493,7 +494,10 @@ const DashboardWidgets = ({ statistics, recentTransactions }) => {
                                         Recent Transactions
                                     </Typography>
                                     <Tooltip title="View all transactions">
-                                        <IconButton size="small">
+                                        <IconButton
+                                            size="small"
+                                            onClick={handleViewAllTransactions}  // No need for the arrow function now
+                                        >
                                             <ArrowForward fontSize="small" />
                                         </IconButton>
                                     </Tooltip>

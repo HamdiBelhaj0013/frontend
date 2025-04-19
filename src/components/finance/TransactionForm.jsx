@@ -57,6 +57,15 @@ const expenseCategories = [
     { value: 'other_expense', label: 'Other Expense' }
 ];
 
+// Helper function to format amount with currency
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('fr-TN', {
+        style: 'currency',
+        currency: 'TND',
+        minimumFractionDigits: 2
+    }).format(amount);
+};
+
 // Form validation schema
 const createTransactionSchema = yup.object({
     transaction_type: yup.string().required('Transaction type is required'),
@@ -69,6 +78,7 @@ const createTransactionSchema = yup.object({
     description: yup.string().required('Description is required'),
     date: yup.date().required('Date is required'),
     project: yup.number().nullable(),
+    budget_allocation: yup.number().nullable(),
     donor: yup.number().nullable(),
     reference_number: yup.string().nullable()
 });
@@ -78,6 +88,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [projects, setProjects] = useState([]);
     const [donors, setDonors] = useState([]);
+    const [budgetAllocations, setBudgetAllocations] = useState([]);
     const [submitError, setSubmitError] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileError, setFileError] = useState('');
@@ -92,6 +103,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
             description: '',
             date: dayjs(),
             project: null,
+            budget_allocation: null,
             donor: null,
             reference_number: ''
         }
@@ -121,6 +133,29 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
         fetchData();
     }, []);
 
+    // Load budget allocations when a project is selected
+    useEffect(() => {
+        const fetchBudgetAllocations = async () => {
+            if (!watchProject) {
+                setBudgetAllocations([]);
+                setValue('budget_allocation', null);
+                return;
+            }
+
+            try {
+                // Fetch budget allocations for the selected project
+                const response = await AxiosInstance.get('/finances/budget-allocations/', {
+                    params: { project: watchProject }
+                });
+                setBudgetAllocations(response.data);
+            } catch (error) {
+                console.error('Error fetching budget allocations:', error);
+            }
+        };
+
+        fetchBudgetAllocations();
+    }, [watchProject, setValue]);
+
     // Reset form when modal opens
     useEffect(() => {
         if (open) {
@@ -131,6 +166,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                 description: '',
                 date: dayjs(),
                 project: null,
+                budget_allocation: null,
                 donor: null,
                 reference_number: ''
             });
@@ -187,6 +223,11 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
 
             if (data.project !== null) {
                 formData.append('project', data.project);
+            }
+
+            // Add budget_allocation if selected
+            if (data.budget_allocation !== null) {
+                formData.append('budget_allocation', data.budget_allocation);
             }
 
             if (data.donor !== null) {
@@ -425,6 +466,43 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                                 )}
                             />
                         </Grid>
+
+                        {/* Budget Allocation - Only show for expenses when a project is selected */}
+                        {watchTransactionType === 'expense' && watchProject && (
+                            <Grid item xs={12} sm={6}>
+                                <Controller
+                                    name="budget_allocation"
+                                    control={control}
+                                    render={({ field: { onChange, value } }) => (
+                                        <FormControl fullWidth error={!!errors.budget_allocation}>
+                                            <InputLabel>Budget Allocation</InputLabel>
+                                            <Select
+                                                value={value || ''}
+                                                onChange={(e) => onChange(e.target.value || null)}
+                                                label="Budget Allocation"
+                                            >
+                                                <MenuItem value="">
+                                                    <em>Select a budget allocation</em>
+                                                </MenuItem>
+                                                {budgetAllocations.map((budget) => (
+                                                    <MenuItem key={budget.id} value={budget.id}>
+                                                        {formatCurrency(budget.allocated_amount)} - Remaining: {formatCurrency(budget.remaining_amount)}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {budgetAllocations.length === 0 && (
+                                                <FormHelperText>
+                                                    No budget allocations found for this project
+                                                </FormHelperText>
+                                            )}
+                                            {errors.budget_allocation && (
+                                                <FormHelperText>{errors.budget_allocation.message}</FormHelperText>
+                                            )}
+                                        </FormControl>
+                                    )}
+                                />
+                            </Grid>
+                        )}
 
                         {/* Donor */}
                         <Grid item xs={12} sm={6}>

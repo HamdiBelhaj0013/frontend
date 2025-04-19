@@ -25,9 +25,11 @@ import {
     FormControl,
     InputLabel,
     Select,
+    FormHelperText,
     Grid,
     CircularProgress,
-    useTheme
+    useTheme,
+    Alert
 } from '@mui/material';
 import {
     Edit,
@@ -56,6 +58,193 @@ const formatCurrency = (amount) => {
         currency: 'TND',
         minimumFractionDigits: 2
     }).format(amount);
+};
+
+// Verify transaction dialog component
+const VerifyTransactionDialog = ({ open, onClose, transaction, onVerify }) => {
+    const theme = useTheme();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [budgetAllocations, setBudgetAllocations] = useState([]);
+    const [selectedBudget, setSelectedBudget] = useState(null);
+    const [verificationNotes, setVerificationNotes] = useState('');
+
+    // Fetch budget allocations for the project when dialog opens
+    useEffect(() => {
+        const fetchBudgetAllocations = async () => {
+            if (!transaction || !transaction.project || transaction.transaction_type !== 'expense') {
+                setBudgetAllocations([]);
+                return;
+            }
+
+            try {
+                const response = await AxiosInstance.get('/finances/budget-allocations/', {
+                    params: { project: transaction.project }
+                });
+                setBudgetAllocations(response.data);
+
+                // If transaction already has a budget allocation, select it
+                if (transaction.budget_allocation) {
+                    setSelectedBudget(transaction.budget_allocation);
+                } else if (response.data.length > 0) {
+                    // Otherwise select the budget with most remaining funds
+                    const sortedBudgets = [...response.data].sort((a, b) =>
+                        b.remaining_amount - a.remaining_amount
+                    );
+                    setSelectedBudget(sortedBudgets[0].id);
+                }
+            } catch (error) {
+                console.error('Error fetching budget allocations:', error);
+                setError('Failed to load budget allocations');
+            }
+        };
+
+        if (open && transaction) {
+            fetchBudgetAllocations();
+            setVerificationNotes('');
+            setError('');
+        }
+    }, [open, transaction]);
+
+    const handleVerify = async (verified) => {
+        // Don't require budget selection for income transactions
+        if (verified && transaction.transaction_type === 'expense' &&
+            !transaction.budget_allocation && !selectedBudget) {
+            setError('Please select a budget allocation for this expense');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const payload = {
+                status: verified ? 'verified' : 'rejected',
+                verification_notes: verificationNotes
+            };
+
+            // Add budget allocation to payload if selected and not already set
+            if (verified && transaction.transaction_type === 'expense' &&
+                !transaction.budget_allocation && selectedBudget) {
+                payload.budget_allocation = selectedBudget;
+            }
+
+            await AxiosInstance.post(`/finances/transactions/${transaction.id}/verify/`, payload);
+            onVerify();
+        } catch (error) {
+            console.error('Error verifying transaction:', error);
+            setError(error.response?.data?.error || 'Failed to verify transaction');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={() => loading ? null : onClose()} maxWidth="sm" fullWidth>
+            <DialogTitle>Verify Transaction</DialogTitle>
+            <DialogContent>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
+
+                <Typography>
+                    Do you want to approve or reject this transaction?
+                </Typography>
+
+                {transaction && (
+                    <Box sx={{ mt: 2, p: 2, bgcolor: theme.palette.grey[100], borderRadius: 1 }}>
+                        <Typography variant="subtitle2">
+                            {transaction.transaction_type === 'income' ? 'Income' : 'Expense'}: {formatCurrency(transaction.amount)}
+                        </Typography>
+                        <Typography variant="body2">
+                            {transaction.description}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            Date: {dayjs(transaction.date).format('DD/MM/YYYY')}
+                        </Typography>
+                        {transaction.document && (
+                            <Box sx={{ mt: 1 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                    Supporting document: {transaction.document.split('/').pop()}
+                                </Typography>
+                            </Box>
+                        )}
+                    </Box>
+                )}
+
+                {/* Budget Allocation selection for expenses */}
+                {transaction && transaction.transaction_type === 'expense' &&
+                    !transaction.budget_allocation && budgetAllocations.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                            <FormControl fullWidth>
+                                <InputLabel>Select Budget Allocation</InputLabel>
+                                <Select
+                                    value={selectedBudget || ''}
+                                    onChange={(e) => setSelectedBudget(e.target.value)}
+                                    label="Select Budget Allocation"
+                                >
+                                    {budgetAllocations.map((budget) => (
+                                        <MenuItem key={budget.id} value={budget.id}>
+                                            {formatCurrency(budget.allocated_amount)} - Remaining: {formatCurrency(budget.remaining_amount)}
+                                            {budget.remaining_amount < transaction.amount &&
+                                                ' (Insufficient funds)'}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                <FormHelperText>
+                                    Select which budget this expense should be deducted from
+                                </FormHelperText>
+                            </FormControl>
+                        </Box>
+                    )}
+
+                {/* No budgets available warning */}
+                {transaction && transaction.transaction_type === 'expense' &&
+                    !transaction.budget_allocation && budgetAllocations.length === 0 && (
+                        <Alert severity="warning" sx={{ mt: 2 }}>
+                            No budget allocations found for this project. You can still verify the transaction,
+                            but it won't be linked to any budget.
+                        </Alert>
+                    )}
+
+                {/* Already has budget allocation info */}
+                {transaction && transaction.budget_allocation && (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                        This transaction is already linked to a budget allocation.
+                    </Alert>
+                )}
+
+                <TextField
+                    label="Verification Notes"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    value={verificationNotes}
+                    onChange={(e) => setVerificationNotes(e.target.value)}
+                    margin="normal"
+                />
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose} disabled={loading}>Cancel</Button>
+                <Button
+                    onClick={() => handleVerify(false)}
+                    color="error"
+                    variant="outlined"
+                    disabled={loading}
+                >
+                    Reject
+                </Button>
+                <Button
+                    onClick={() => handleVerify(true)}
+                    color="success"
+                    variant="contained"
+                    disabled={loading}
+                >
+                    {loading ? <CircularProgress size={24} /> : 'Verify'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
 };
 
 const TransactionList = ({ transactions, onRefresh, onAddTransaction }) => {
@@ -199,6 +388,12 @@ const TransactionList = ({ transactions, onRefresh, onAddTransaction }) => {
         handleMenuClose();
     };
 
+    const handleVerificationSuccess = () => {
+        setVerifyDialogOpen(false);
+        setSelectedTransaction(null);
+        onRefresh();
+    };
+
     const handleDeleteTransaction = async () => {
         if (!selectedTransaction) return;
 
@@ -210,25 +405,6 @@ const TransactionList = ({ transactions, onRefresh, onAddTransaction }) => {
             onRefresh();
         } catch (error) {
             console.error('Error deleting transaction:', error);
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleVerifyTransaction = async (verified) => {
-        if (!selectedTransaction) return;
-
-        setActionLoading(true);
-        try {
-            await AxiosInstance.post(`/finances/transactions/${selectedTransaction.id}/verify/`, {
-                status: verified ? 'verified' : 'rejected',
-                verification_notes: verified ? 'Verified by user' : 'Rejected by user'
-            });
-            setVerifyDialogOpen(false);
-            setSelectedTransaction(null);
-            onRefresh();
-        } catch (error) {
-            console.error('Error verifying transaction:', error);
         } finally {
             setActionLoading(false);
         }
@@ -668,6 +844,14 @@ const TransactionList = ({ transactions, onRefresh, onAddTransaction }) => {
                 />
             )}
 
+            {/* Verify transaction dialog */}
+            <VerifyTransactionDialog
+                open={verifyDialogOpen}
+                onClose={() => setVerifyDialogOpen(false)}
+                transaction={selectedTransaction}
+                onVerify={handleVerificationSuccess}
+            />
+
             {/* Delete confirmation dialog */}
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
                 <DialogTitle>Confirm Deletion</DialogTitle>
@@ -698,55 +882,6 @@ const TransactionList = ({ transactions, onRefresh, onAddTransaction }) => {
                         disabled={actionLoading}
                     >
                         {actionLoading ? <CircularProgress size={24} /> : 'Delete'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Verify transaction dialog */}
-            <Dialog open={verifyDialogOpen} onClose={() => setVerifyDialogOpen(false)}>
-                <DialogTitle>Verify Transaction</DialogTitle>
-                <DialogContent>
-                    <Typography>
-                        Do you want to approve or reject this transaction?
-                    </Typography>
-                    {selectedTransaction && (
-                        <Box sx={{ mt: 2, p: 2, bgcolor: theme.palette.grey[100], borderRadius: 1 }}>
-                            <Typography variant="subtitle2">
-                                {selectedTransaction.transaction_type === 'income' ? 'Income' : 'Expense'}: {formatCurrency(selectedTransaction.amount)}
-                            </Typography>
-                            <Typography variant="body2">
-                                {selectedTransaction.description}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                Date: {dayjs(selectedTransaction.date).format('DD/MM/YYYY')}
-                            </Typography>
-                            {selectedTransaction.document && (
-                                <Box sx={{ mt: 1 }}>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Supporting document: {selectedTransaction.document.split('/').pop()}
-                                    </Typography>
-                                </Box>
-                            )}
-                        </Box>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setVerifyDialogOpen(false)}>Cancel</Button>
-                    <Button
-                        onClick={() => handleVerifyTransaction(false)}
-                        color="error"
-                        variant="outlined"
-                        disabled={actionLoading}
-                    >
-                        Reject
-                    </Button>
-                    <Button
-                        onClick={() => handleVerifyTransaction(true)}
-                        color="success"
-                        variant="contained"
-                        disabled={actionLoading}
-                    >
-                        {actionLoading ? <CircularProgress size={24} /> : 'Verify'}
                     </Button>
                 </DialogActions>
             </Dialog>
