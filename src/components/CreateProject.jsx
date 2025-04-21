@@ -1,4 +1,4 @@
-import { React, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Typography,
@@ -8,7 +8,17 @@ import {
     Alert,
     Grid,
     Paper,
-    Container
+    Container,
+    IconButton,
+    Stepper,
+    Step,
+    StepLabel,
+    StepContent,
+    Divider,
+    Chip,
+    Fade,
+    Tooltip,
+    useMediaQuery
 } from "@mui/material";
 import { useForm } from 'react-hook-form';
 import AxiosInstance from './Axios.jsx';
@@ -16,7 +26,8 @@ import Dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme, alpha } from '@mui/material/styles';
+import { motion } from 'framer-motion';
 import MyDatePickerField from "./forms/MyDatePickerField.jsx";
 import MyTextField from "./forms/MyTextField.jsx";
 import MyMultilineField from "./forms/MyMultilineField.jsx";
@@ -29,47 +40,81 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import EventIcon from '@mui/icons-material/Event';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import GroupIcon from '@mui/icons-material/Group';
+import CloseIcon from '@mui/icons-material/Close';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 
-import '../assets/Styles/CreateProject.css';
-
-// Styled components
 const FormContainer = styled(Paper)(({ theme }) => ({
-    borderRadius: '8px',
+    borderRadius: '12px',
     padding: theme.spacing(3),
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
-    backgroundColor: '#fff',
-    borderLeft: '4px solid #00897B',
+    boxShadow: '0 2px 20px rgba(0, 0, 0, 0.08)',
+    backgroundColor: theme.palette.background.paper,
+    borderLeft: `4px solid ${theme.palette.primary.main}`,
     margin: '0 auto',
     maxWidth: '100%',
-    position: 'relative'
+    position: 'relative',
+    transition: 'transform 0.3s, box-shadow 0.3s',
+    overflow: 'hidden',
+    '&:hover': {
+        boxShadow: '0 4px 25px rgba(0, 0, 0, 0.12)',
+    }
 }));
 
 const HeaderContainer = styled(Box)(({ theme }) => ({
-    backgroundColor: '#00897B',
-    color: '#fff',
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
     padding: theme.spacing(2, 3),
-    borderRadius: '4px',
+    borderRadius: '8px',
     marginBottom: theme.spacing(3),
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+    '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
+        zIndex: 0,
+    }
 }));
 
 const SubmitButton = styled(Button)(({ theme }) => ({
-    backgroundColor: '#00897B',
+    backgroundColor: theme.palette.primary.main,
     '&:hover': {
-        backgroundColor: '#00695C',
+        backgroundColor: theme.palette.primary.dark,
+        transform: 'translateY(-2px)',
+        boxShadow: '0 6px 10px rgba(0, 0, 0, 0.15)',
     },
-    borderRadius: '4px',
+    borderRadius: '8px',
+    padding: '10px 24px',
+    fontWeight: 600,
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    '&:active': {
+        transform: 'translateY(0)',
+    }
 }));
 
-const ResetButton = styled(Button)(({ theme }) => ({
-    borderRadius: '4px',
-    border: '1px solid #e0e0e0',
-    color: '#757575',
-    backgroundColor: '#fff',
+const BackButton = styled(Button)(({ theme }) => ({
+    borderRadius: '8px',
+    border: `1px solid ${theme.palette.divider}`,
+    color: theme.palette.text.secondary,
+    backgroundColor: theme.palette.background.paper,
     '&:hover': {
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.palette.action.hover,
     },
+    padding: '10px 24px',
+    fontWeight: 500,
+    transition: 'all 0.2s ease',
 }));
 
 const FormBox = styled(Box)(({ theme }) => ({
@@ -78,15 +123,49 @@ const FormBox = styled(Box)(({ theme }) => ({
         width: '100%',
     },
     '& .MuiOutlinedInput-root': {
-        borderRadius: '4px',
+        borderRadius: '8px',
+        transition: 'transform 0.2s ease',
+    },
+    '& .MuiFormLabel-root': {
+        color: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.8) : theme.palette.primary.main,
     }
+}));
+
+const StyledStepLabel = styled(StepLabel)(({ theme }) => ({
+    '& .MuiStepLabel-label': {
+        fontWeight: 500,
+    },
+    '& .MuiStepLabel-label.Mui-active': {
+        color: theme.palette.primary.main,
+        fontWeight: 600,
+    },
+    '& .MuiStepLabel-iconContainer': {
+        paddingRight: theme.spacing(1.5),
+    }
+}));
+
+const InfoChip = styled(Chip)(({ theme }) => ({
+    backgroundColor: alpha(theme.palette.info.main, 0.1),
+    color: theme.palette.info.main,
+    borderRadius: '16px',
+    fontWeight: 500,
+    '& .MuiChip-icon': {
+        color: theme.palette.info.main,
+    }
+}));
+
+const StepContentWrapper = styled(Box)(({ theme }) => ({
+    padding: theme.spacing(2, 0, 3, 2),
 }));
 
 const CreateProject = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false);
+    const [activeStep, setActiveStep] = useState(0);
     const navigate = useNavigate();
     const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const schema = yup.object({
         name: yup.string().required('Name is required'),
@@ -102,7 +181,7 @@ const CreateProject = () => {
         description: yup.string().required('Description is required'),
     });
 
-    const { handleSubmit, control, reset, formState: { errors, isValid } } = useForm({
+    const { handleSubmit, control, reset, formState: { errors, isValid, isDirty } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             name: '',
@@ -114,6 +193,14 @@ const CreateProject = () => {
         },
         mode: 'onChange'
     });
+
+    const handleNext = () => {
+        setActiveStep((prevStep) => prevStep + 1);
+    };
+
+    const handleBack = () => {
+        setActiveStep((prevStep) => prevStep - 1);
+    };
 
     const submission = async (data) => {
         setLoading(true);
@@ -127,8 +214,11 @@ const CreateProject = () => {
                 status: data.status,
                 budget: data.budget,
             });
-            reset();
-            navigate('/projects', { state: { success: true } });
+            setSuccess(true);
+            setTimeout(() => {
+                reset();
+                navigate('/projects', { state: { success: true } });
+            }, 1500);
         } catch (err) {
             setError(err.response?.data?.message || 'An error occurred. Please try again.');
             console.error(err);
@@ -145,148 +235,392 @@ const CreateProject = () => {
         { value: "Cancelled", label: "Cancelled" },
     ];
 
-    return (
-        <Container maxWidth="lg">
-            <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
-                {/* Header */}
-                <HeaderContainer>
-                    <BusinessIcon sx={{ mr: 1 }} />
-                    <Box>
-                        <Typography variant="h6" component="h1">
-                            Create New Project
-                        </Typography>
-                        <Typography variant="subtitle2">
-                            Add a new project to your organization
-                        </Typography>
-                    </Box>
-                </HeaderContainer>
+    const steps = [
+        {
+            label: 'Project Information',
+            description: 'Enter basic project details',
+            icon: <BusinessIcon color="primary" />,
+            fields: (
+                <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                        <FormBox>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <BusinessIcon color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="subtitle2">Project Name</Typography>
+                            </Box>
+                            <MyTextField
+                                name="name"
+                                control={control}
+                                placeholder="Enter project name"
+                                error={!!errors.name}
+                                helperText={errors.name?.message}
+                            />
+                        </FormBox>
+                    </Grid>
 
-                <FormContainer elevation={0}>
-                    <form onSubmit={handleSubmit(submission)}>
-                        <Grid container spacing={3}>
-                            {/* Project Name */}
-                            <Grid item xs={12} md={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <BusinessIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Project Name</Typography>
-                                    </Box>
-                                    <MyTextField
-                                        name="name"
-                                        control={control}
-                                        placeholder="Enter project name"
-                                        error={!!errors.name}
-                                        helperText={errors.name?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
+                    <Grid item xs={12}>
+                        <FormBox>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <DescriptionIcon color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="subtitle2">Description</Typography>
+                            </Box>
+                            <MyMultilineField
+                                name="description"
+                                control={control}
+                                placeholder="Enter project description"
+                                rows={4}
+                                error={!!errors.description}
+                                helperText={errors.description?.message}
+                            />
+                        </FormBox>
+                    </Grid>
+                </Grid>
+            )
+        },
+        {
+            label: 'Timeline & Budget',
+            description: 'Set project timeline and budget',
+            icon: <AttachMoneyIcon color="primary" />,
+            fields: (
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                        <FormBox>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <CalendarTodayIcon color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="subtitle2">Start Date</Typography>
+                            </Box>
+                            <MyDatePickerField
+                                name="start_date"
+                                control={control}
+                                error={!!errors.start_date}
+                                helperText={errors.start_date?.message}
+                            />
+                        </FormBox>
+                    </Grid>
 
-                            {/* Budget */}
-                            <Grid item xs={12} md={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <AttachMoneyIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Budget</Typography>
-                                    </Box>
-                                    <MyTextField
-                                        name="budget"
-                                        control={control}
-                                        placeholder="Enter budget amount"
-                                        error={!!errors.budget}
-                                        helperText={errors.budget?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
+                    <Grid item xs={12} md={6}>
+                        <FormBox>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <EventIcon color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="subtitle2">End Date</Typography>
+                            </Box>
+                            <MyDatePickerField
+                                name="end_date"
+                                control={control}
+                                error={!!errors.end_date}
+                                helperText={errors.end_date?.message}
+                            />
+                        </FormBox>
+                    </Grid>
 
-                            {/* Project Dates */}
+                    <Grid item xs={12} md={6}>
+                        <FormBox>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <AttachMoneyIcon color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="subtitle2">Budget</Typography>
+                            </Box>
+                            <MyTextField
+                                name="budget"
+                                control={control}
+                                placeholder="Enter budget amount"
+                                error={!!errors.budget}
+                                helperText={errors.budget?.message}
+                            />
+                        </FormBox>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                        <FormBox>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <TaskAltIcon color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="subtitle2">Status</Typography>
+                            </Box>
+                            <MySelectField
+                                name="status"
+                                control={control}
+                                options={statusOptions}
+                                error={!!errors.status}
+                                helperText={errors.status?.message}
+                            />
+                        </FormBox>
+                    </Grid>
+                </Grid>
+            )
+        },
+        {
+            label: 'Review & Submit',
+            description: 'Review project details before submission',
+            icon: <CheckCircleIcon color="primary" />,
+            fields: (
+                <Box sx={{ py: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Review Your Project
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                        Please review your project details below before submitting. You can go back to make changes if needed.
+                    </Typography>
+
+                    <InfoChip
+                        icon={<InfoOutlinedIcon />}
+                        label="All fields will be editable after creation"
+                        sx={{ mb: 3 }}
+                    />
+
+                    <Box sx={{
+                        p: 2,
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.palette.divider}`,
+                        bgcolor: alpha(theme.palette.background.default, 0.5),
+                        mb: 3
+                    }}>
+                        <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <CalendarTodayIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Start Date</Typography>
-                                    </Box>
-                                    <MyDatePickerField
-                                        name="start_date"
-                                        control={control}
-                                        error={!!errors.start_date}
-                                        helperText={errors.start_date?.message}
-                                    />
-                                </FormBox>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    Project Name
+                                </Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {control._formValues.name || 'Not provided'}
+                                </Typography>
                             </Grid>
-
                             <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <EventIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">End Date</Typography>
-                                    </Box>
-                                    <MyDatePickerField
-                                        name="end_date"
-                                        control={control}
-                                        error={!!errors.end_date}
-                                        helperText={errors.end_date?.message}
-                                    />
-                                </FormBox>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    Budget
+                                </Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {control._formValues.budget ? `${control._formValues.budget} TND` : 'Not provided'}
+                                </Typography>
                             </Grid>
-
-                            {/* Project Status */}
                             <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <TaskAltIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Status</Typography>
-                                    </Box>
-                                    <MySelectField
-                                        name="status"
-                                        control={control}
-                                        options={statusOptions}
-                                        error={!!errors.status}
-                                        helperText={errors.status?.message}
-                                    />
-                                </FormBox>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    Start Date
+                                </Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {control._formValues.start_date ? Dayjs(control._formValues.start_date).format('YYYY-MM-DD') : 'Not provided'}
+                                </Typography>
                             </Grid>
-
-                            {/* Description */}
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    End Date
+                                </Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {control._formValues.end_date ? Dayjs(control._formValues.end_date).format('YYYY-MM-DD') : 'Not provided'}
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    Status
+                                </Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {control._formValues.status || 'Not provided'}
+                                </Typography>
+                            </Grid>
                             <Grid item xs={12}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <DescriptionIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Description</Typography>
-                                    </Box>
-                                    <MyMultilineField
-                                        name="description"
-                                        control={control}
-                                        placeholder="Enter project description"
-                                        rows={4}
-                                        error={!!errors.description}
-                                        helperText={errors.description?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            {/* Action Buttons */}
-                            <Grid item xs={12}>
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-                                    <ResetButton
-                                        onClick={() => reset()}
-                                        variant="outlined"
-                                    >
-                                        Reset
-                                    </ResetButton>
-                                    <SubmitButton
-                                        variant="contained"
-                                        type="submit"
-                                        disabled={loading || !isValid}
-                                        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-                                    >
-                                        {loading ? 'Creating...' : 'Create Project'}
-                                    </SubmitButton>
-                                </Box>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    Description
+                                </Typography>
+                                <Typography variant="body2">
+                                    {control._formValues.description || 'Not provided'}
+                                </Typography>
                             </Grid>
                         </Grid>
-                    </form>
-                </FormContainer>
-            </Box>
+                    </Box>
+                </Box>
+            )
+        }
+    ];
+
+    const containerVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.5,
+                when: "beforeChildren",
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 15 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+    };
+
+    return (
+        <Container maxWidth="lg">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
+                <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
+                    {/* Back button */}
+                    <Button
+                        component={motion.button}
+                        variants={itemVariants}
+                        onClick={() => navigate('/projects')}
+                        startIcon={<ArrowBackIcon />}
+                        sx={{
+                            mb: 2,
+                            fontWeight: 500,
+                            color: theme.palette.text.secondary,
+                            '&:hover': {
+                                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                            }
+                        }}
+                    >
+                        Back to Projects
+                    </Button>
+
+                    {/* Header */}
+                    <motion.div variants={itemVariants}>
+                        <HeaderContainer>
+                            <BusinessIcon sx={{ mr: 2, fontSize: 28 }} />
+                            <Box sx={{ zIndex: 1 }}>
+                                <Typography variant="h5" component="h1" fontWeight="bold">
+                                    Create New Project
+                                </Typography>
+                                <Typography variant="subtitle2">
+                                    Enter the details to create a new project for your organization
+                                </Typography>
+                            </Box>
+                            {/* Decorative circles */}
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: -20,
+                                    right: -20,
+                                    width: 100,
+                                    height: 100,
+                                    borderRadius: '50%',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    zIndex: 0
+                                }}
+                            />
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: -30,
+                                    right: 100,
+                                    width: 60,
+                                    height: 60,
+                                    borderRadius: '50%',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    zIndex: 0
+                                }}
+                            />
+                        </HeaderContainer>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                        <FormContainer elevation={0}>
+                            <form onSubmit={handleSubmit(submission)}>
+                                {/* Desktop Stepper - Horizontal */}
+                                {!isMobile && (
+                                    <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+                                        {steps.map((step, index) => (
+                                            <Step key={step.label}>
+                                                <StyledStepLabel StepIconProps={{
+                                                    icon: step.icon
+                                                }}>
+                                                    {step.label}
+                                                    <Typography variant="caption" display="block" color="text.secondary">
+                                                        {step.description}
+                                                    </Typography>
+                                                </StyledStepLabel>
+                                            </Step>
+                                        ))}
+                                    </Stepper>
+                                )}
+
+                                {/* Mobile Stepper - Vertical */}
+                                {isMobile && (
+                                    <Stepper activeStep={activeStep} orientation="vertical" sx={{ mb: 3 }}>
+                                        {steps.map((step, index) => (
+                                            <Step key={step.label}>
+                                                <StyledStepLabel StepIconProps={{
+                                                    icon: index + 1
+                                                }}>
+                                                    {step.label}
+                                                </StyledStepLabel>
+                                                {activeStep === index && (
+                                                    <StepContent>
+                                                        <StepContentWrapper>
+                                                            {step.fields}
+                                                        </StepContentWrapper>
+                                                    </StepContent>
+                                                )}
+                                            </Step>
+                                        ))}
+                                    </Stepper>
+                                )}
+
+                                {/* Form content for desktop */}
+                                {!isMobile && (
+                                    <Fade in={true} timeout={500}>
+                                        <Box sx={{ mt: 2, mb: 4 }}>
+                                            {steps[activeStep].fields}
+                                        </Box>
+                                    </Fade>
+                                )}
+
+                                {/* Navigation buttons */}
+                                <Box sx={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    mt: isMobile ? 0 : 2
+                                }}>
+                                    <BackButton
+                                        disabled={activeStep === 0 || loading}
+                                        onClick={handleBack}
+                                        startIcon={<NavigateBeforeIcon />}
+                                    >
+                                        Back
+                                    </BackButton>
+                                    <Box>
+                                        <Button
+                                            onClick={() => reset()}
+                                            sx={{
+                                                mr: 2,
+                                                borderRadius: '8px',
+                                                border: `1px solid ${theme.palette.divider}`,
+                                                color: theme.palette.text.secondary,
+                                            }}
+                                            disabled={loading || !isDirty}
+                                        >
+                                            Reset
+                                        </Button>
+
+                                        {activeStep === steps.length - 1 ? (
+                                            <SubmitButton
+                                                variant="contained"
+                                                type="submit"
+                                                disabled={loading || !isValid}
+                                                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CheckCircleIcon />}
+                                            >
+                                                {loading ? 'Creating...' : success ? 'Created!' : 'Create Project'}
+                                            </SubmitButton>
+                                        ) : (
+                                            <SubmitButton
+                                                variant="contained"
+                                                onClick={handleNext}
+                                                disabled={
+                                                    (activeStep === 0 && (!control._formValues.name || !control._formValues.description)) ||
+                                                    (activeStep === 1 && (!control._formValues.start_date || !control._formValues.end_date || !control._formValues.budget || !control._formValues.status))
+                                                }
+                                                endIcon={<NavigateNextIcon />}
+                                            >
+                                                Continue
+                                            </SubmitButton>
+                                        )}
+                                    </Box>
+                                </Box>
+                            </form>
+                        </FormContainer>
+                    </motion.div>
+                </Box>
+            </motion.div>
 
             {/* Error Notification */}
             <Snackbar
@@ -298,9 +632,33 @@ const CreateProject = () => {
                 <Alert
                     severity="error"
                     onClose={() => setError(null)}
-                    sx={{ width: '100%' }}
+                    sx={{ width: '100%', borderRadius: '8px' }}
+                    action={
+                        <IconButton
+                            size="small"
+                            aria-label="close"
+                            color="inherit"
+                            onClick={() => setError(null)}
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    }
                 >
                     {error}
+                </Alert>
+            </Snackbar>
+
+            {/* Success Notification */}
+            <Snackbar
+                open={success}
+                autoHideDuration={3000}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    severity="success"
+                    sx={{ width: '100%', borderRadius: '8px' }}
+                >
+                    Project created successfully! Redirecting to projects list...
                 </Alert>
             </Snackbar>
         </Container>

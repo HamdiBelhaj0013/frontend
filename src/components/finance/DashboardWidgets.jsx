@@ -332,11 +332,6 @@ const DashboardWidgets = ({ statistics, recentTransactions }) => {
         }
     }, [statistics]);
 
-    // Handle viewing all transactions
-    const handleViewAllTransactions = () => {
-        navigate('/finances', { state: { activeTab: 1 } }); // Navigate to transactions tab
-    };
-
     // Generate colors for charts
     const incomeColors = generateColors(incomeChartData.length);
     const expenseColors = generateColors(expenseChartData.length);
@@ -574,14 +569,6 @@ const DashboardWidgets = ({ statistics, recentTransactions }) => {
                                     <Typography variant="h6" component="div" sx={{ fontWeight: 500 }}>
                                         Recent Transactions
                                     </Typography>
-                                    <Tooltip title="View all transactions">
-                                        <IconButton
-                                            size="small"
-                                            onClick={handleViewAllTransactions}
-                                        >
-                                            <ArrowForward fontSize="small" />
-                                        </IconButton>
-                                    </Tooltip>
                                 </Box>
 
                                 <List sx={{

@@ -1,4 +1,4 @@
-import { React, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Typography,
@@ -8,15 +8,24 @@ import {
     Alert,
     Grid,
     Paper,
-    Container
+    Container,
+    IconButton,
+    Chip,
+    Avatar,
+    Fade,
+    Tabs,
+    Tab
 } from "@mui/material";
 import { useForm } from 'react-hook-form';
 import AxiosInstance from './Axios.jsx';
 import Dayjs from "dayjs";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme, alpha } from '@mui/material/styles';
+import { motion } from 'framer-motion';
+
+// Form Fields
 import MyDatePickerField from "./forms/MyDatePickerField.jsx";
 import MyTextField from "./forms/MyTextField.jsx";
 import MySelectField from "./forms/MySelectField.jsx";
@@ -30,47 +39,81 @@ import WorkIcon from '@mui/icons-material/Work';
 import CakeIcon from '@mui/icons-material/Cake';
 import EventIcon from '@mui/icons-material/Event';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
+import CloseIcon from '@mui/icons-material/Close';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import '../assets/Styles/CreateMember.css';
 
 // Styled components
 const FormContainer = styled(Paper)(({ theme }) => ({
-    borderRadius: '8px',
+    borderRadius: '12px',
     padding: theme.spacing(3),
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
-    backgroundColor: '#fff',
-    borderLeft: '4px solid #00897B',
+    boxShadow: '0 2px 20px rgba(0, 0, 0, 0.08)',
+    backgroundColor: theme.palette.background.paper,
+    borderLeft: `4px solid ${theme.palette.primary.main}`,
     margin: '0 auto',
     maxWidth: '100%',
-    position: 'relative'
+    position: 'relative',
+    transition: 'transform 0.3s, box-shadow 0.3s',
+    overflow: 'hidden',
+    '&:hover': {
+        boxShadow: '0 4px 25px rgba(0, 0, 0, 0.12)',
+    }
 }));
 
 const HeaderContainer = styled(Box)(({ theme }) => ({
-    backgroundColor: '#00897B',
-    color: '#fff',
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
     padding: theme.spacing(2, 3),
-    borderRadius: '4px',
+    borderRadius: '8px',
     marginBottom: theme.spacing(3),
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+    '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
+        zIndex: 0,
+    }
 }));
 
 const SubmitButton = styled(Button)(({ theme }) => ({
-    backgroundColor: '#00897B',
+    backgroundColor: theme.palette.primary.main,
     '&:hover': {
-        backgroundColor: '#00695C',
+        backgroundColor: theme.palette.primary.dark,
+        transform: 'translateY(-2px)',
+        boxShadow: '0 6px 10px rgba(0, 0, 0, 0.15)',
     },
-    borderRadius: '4px',
+    borderRadius: '8px',
+    padding: '10px 24px',
+    fontWeight: 600,
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    '&:active': {
+        transform: 'translateY(0)',
+    }
 }));
 
 const ResetButton = styled(Button)(({ theme }) => ({
-    borderRadius: '4px',
-    border: '1px solid #e0e0e0',
-    color: '#757575',
-    backgroundColor: '#fff',
+    borderRadius: '8px',
+    padding: '10px 24px',
+    fontWeight: 500,
+    color: theme.palette.text.secondary,
+    backgroundColor: 'transparent',
+    border: `1px solid ${theme.palette.divider}`,
     '&:hover': {
-        backgroundColor: '#f5f5f5',
+        backgroundColor: alpha(theme.palette.primary.main, 0.08),
     },
+    transition: 'all 0.3s ease',
 }));
 
 const FormBox = styled(Box)(({ theme }) => ({
@@ -79,13 +122,52 @@ const FormBox = styled(Box)(({ theme }) => ({
         width: '100%',
     },
     '& .MuiOutlinedInput-root': {
-        borderRadius: '4px',
+        borderRadius: '8px',
+        transition: 'transform 0.2s ease',
+    },
+    '& .MuiFormLabel-root': {
+        color: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.8) : theme.palette.primary.main,
     }
+}));
+
+const StyledTab = styled(Tab)(({ theme }) => ({
+    textTransform: 'none',
+    fontWeight: 500,
+    fontSize: '0.9rem',
+    minHeight: 48,
+    borderRadius: '8px 8px 0 0',
+    '&.Mui-selected': {
+        color: theme.palette.primary.main,
+        fontWeight: 600,
+    }
+}));
+
+const InfoChip = styled(Chip)(({ theme }) => ({
+    backgroundColor: alpha(theme.palette.info.main, 0.1),
+    color: theme.palette.info.main,
+    borderRadius: '16px',
+    fontWeight: 500,
+    '& .MuiChip-icon': {
+        color: theme.palette.info.main,
+    }
+}));
+
+const ProfileAvatar = styled(Avatar)(({ theme }) => ({
+    width: 100,
+    height: 100,
+    backgroundColor: alpha(theme.palette.primary.main, 0.9),
+    color: theme.palette.common.white,
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+    margin: '0 auto 20px auto',
 }));
 
 const CreateMember = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false);
+    const [tabValue, setTabValue] = useState(0);
     const navigate = useNavigate();
     const theme = useTheme();
 
@@ -100,7 +182,7 @@ const CreateMember = () => {
         role: yup.string().required('Role is required'),
     });
 
-    const { handleSubmit, control, reset, formState: { errors, isValid } } = useForm({
+    const { handleSubmit, control, reset, watch, formState: { errors, isValid } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             name: '',
@@ -115,6 +197,17 @@ const CreateMember = () => {
         mode: 'onChange'
     });
 
+    // Helper function to get initials from name
+    const getInitials = (name) => {
+        if (!name) return '?';
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+    };
+
     const submission = async (data) => {
         setLoading(true);
         setError(null);
@@ -124,14 +217,27 @@ const CreateMember = () => {
                 birth_date: data.birth_date ? Dayjs(data.birth_date).format('YYYY-MM-DD') : null,
                 joining_date: data.joining_date ? Dayjs(data.joining_date).format('YYYY-MM-DD') : null,
             });
+            setSuccess(true);
             reset();
-            navigate('/members', { state: { success: true } });
+            setTimeout(() => {
+                navigate('/members', {
+                    state: {
+                        success: true,
+                        message: `Member "${data.name}" was created successfully`
+                    }
+                });
+            }, 1500);
         } catch (err) {
-            setError(err.response?.data?.message || 'An error occurred. Please try again.');
+            setError(err.response?.data?.message || 'An error occurred while creating the member. Please try again.');
             console.error(err);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Handle tab change
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue);
     };
 
     const roleOptions = [
@@ -339,177 +445,295 @@ const CreateMember = () => {
         { value: "Zimbabwe", label: "Zimbabwe" }
     ];
 
+    // Animation variants
+    const containerVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.5,
+                when: "beforeChildren",
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 15 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+    };
+
     return (
         <Container maxWidth="lg">
-            <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
-                {/* Header */}
-                <HeaderContainer>
-                    <PersonIcon sx={{ mr: 1 }} />
-                    <Box>
-                        <Typography variant="h6" component="h1">
-                            Create New Member
-                        </Typography>
-                        <Typography variant="subtitle2">
-                            Add a new member to your organization
-                        </Typography>
-                    </Box>
-                </HeaderContainer>
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
+                <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
+                    {/* Back button */}
+                    <Button
+                        component={motion.button}
+                        variants={itemVariants}
+                        onClick={() => navigate('/members')}
+                        startIcon={<ArrowBackIcon />}
+                        sx={{
+                            mb: 2,
+                            fontWeight: 500,
+                            color: theme.palette.text.secondary,
+                            '&:hover': {
+                                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                            }
+                        }}
+                    >
+                        Back to Members
+                    </Button>
 
-                <FormContainer elevation={0}>
-                    <form onSubmit={handleSubmit(submission)}>
-                        <Grid container spacing={3}>
-                            {/* Personal Information Row */}
-                            <Grid item xs={12} md={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <PersonIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Full Name</Typography>
-                                    </Box>
-                                    <MyTextField
-                                        name="name"
-                                        control={control}
-                                        placeholder="Enter full name"
-                                        error={!!errors.name}
-                                        helperText={errors.name?.message}
+                    {/* Header */}
+                    <motion.div variants={itemVariants}>
+                        <HeaderContainer>
+                            <PersonIcon sx={{ mr: 2, fontSize: 28 }} />
+                            <Box sx={{ zIndex: 1 }}>
+                                <Typography variant="h5" component="h1" fontWeight="bold">
+                                    Create New Member
+                                </Typography>
+                                <Typography variant="subtitle2">
+                                    Add a new member to your organization
+                                </Typography>
+                            </Box>
+                            {/* Decorative circles */}
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: -20,
+                                    right: -20,
+                                    width: 100,
+                                    height: 100,
+                                    borderRadius: '50%',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    zIndex: 0
+                                }}
+                            />
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: -30,
+                                    right: 100,
+                                    width: 60,
+                                    height: 60,
+                                    borderRadius: '50%',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    zIndex: 0
+                                }}
+                            />
+                        </HeaderContainer>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                        <FormContainer elevation={0}>
+                            {/* Tabs */}
+                            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                                <Tabs
+                                    value={tabValue}
+                                    onChange={handleTabChange}
+                                    aria-label="member creation tabs"
+                                    indicatorColor="primary"
+                                    textColor="primary"
+                                >
+                                    <StyledTab label="Personal Information" icon={<PersonIcon />} iconPosition="start" />
+                                    <StyledTab label="Professional & Dates" icon={<WorkIcon />} iconPosition="start" />
+                                </Tabs>
+                            </Box>
+
+                            <form onSubmit={handleSubmit(submission)}>
+                                {/* Profile Avatar */}
+                                <Box sx={{ textAlign: 'center', mb: 3 }}>
+                                    <ProfileAvatar>
+                                        {getInitials(watch('name'))}
+                                    </ProfileAvatar>
+                                </Box>
+
+                                {/* Tab Content */}
+                                <Box sx={{ mb: 3 }}>
+                                    {/* Personal Information Tab */}
+                                    <Fade in={tabValue === 0} unmountOnExit>
+                                        <Box hidden={tabValue !== 0}>
+                                            <Grid container spacing={3}>
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <PersonIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Full Name</Typography>
+                                                        </Box>
+                                                        <MyTextField
+                                                            name="name"
+                                                            control={control}
+                                                            placeholder="Enter full name"
+                                                            error={!!errors.name}
+                                                            helperText={errors.name?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <EmailIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Email</Typography>
+                                                        </Box>
+                                                        <MyTextField
+                                                            name="email"
+                                                            control={control}
+                                                            placeholder="Enter email address"
+                                                            error={!!errors.email}
+                                                            helperText={errors.email?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+
+                                                <Grid item xs={12}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <HomeIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Address</Typography>
+                                                        </Box>
+                                                        <MyTextField
+                                                            name="address"
+                                                            control={control}
+                                                            placeholder="Enter residential address"
+                                                            error={!!errors.address}
+                                                            helperText={errors.address?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    </Fade>
+
+                                    {/* Professional & Dates Tab */}
+                                    <Fade in={tabValue === 1} unmountOnExit>
+                                        <Box hidden={tabValue !== 1}>
+                                            <Grid container spacing={3}>
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <PublicIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Nationality</Typography>
+                                                        </Box>
+                                                        <MySelectField
+                                                            name="nationality"
+                                                            control={control}
+                                                            options={countries}
+                                                            error={!!errors.nationality}
+                                                            helperText={errors.nationality?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <WorkIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Job</Typography>
+                                                        </Box>
+                                                        <MyTextField
+                                                            name="job"
+                                                            control={control}
+                                                            placeholder="Enter job title"
+                                                            error={!!errors.job}
+                                                            helperText={errors.job?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <AdminPanelSettingsIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Role</Typography>
+                                                        </Box>
+                                                        <MySelectField
+                                                            name="role"
+                                                            control={control}
+                                                            options={roleOptions}
+                                                            error={!!errors.role}
+                                                            helperText={errors.role?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <CakeIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Birth Date</Typography>
+                                                        </Box>
+                                                        <MyDatePickerField
+                                                            name="birth_date"
+                                                            control={control}
+                                                            error={!!errors.birth_date}
+                                                            helperText={errors.birth_date?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <EventIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">Joining Date</Typography>
+                                                        </Box>
+                                                        <MyDatePickerField
+                                                            name="joining_date"
+                                                            control={control}
+                                                            error={!!errors.joining_date}
+                                                            helperText={errors.joining_date?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    </Fade>
+                                </Box>
+
+                                {/* Info message */}
+                                <Box sx={{ mb: 3 }}>
+                                    <InfoChip
+                                        icon={<InfoOutlinedIcon />}
+                                        label="Fill in all required fields to create a new member"
                                     />
-                                </FormBox>
-                            </Grid>
+                                </Box>
 
-                            <Grid item xs={12} md={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <EmailIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Email</Typography>
-                                    </Box>
-                                    <MyTextField
-                                        name="email"
-                                        control={control}
-                                        placeholder="Enter email address"
-                                        error={!!errors.email}
-                                        helperText={errors.email?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <HomeIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Address</Typography>
-                                    </Box>
-                                    <MyTextField
-                                        name="address"
-                                        control={control}
-                                        placeholder="Enter address"
-                                        error={!!errors.address}
-                                        helperText={errors.address?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            {/* Work Information Row */}
-                            <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <PublicIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Nationality</Typography>
-                                    </Box>
-                                    <MySelectField
-                                        name="nationality"
-                                        control={control}
-                                        options={countries}
-                                        error={!!errors.nationality}
-                                        helperText={errors.nationality?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <WorkIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Job</Typography>
-                                    </Box>
-                                    <MyTextField
-                                        name="job"
-                                        control={control}
-                                        placeholder="Enter job title"
-                                        error={!!errors.job}
-                                        helperText={errors.job?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <AdminPanelSettingsIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Role</Typography>
-                                    </Box>
-                                    <MySelectField
-                                        name="role"
-                                        control={control}
-                                        options={roleOptions}
-                                        error={!!errors.role}
-                                        helperText={errors.role?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            {/* Date Information Row */}
-                            <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <CakeIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Birth Date</Typography>
-                                    </Box>
-                                    <MyDatePickerField
-                                        name="birth_date"
-                                        control={control}
-                                        error={!!errors.birth_date}
-                                        helperText={errors.birth_date?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <FormBox>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <EventIcon color="primary" sx={{ mr: 1, color: '#00897B' }} />
-                                        <Typography variant="subtitle2">Joining Date</Typography>
-                                    </Box>
-                                    <MyDatePickerField
-                                        name="joining_date"
-                                        control={control}
-                                        error={!!errors.joining_date}
-                                        helperText={errors.joining_date?.message}
-                                    />
-                                </FormBox>
-                            </Grid>
-
-                            {/* Action Buttons */}
-                            <Grid item xs={12}>
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                                {/* Action buttons */}
+                                <Box sx={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                                    gap: 2,
+                                    mt: 2
+                                }}>
                                     <ResetButton
                                         onClick={() => reset()}
                                         variant="outlined"
                                     >
                                         Reset
                                     </ResetButton>
+
                                     <SubmitButton
-                                        variant="contained"
                                         type="submit"
+                                        variant="contained"
                                         disabled={loading || !isValid}
-                                        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                                        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                                     >
-                                        {loading ? 'Creating...' : 'Create Member'}
+                                        {loading ? 'Creating...' : success ? 'Created!' : 'Create Member'}
                                     </SubmitButton>
                                 </Box>
-                            </Grid>
-                        </Grid>
-                    </form>
-                </FormContainer>
-            </Box>
+                            </form>
+                        </FormContainer>
+                    </motion.div>
+                </Box>
+            </motion.div>
 
             {/* Error Notification */}
             <Snackbar
@@ -521,9 +745,33 @@ const CreateMember = () => {
                 <Alert
                     severity="error"
                     onClose={() => setError(null)}
-                    sx={{ width: '100%' }}
+                    sx={{ width: '100%', borderRadius: '8px' }}
+                    action={
+                        <IconButton
+                            size="small"
+                            aria-label="close"
+                            color="inherit"
+                            onClick={() => setError(null)}
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    }
                 >
                     {error}
+                </Alert>
+            </Snackbar>
+
+            {/* Success Notification */}
+            <Snackbar
+                open={success}
+                autoHideDuration={3000}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    severity="success"
+                    sx={{ width: '100%', borderRadius: '8px' }}
+                >
+                    Member created successfully! Redirecting to members list...
                 </Alert>
             </Snackbar>
         </Container>

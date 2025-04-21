@@ -28,7 +28,8 @@ import {
     TrendingUp,
     TrendingDown,
     Warning,
-    Info
+    Info,
+    Delete
 } from '@mui/icons-material';
 import AxiosInstance from '../Axios';
 
@@ -147,6 +148,102 @@ const BudgetAdjustmentDialog = ({ open, onClose, budget, onSuccess }) => {
                     disabled={loading}
                 >
                     {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
+
+// Delete budget dialog component
+const DeleteBudgetDialog = ({ open, onClose, budget, onSuccess }) => {
+    const [confirmText, setConfirmText] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleConfirmTextChange = (e) => {
+        setConfirmText(e.target.value);
+        setError('');
+    };
+
+    const handleDelete = async () => {
+        if (confirmText !== 'delete') {
+            setError('Please type "delete" to confirm');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await AxiosInstance.delete(`/finances/budget-allocations/${budget.id}/`);
+            onSuccess();
+            onClose();
+        } catch (err) {
+            console.error('Error deleting budget:', err);
+            setError(err.response?.data?.error || 'Failed to delete budget');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={loading ? undefined : onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>
+                <Box display="flex" alignItems="center">
+                    <Delete sx={{ mr: 1, color: 'error.main' }} />
+                    <Typography variant="h6" color="error">
+                        Delete Budget
+                    </Typography>
+                </Box>
+            </DialogTitle>
+            <DialogContent dividers>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
+
+                {budget && (
+                    <Box>
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                            <Typography variant="body1" gutterBottom>
+                                You are about to delete the budget allocation for:
+                            </Typography>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                {budget.project_details?.name}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                                This action cannot be undone. All budget allocation data will be permanently removed.
+                            </Typography>
+                        </Alert>
+
+                        <Box sx={{ mt: 2 }}>
+                            <Typography variant="body2" gutterBottom>
+                                To confirm, type "delete" below:
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                value={confirmText}
+                                onChange={handleConfirmTextChange}
+                                placeholder="delete"
+                                error={!!error}
+                                helperText={error}
+                                disabled={loading}
+                            />
+                        </Box>
+                    </Box>
+                )}
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose} disabled={loading}>
+                    Cancel
+                </Button>
+                <Button
+                    onClick={handleDelete}
+                    variant="contained"
+                    color="error"
+                    disabled={loading || confirmText !== 'delete'}
+                >
+                    {loading ? <CircularProgress size={24} /> : 'Delete Budget'}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -299,7 +396,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
 };
 
 // Budget card component
-const BudgetCard = ({ budget, onAdjust }) => {
+const BudgetCard = ({ budget, onAdjust, onDelete }) => {
     const theme = useTheme();
 
     // Determine color based on utilization percentage
@@ -330,11 +427,18 @@ const BudgetCard = ({ budget, onAdjust }) => {
                     <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 500 }}>
                         {budget.project_details.name}
                     </Typography>
-                    <Tooltip title="Adjust Budget">
-                        <IconButton size="small" onClick={() => onAdjust(budget)} sx={{ mt: -1 }}>
-                            <Edit fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
+                    <Box>
+                        <Tooltip title="Adjust Budget">
+                            <IconButton size="small" onClick={() => onAdjust(budget)} sx={{ mr: 0.5 }}>
+                                <Edit fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Budget">
+                            <IconButton size="small" onClick={() => onDelete(budget)} color="error">
+                                <Delete fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
@@ -411,6 +515,7 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
     const [error, setError] = useState(null);
     const [selectedBudget, setSelectedBudget] = useState(null);
     const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [newBudgetDialogOpen, setNewBudgetDialogOpen] = useState(false);
 
     // Fetch budgets from API
@@ -439,6 +544,12 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
         setAdjustDialogOpen(true);
     };
 
+    // Handle opening the budget deletion dialog
+    const handleDeleteBudget = (budget) => {
+        setSelectedBudget(budget);
+        setDeleteDialogOpen(true);
+    };
+
     // Handle successful budget operations
     const handleSuccess = () => {
         fetchBudgets();
@@ -452,7 +563,7 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
             {/* Header with action buttons */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h5" component="h2" fontWeight="bold">
-                    Project Budget Allocations
+                    Project Budget
                 </Typography>
                 <Box>
                     <Button
@@ -516,6 +627,7 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
                                     <BudgetCard
                                         budget={budget}
                                         onAdjust={handleAdjustBudget}
+                                        onDelete={handleDeleteBudget}
                                     />
                                 </Grid>
                             ))}
@@ -528,6 +640,14 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
             <BudgetAdjustmentDialog
                 open={adjustDialogOpen}
                 onClose={() => setAdjustDialogOpen(false)}
+                budget={selectedBudget}
+                onSuccess={handleSuccess}
+            />
+
+            {/* Budget deletion dialog */}
+            <DeleteBudgetDialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
                 budget={selectedBudget}
                 onSuccess={handleSuccess}
             />

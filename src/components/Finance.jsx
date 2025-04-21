@@ -7,34 +7,22 @@ import {
     Tabs,
     Tab,
     CircularProgress,
-    Divider,
     Button,
-    IconButton,
-    Card,
-    CardContent,
-    Chip,
     Alert,
-    Tooltip,
     useTheme
 } from '@mui/material';
 import {
     Add,
     Refresh,
-    AttachMoney,
     AccountBalance,
-    DateRange,
-    Download,
-    TrendingUp,
-    TrendingDown,
     ReceiptLong,
     BarChart,
-    PieChart,
-    ShowChart,
-    Receipt,
-    AssignmentTurnedIn
+    AssignmentTurnedIn,
+    People
 } from '@mui/icons-material';
 import AxiosInstance from './Axios';
-import { useNavigate } from 'react-router-dom';
+
+
 
 // Import child components
 import TransactionList from './finance/TransactionList.jsx';
@@ -42,6 +30,8 @@ import TransactionForm from './finance/TransactionForm';
 import BudgetDashboard from './finance/BudgetDashboard';
 import FinancialReports from './finance/FinancialReports';
 import DashboardWidgets from './finance/DashboardWidgets';
+import DonorForm from './finance/DonorForm.jsx';
+import DonorList from './finance/DonorList';
 
 // Tab panel component
 function TabPanel(props) {
@@ -63,11 +53,11 @@ function TabPanel(props) {
 
 const Finance = () => {
     const theme = useTheme();
-    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [transactions, setTransactions] = useState([]);
+    const [donors, setDonors] = useState([]);
     const [statistics, setStatistics] = useState({
         total_income: 0,
         total_expenses: 0,
@@ -85,6 +75,9 @@ const Finance = () => {
     const [formType, setFormType] = useState('income'); // 'income' or 'expense'
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+    // State for donor form modal
+    const [donorFormOpen, setDonorFormOpen] = useState(false);
+
     // State for notifications
     const [notification, setNotification] = useState({
         show: false,
@@ -94,7 +87,7 @@ const Finance = () => {
 
     // Fetch financial statistics
     useEffect(() => {
-        const fetchStatistics = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
 
@@ -106,6 +99,10 @@ const Finance = () => {
                 const transactionsResponse = await AxiosInstance.get('/finances/transactions/');
                 setTransactions(transactionsResponse.data);
 
+                // Fetch donors
+                const donorsResponse = await AxiosInstance.get('/finances/donors/');
+                setDonors(donorsResponse.data);
+
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching financial data:', err);
@@ -114,7 +111,7 @@ const Finance = () => {
             }
         };
 
-        fetchStatistics();
+        fetchData();
     }, [refreshTrigger]);
 
     // Handle tab change
@@ -128,6 +125,11 @@ const Finance = () => {
         setFormOpen(true);
     };
 
+    // Open donor form
+    const handleAddDonor = () => {
+        setDonorFormOpen(true);
+    };
+
     // Handle form submission success
     const handleFormSuccess = () => {
         setFormOpen(false);
@@ -135,6 +137,25 @@ const Finance = () => {
         setNotification({
             show: true,
             message: 'Transaction saved successfully!',
+            severity: 'success'
+        });
+
+        // Hide notification after 3 seconds
+        setTimeout(() => {
+            setNotification({
+                ...notification,
+                show: false
+            });
+        }, 3000);
+    };
+
+    // Handle donor form submission success
+    const handleDonorFormSuccess = () => {
+        setDonorFormOpen(false);
+        setRefreshTrigger(prev => prev + 1);
+        setNotification({
+            show: true,
+            message: 'Donor added successfully!',
             severity: 'success'
         });
 
@@ -157,6 +178,7 @@ const Finance = () => {
         { label: 'Dashboard', icon: <BarChart fontSize="small" /> },
         { label: 'Transactions', icon: <ReceiptLong fontSize="small" /> },
         { label: 'Budgets', icon: <AccountBalance fontSize="small" /> },
+        { label: 'Donors', icon: <People fontSize="small" /> },
         { label: 'Reports', icon: <AssignmentTurnedIn fontSize="small" /> }
     ];
 
@@ -278,8 +300,26 @@ const Finance = () => {
                             />
                         </TabPanel>
 
-                        {/* Reports Tab */}
+                        {/* Donors Tab */}
                         <TabPanel value={activeTab} index={3}>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={handleAddDonor}
+                                    startIcon={<Add />}
+                                >
+                                    Add Donor
+                                </Button>
+                            </Box>
+                            <DonorList
+                                donors={donors}
+                                onRefresh={handleRefresh}
+                            />
+                        </TabPanel>
+
+                        {/* Reports Tab */}
+                        <TabPanel value={activeTab} index={4}>
                             <FinancialReports onRefresh={handleRefresh} />
                         </TabPanel>
                     </>
@@ -292,6 +332,13 @@ const Finance = () => {
                 onClose={() => setFormOpen(false)}
                 type={formType}
                 onSuccess={handleFormSuccess}
+            />
+
+            {/* Donor Form Modal */}
+            <DonorForm
+                open={donorFormOpen}
+                onClose={() => setDonorFormOpen(false)}
+                onSuccess={handleDonorFormSuccess}
             />
         </Box>
     );

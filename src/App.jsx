@@ -47,7 +47,6 @@ function App() {
         "/login",
         "/register",
         "/request/password_reset",
-        "/chatbot" // Added chatbot to auth routes so it's accessible without the main app navbar
     ].includes(location.pathname) || location.pathname.includes("password-reset");
 
     return (
@@ -84,6 +83,7 @@ function App() {
                                     <Route path="/member/edit/:id" element={<AuthGuard><EditMember /></AuthGuard>} />
                                     <Route path="/member/delete/:id" element={<AuthGuard><DeleteMember /></AuthGuard>} />
                                     <Route path="/member/editmember/:id" element={<AuthGuard><EditMember /></AuthGuard>} />
+                                    <Route path="/chatbot" element={<AuthGuard><NGOChatbot /></AuthGuard>} />
                                 </Routes>
                             }
                         />

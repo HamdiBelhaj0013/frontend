@@ -22,10 +22,12 @@ import {
     Badge,
     Chip,
     SwipeableDrawer,
-    Fade
+    Fade,
+
 } from '@mui/material';
 import { styled, alpha, useTheme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 // Import the ColorModeContext hook
 import { useColorMode } from '../contexts/ThemeContext';
@@ -295,7 +297,7 @@ const pages = [
     { name: 'Members', path: '/members', icon: <GroupIcon /> },
     { name: 'Finance', path: '/finance', icon: <AccountBalanceIcon /> },
     { name: 'Volunteer', path: '/volunteer', icon: <VolunteerActivismIcon /> },
-    { name: 'About', path: '/about', icon: <InfoIcon /> },
+    {name: 'AI Assitance' , path: '/chatbot' , icon: <SmartToyIcon />},
 ];
 
 export default function NavBar(props) {

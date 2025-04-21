@@ -19,7 +19,9 @@ import {
     CircularProgress,
     Alert,
     IconButton,
-    Divider
+    Divider,
+    Checkbox,
+    FormControlLabel
 } from '@mui/material';
 import {
     AttachMoney,
@@ -29,7 +31,9 @@ import {
     Close,
     AttachFile,
     UploadFile,
-    Delete
+    Delete,
+    Business,
+    Receipt,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -57,6 +61,20 @@ const expenseCategories = [
     { value: 'other_expense', label: 'Other Expense' }
 ];
 
+// Common expense recipients based on the expense report
+const commonExpenseRecipients = [
+    { id: 'team_member', name: 'Team Member' },
+    { id: 'non_member', name: 'Non-Member (External)' },
+    { id: 'cnss', name: 'CNSS (Social Security)' },
+    { id: 'internet', name: 'Internet Provider' },
+    { id: 'rent', name: 'Office Rent' },
+    { id: 'attaysir', name: 'Attaysir Rent Car' },
+    { id: 'vendor', name: 'Vendor/Supplier' },
+    { id: 'utility', name: 'Utility Payment' },
+    { id: 'tax_authority', name: 'Tax Authority' },
+    { id: 'other', name: 'Other' }
+];
+
 // Helper function to format amount with currency
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-TN', {
@@ -77,10 +95,23 @@ const createTransactionSchema = yup.object({
         .required('Amount is required'),
     description: yup.string().required('Description is required'),
     date: yup.date().required('Date is required'),
-    project: yup.number().nullable(),
+    project: yup.number().when('is_project_wide', {
+        is: true,
+        then: schema => schema.required('Project is required for project-wide expenses')
+    }),
     budget_allocation: yup.number().nullable(),
+    paid_to: yup.string().nullable(), // For expense recipients
+    paid_to_notes: yup.string().when('recipient_type', {
+        is: 'non_member',
+        then: schema => schema.required('Notes are required for non-member recipients')
+    }),
     donor: yup.number().nullable(),
-    reference_number: yup.string().nullable()
+    reference_number: yup.string().nullable(),
+    recipient_type: yup.string().when('transaction_type', {
+        is: 'expense',
+        then: schema => schema.required('Recipient type is required')
+    }),
+    is_project_wide: yup.boolean().default(false)
 });
 
 const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
@@ -88,10 +119,16 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [projects, setProjects] = useState([]);
     const [donors, setDonors] = useState([]);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [nonMemberRecipients, setNonMemberRecipients] = useState([]);
     const [budgetAllocations, setBudgetAllocations] = useState([]);
     const [submitError, setSubmitError] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileError, setFileError] = useState('');
+    const [recipientType, setRecipientType] = useState('');
+    const [customRecipient, setCustomRecipient] = useState('');
+    const [recipientNotes, setRecipientNotes] = useState('');
+    const [isProjectWide, setIsProjectWide] = useState(false);
 
     // Form setup
     const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
@@ -105,7 +142,11 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
             project: null,
             budget_allocation: null,
             donor: null,
-            reference_number: ''
+            paid_to: '',
+            paid_to_notes: '',
+            reference_number: '',
+            recipient_type: '',
+            is_project_wide: false
         }
     });
 
@@ -113,8 +154,29 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
     const watchTransactionType = watch('transaction_type');
     const watchCategory = watch('category');
     const watchProject = watch('project');
+    const watchRecipientType = watch('recipient_type');
+    const watchIsProjectWide = watch('is_project_wide');
+// Fetch team members from API
+    useEffect(() => {
+        const fetchTeamMembers = async () => {
+            try {
+                const response = await AxiosInstance.get('/api/member/');
+                setTeamMembers(response.data.map(member => ({
+                    id: member.id,
+                    name: member.name || member.full_name || member.username // Use name from your API response first
+                })));
+                console.log('Team members fetched:', response.data); // Add this for debugging
+            } catch (error) {
+                console.error('Error fetching team members:', error);
+                // Fallback to empty array if API fails
+                setTeamMembers([]);
+            }
+        };
 
-    // Load projects and donors on component mount
+        fetchTeamMembers();
+    }, []);
+
+    // Load projects, donors, and non-member recipients on component mount
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -122,16 +184,30 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                 const projectsResponse = await AxiosInstance.get('/api/project/');
                 setProjects(projectsResponse.data);
 
-                // Fetch donors
-                const donorsResponse = await AxiosInstance.get('/finances/donors/');
-                setDonors(donorsResponse.data);
+                // Fetch donors (only needed for income transactions)
+                if (watchTransactionType === 'income') {
+                    const donorsResponse = await AxiosInstance.get('/finances/donors/');
+                    setDonors(donorsResponse.data);
+                }
+
+                // Fetch non-member recipients (for expense transactions)
+                if (watchTransactionType === 'expense') {
+                    try {
+                        const nonMembersResponse = await AxiosInstance.get('/api/non-members/');
+                        setNonMemberRecipients(nonMembersResponse.data);
+                    } catch (err) {
+                        // If the endpoint doesn't exist or fails, we'll just leave the list empty
+                        console.warn('Could not fetch non-member recipients', err);
+                        setNonMemberRecipients([]);
+                    }
+                }
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
         };
 
         fetchData();
-    }, []);
+    }, [watchTransactionType]);
 
     // Load budget allocations when a project is selected
     useEffect(() => {
@@ -168,11 +244,19 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                 project: null,
                 budget_allocation: null,
                 donor: null,
-                reference_number: ''
+                paid_to: '',
+                paid_to_notes: '',
+                reference_number: '',
+                recipient_type: '',
+                is_project_wide: false
             });
             setSelectedFile(null);
             setFileError('');
             setSubmitError('');
+            setRecipientType('');
+            setCustomRecipient('');
+            setRecipientNotes('');
+            setIsProjectWide(false);
         }
     }, [open, type, reset]);
 
@@ -205,6 +289,56 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
         setSelectedFile(null);
     };
 
+    // Handle recipient type change
+    const handleRecipientTypeChange = (e) => {
+        const newRecipientType = e.target.value;
+        setRecipientType(newRecipientType);
+        setValue('recipient_type', newRecipientType);
+
+        // Reset the paid_to field when changing recipient types
+        setValue('paid_to', '');
+
+        // Reset notes when changing away from non_member
+        if (newRecipientType !== 'non_member') {
+            setValue('paid_to_notes', '');
+            setRecipientNotes('');
+        }
+    };
+
+    // Handle team member selection
+    const handleTeamMemberChange = (event) => {
+        setValue('paid_to', event.target.value);
+    };
+
+    // Handle non-member selection
+    const handleNonMemberChange = (event) => {
+        setValue('paid_to', event.target.value);
+    };
+
+    // Handle custom recipient input
+    const handleCustomRecipientChange = (e) => {
+        setCustomRecipient(e.target.value);
+        setValue('paid_to', e.target.value);
+    };
+
+    // Handle recipient notes change
+    const handleRecipientNotesChange = (e) => {
+        setRecipientNotes(e.target.value);
+        setValue('paid_to_notes', e.target.value);
+    };
+
+    // Handle project-wide toggle
+    const handleProjectWideChange = (e) => {
+        const isChecked = e.target.checked;
+        setIsProjectWide(isChecked);
+        setValue('is_project_wide', isChecked);
+
+        // If not project-wide, we don't require project selection
+        if (!isChecked && !watchProject) {
+            setValue('project', null);
+        }
+    };
+
     // Form submission handler
     const onSubmit = async (data) => {
         setLoading(true);
@@ -221,6 +355,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
             formData.append('description', data.description);
             formData.append('date', dayjs(data.date).format('YYYY-MM-DD'));
 
+            // Project is required if it's a project-wide expense
             if (data.project !== null) {
                 formData.append('project', data.project);
             }
@@ -230,8 +365,47 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                 formData.append('budget_allocation', data.budget_allocation);
             }
 
-            if (data.donor !== null) {
+            // For income transactions, use donor field
+            if (data.transaction_type === 'income' && data.donor !== null) {
                 formData.append('donor', data.donor);
+            }
+            // For expense transactions with a recipient
+            else if (data.transaction_type === 'expense' && data.paid_to) {
+                // Enhanced handling based on recipient type
+                switch(data.recipient_type) {
+                    case 'team_member':
+                        // For team members, we might have an API to find their ID
+                        // For now, add to the description
+                        const teamMemberDescription = `${data.description} (Paid to team member: ${data.paid_to})`;
+                        formData.set('description', teamMemberDescription);
+
+                        // If you have a team member ID, you could use it here
+                        // formData.append('team_member_id', teamMemberId);
+                        break;
+
+                    case 'non_member':
+                        // For non-members, include both name and notes
+                        const nonMemberDescription = `${data.description} (Paid to: ${data.paid_to})`;
+                        formData.set('description', nonMemberDescription);
+
+                        // Add notes as a separate field if your API supports it
+                        if (data.paid_to_notes) {
+                            formData.append('recipient_notes', data.paid_to_notes);
+                        }
+                        break;
+
+                    default:
+                        // For other recipient types (CNSS, vendors, etc.)
+                        const recipientDescription = `${data.description} (Paid to ${data.recipient_type}: ${data.paid_to})`;
+                        formData.set('description', recipientDescription);
+                }
+
+                // You could also store the recipient type in a custom field
+                formData.append('recipient_type', data.recipient_type);
+                formData.append('paid_to', data.paid_to);
+
+                // Flag whether this is a project-wide expense
+                formData.append('is_project_wide', data.is_project_wide ? '1' : '0');
             }
 
             if (data.reference_number) {
@@ -260,6 +434,156 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
             );
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Render recipient selection based on transaction type
+    const renderRecipientField = () => {
+        if (watchTransactionType === 'income') {
+            // For income transactions, show donor selection
+            return (
+                <Controller
+                    name="donor"
+                    control={control}
+                    render={({ field: { onChange, value } }) => (
+                        <Autocomplete
+                            options={donors}
+                            getOptionLabel={(option) => option.name || ''}
+                            value={donors.find(donor => donor.id === value) || null}
+                            onChange={(_, newValue) => {
+                                onChange(newValue ? newValue.id : null);
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Donor"
+                                    error={!!errors.donor}
+                                    helperText={errors.donor?.message}
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        startAdornment: (
+                                            <>
+                                                <InputAdornment position="start">
+                                                    <Person />
+                                                </InputAdornment>
+                                                {params.InputProps.startAdornment}
+                                            </>
+                                        ),
+                                    }}
+                                />
+                            )}
+                        />
+                    )}
+                />
+            );
+        } else {
+            // For expense transactions, show recipient type selection and conditional fields
+            return (
+                <>
+                    <Controller
+                        name="recipient_type"
+                        control={control}
+                        render={({ field }) => (
+                            <FormControl fullWidth error={!!errors.recipient_type}>
+                                <InputLabel>Recipient Type</InputLabel>
+                                <Select
+                                    {...field}
+                                    label="Recipient Type"
+                                >
+                                    <MenuItem value="">
+                                        <em>Select recipient type</em>
+                                    </MenuItem>
+                                    {commonExpenseRecipients.map((recipient) => (
+                                        <MenuItem key={recipient.id} value={recipient.id}>
+                                            {recipient.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.recipient_type && (
+                                    <FormHelperText>{errors.recipient_type.message}</FormHelperText>
+                                )}
+                            </FormControl>
+                        )}
+                    />
+
+                    {watchRecipientType === 'team_member' && (
+                        <FormControl fullWidth sx={{ mt: 2 }}>
+                            <InputLabel>Team Member</InputLabel>
+                            <Select
+                                value={watch('paid_to') || ''}
+                                onChange={handleTeamMemberChange}
+                                label="Team Member"
+                                error={!!errors.paid_to}
+                            >
+                                <MenuItem value="">
+                                    <em>Select team member</em>
+                                </MenuItem>
+                                {teamMembers.map((member) => (
+                                    <MenuItem key={member.id} value={member.name}>
+                                        {member.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            {errors.paid_to && (
+                                <FormHelperText error>{errors.paid_to.message}</FormHelperText>
+                            )}
+                            {teamMembers.length === 0 && (
+                                <FormHelperText>No team members found. Please check API connection.</FormHelperText>
+                            )}
+                        </FormControl>
+                    )}
+
+                    {watchRecipientType === 'non_member' && (
+                        <>
+                            <TextField
+                                fullWidth
+                                label="Recipient Name"
+                                value={watch('paid_to') || ''}
+                                onChange={handleCustomRecipientChange}
+                                error={!!errors.paid_to}
+                                helperText={errors.paid_to?.message}
+                                sx={{ mt: 2 }}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Recipient Notes (Required)"
+                                value={recipientNotes}
+                                onChange={handleRecipientNotesChange}
+                                error={!!errors.paid_to_notes}
+                                helperText={errors.paid_to_notes?.message || "Please provide details about this non-member recipient"}
+                                multiline
+                                rows={2}
+                                sx={{ mt: 2 }}
+                            />
+                        </>
+                    )}
+
+                    {watchRecipientType === 'other' && (
+                        <TextField
+                            fullWidth
+                            label="Recipient Name"
+                            value={customRecipient}
+                            onChange={handleCustomRecipientChange}
+                            error={!!errors.paid_to}
+                            helperText={errors.paid_to?.message}
+                            sx={{ mt: 2 }}
+                        />
+                    )}
+
+                    {/* Project-wide expense checkbox - only show for expense transactions */}
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={isProjectWide}
+                                onChange={handleProjectWideChange}
+                                name="is_project_wide"
+                            />
+                        }
+                        label="This expense applies to the entire project"
+                        sx={{ mt: 2, display: 'block' }}
+                    />
+                </>
+            );
         }
     };
 
@@ -430,7 +754,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                             </Divider>
                         </Grid>
 
-                        {/* Project */}
+                        {/* Project - required if it's a project-wide expense */}
                         <Grid item xs={12} sm={6}>
                             <Controller
                                 name="project"
@@ -446,7 +770,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
-                                                label="Related Project"
+                                                label={watchIsProjectWide ? "Related Project (Required)" : "Related Project"}
                                                 error={!!errors.project}
                                                 helperText={errors.project?.message}
                                                 InputProps={{
@@ -504,41 +828,9 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                             </Grid>
                         )}
 
-                        {/* Donor */}
+                        {/* Donor (for income) or Paid To (for expense) */}
                         <Grid item xs={12} sm={6}>
-                            <Controller
-                                name="donor"
-                                control={control}
-                                render={({ field: { onChange, value } }) => (
-                                    <Autocomplete
-                                        options={donors}
-                                        getOptionLabel={(option) => option.name || ''}
-                                        value={donors.find(donor => donor.id === value) || null}
-                                        onChange={(_, newValue) => {
-                                            onChange(newValue ? newValue.id : null);
-                                        }}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label={watchTransactionType === 'income' ? "Donor" : "Paid To"}
-                                                error={!!errors.donor}
-                                                helperText={errors.donor?.message}
-                                                InputProps={{
-                                                    ...params.InputProps,
-                                                    startAdornment: (
-                                                        <>
-                                                            <InputAdornment position="start">
-                                                                <Person />
-                                                            </InputAdornment>
-                                                            {params.InputProps.startAdornment}
-                                                        </>
-                                                    ),
-                                                }}
-                                            />
-                                        )}
-                                    />
-                                )}
-                            />
+                            {renderRecipientField()}
                         </Grid>
 
                         {/* Reference Number */}
@@ -554,6 +846,13 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                                         placeholder="Check #, Invoice #, etc."
                                         error={!!errors.reference_number}
                                         helperText={errors.reference_number?.message}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Receipt fontSize="small" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
                                     />
                                 )}
                             />
