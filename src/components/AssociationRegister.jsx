@@ -45,8 +45,10 @@ import {
     WarningAmber,
     DeleteOutline,
     RestartAlt,
-    HelpOutline
+    HelpOutline,
+    Person
 } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -72,6 +74,30 @@ const schema = yup.object({
     email: yup.string()
         .email('Format d\'email invalide')
         .required('L\'email est obligatoire'),
+
+    president_email: yup.string()
+        .email('Format d\'email invalide')
+        .required('L\'email du président est obligatoire'),
+
+    president_name: yup.string()
+        .required('Le nom du président est obligatoire')
+        .min(3, 'Le nom doit contenir au moins 3 caractères'),
+
+    treasurer_email: yup.string()
+        .email('Format d\'email invalide')
+        .required('L\'email du trésorier est obligatoire'),
+
+    treasurer_name: yup.string()
+        .required('Le nom du trésorier est obligatoire')
+        .min(3, 'Le nom doit contenir au moins 3 caractères'),
+
+    secretary_email: yup.string()
+        .email('Format d\'email invalide')
+        .required('L\'email du secrétaire général est obligatoire'),
+
+    secretary_name: yup.string()
+        .required('Le nom du secrétaire général est obligatoire')
+        .min(3, 'Le nom doit contenir au moins 3 caractères'),
 
     matricule_fiscal: yup.string()
         .required('Le matricule fiscal est obligatoire')
@@ -363,6 +389,19 @@ const RegisterAssociation = () => {
         // Add each field individually to FormData
         formDataObj.append('name', data.name);
         formDataObj.append('email', data.email);
+
+        // Add president data
+        formDataObj.append('president_email', data.president_email);
+        formDataObj.append('president_name', data.president_name);
+
+        // Add treasurer data
+        formDataObj.append('treasurer_email', data.treasurer_email);
+        formDataObj.append('treasurer_name', data.treasurer_name);
+
+        // Add secretary data
+        formDataObj.append('secretary_email', data.secretary_email);
+        formDataObj.append('secretary_name', data.secretary_name);
+
         formDataObj.append('matricule_fiscal', data.matricule_fiscal);
 
         // Handle file fields separately
@@ -374,7 +413,7 @@ const RegisterAssociation = () => {
             const response = await AxiosInstance.post('/users/register-association/', formDataObj, {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 timeout: 60000 // 60 sec timeout for large files
-            });
+            })
 
             // Store the registered association data from response
             // The response already includes verification status from the backend
@@ -522,7 +561,20 @@ const RegisterAssociation = () => {
 
     // Get percentage of form completion
     const getCompletionPercentage = () => {
-        const fields = ['name', 'email', 'matricule_fiscal', 'cin_recto', 'cin_verso', 'rne_document'];
+        const fields = [
+            'name',
+            'email',
+            'president_email',
+            'president_name',
+            'treasurer_email',
+            'treasurer_name',
+            'secretary_email',
+            'secretary_name',
+            'matricule_fiscal',
+            'cin_recto',
+            'cin_verso',
+            'rne_document'
+        ];
         const completed = fields.filter(field => watch(field)).length;
         return Math.round((completed / fields.length) * 100);
     };
@@ -1691,21 +1743,159 @@ const RegisterAssociation = () => {
                                                         />
                                                     </Box>
 
-                                                    {/* Email Field */}
+                                                    {/* Association Email Field */}
                                                     <Box className="input-group" sx={{ mb: 3 }}>
                                                         <FormField
-                                                            label="Adresse email"
+                                                            label="Adresse email de l'association"
                                                             name="email"
                                                             type="email"
                                                             control={control}
                                                             fullWidth
-                                                            placeholder="votre.email@exemple.com"
+                                                            placeholder="association@exemple.com"
                                                             error={!!errors.email}
                                                             helperText={errors.email?.message}
                                                             InputProps={{
                                                                 startAdornment: (
                                                                     <InputAdornment position="start">
                                                                         <Email style={{ color: '#0d47a1' }} />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    {/* President Information Section */}
+                                                    <Typography variant="subtitle1" sx={{ mt: 3, mb: 2, fontWeight: 'bold', color: '#4caf50' }}>
+                                                        Information du Président
+                                                    </Typography>
+
+                                                    {/* President Name Field */}
+                                                    <Box className="input-group" sx={{ mb: 3 }}>
+                                                        <FormField
+                                                            label="Nom complet du Président"
+                                                            name="president_name"
+                                                            control={control}
+                                                            fullWidth
+                                                            placeholder="Prénom et nom du président"
+                                                            error={!!errors.president_name}
+                                                            helperText={errors.president_name?.message}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <Person style={{ color: '#4caf50' }} />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    {/* President Email Field */}
+                                                    <Box className="input-group" sx={{ mb: 3 }}>
+                                                        <FormField
+                                                            label="Email du Président"
+                                                            name="president_email"
+                                                            type="email"
+                                                            control={control}
+                                                            fullWidth
+                                                            placeholder="president@exemple.com"
+                                                            error={!!errors.president_email}
+                                                            helperText={errors.president_email?.message}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <Email style={{ color: '#4caf50' }} />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    {/* Treasurer Information Section */}
+                                                    <Typography variant="subtitle1" sx={{ mt: 3, mb: 2, fontWeight: 'bold', color: '#ff9800' }}>
+                                                        Information du Trésorier
+                                                    </Typography>
+
+                                                    {/* Treasurer Name Field */}
+                                                    <Box className="input-group" sx={{ mb: 3 }}>
+                                                        <FormField
+                                                            label="Nom complet du Trésorier"
+                                                            name="treasurer_name"
+                                                            control={control}
+                                                            fullWidth
+                                                            placeholder="Prénom et nom du trésorier"
+                                                            error={!!errors.treasurer_name}
+                                                            helperText={errors.treasurer_name?.message}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <Person style={{ color: '#ff9800' }} />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    {/* Treasurer Email Field */}
+                                                    <Box className="input-group" sx={{ mb: 3 }}>
+                                                        <FormField
+                                                            label="Email du Trésorier"
+                                                            name="treasurer_email"
+                                                            type="email"
+                                                            control={control}
+                                                            fullWidth
+                                                            placeholder="tresorier@exemple.com"
+                                                            error={!!errors.treasurer_email}
+                                                            helperText={errors.treasurer_email?.message}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <Email style={{ color: '#ff9800' }} />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    {/* Secretary Information Section */}
+                                                    <Typography variant="subtitle1" sx={{ mt: 3, mb: 2, fontWeight: 'bold', color: '#f44336' }}>
+                                                        Information du Secrétaire Général
+                                                    </Typography>
+
+                                                    {/* Secretary Name Field */}
+                                                    <Box className="input-group" sx={{ mb: 3 }}>
+                                                        <FormField
+                                                            label="Nom complet du Secrétaire Général"
+                                                            name="secretary_name"
+                                                            control={control}
+                                                            fullWidth
+                                                            placeholder="Prénom et nom du secrétaire"
+                                                            error={!!errors.secretary_name}
+                                                            helperText={errors.secretary_name?.message}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <Person style={{ color: '#f44336' }} />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    {/* Secretary Email Field */}
+                                                    <Box className="input-group" sx={{ mb: 3 }}>
+                                                        <FormField
+                                                            label="Email du Secrétaire Général"
+                                                            name="secretary_email"
+                                                            type="email"
+                                                            control={control}
+                                                            fullWidth
+                                                            placeholder="secretaire@exemple.com"
+                                                            error={!!errors.secretary_email}
+                                                            helperText={errors.secretary_email?.message}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <Email style={{ color: '#f44336' }} />
                                                                     </InputAdornment>
                                                                 ),
                                                             }}
@@ -1734,6 +1924,11 @@ const RegisterAssociation = () => {
                                                     <Alert severity="info" sx={{ mt: 2, fontSize: '0.85rem' }}>
                                                         Le matricule fiscal sera automatiquement vérifié dans votre document RNE.
                                                         Assurez-vous qu'il soit identique.
+                                                    </Alert>
+
+                                                    {/* Additional info about the email fields */}
+                                                    <Alert severity="info" sx={{ mt: 2, fontSize: '0.85rem' }}>
+                                                        Les informations du Président, Trésorier et Secrétaire Général seront utilisées pour créer automatiquement des comptes avec les rôles appropriés après vérification de l'association.
                                                     </Alert>
                                                 </>
                                             )}
