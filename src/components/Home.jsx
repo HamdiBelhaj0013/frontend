@@ -668,7 +668,7 @@ const Home = () => {
                                     <AccountBalance /> Utilisation des Budgets
                                 </SectionTitle>
                                 <Button
-                                    onClick={() => navigate('/finances', { state: { activeTab: 2 } })}
+                                    onClick={() => navigate('/finance', { state: { activeTab: 2 } })}
                                     endIcon={<ArrowForward />}
                                     size="small"
                                 >

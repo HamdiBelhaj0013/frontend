@@ -164,9 +164,24 @@ const Projects = () => {
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
+    // Add view dialog state
+    const [openViewDialog, setOpenViewDialog] = useState(false);
+    const [selectedProject, setSelectedProject] = useState(null);
+
     const theme = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // View dialog handlers
+    const handleOpenViewDialog = (project) => {
+        setSelectedProject(project);
+        setOpenViewDialog(true);
+    };
+
+    const handleCloseViewDialog = () => {
+        setOpenViewDialog(false);
+        setSelectedProject(null);
+    };
 
     // Function to fetch data
     const fetchData = async () => {
@@ -513,7 +528,19 @@ const Projects = () => {
                         })}
                         renderRowActions={({ row }) => (
                             <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <Tooltip title="View/Edit Project">
+                                <Tooltip title="View Project">
+                                    <IconButton
+                                        color="info"
+                                        onClick={() => handleOpenViewDialog(row.original)}
+                                        sx={{
+                                            bgcolor: alpha(theme.palette.info.main, 0.1),
+                                            '&:hover': { bgcolor: alpha(theme.palette.info.main, 0.2) }
+                                        }}
+                                    >
+                                        <VisibilityIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit Project">
                                     <IconButton
                                         color="primary"
                                         component={Link}
@@ -620,11 +647,20 @@ const Projects = () => {
                                             variant="outlined"
                                             size="small"
                                             startIcon={<VisibilityIcon />}
+                                            onClick={() => handleOpenViewDialog(project)}
+                                            sx={{ borderRadius: '8px' }}
+                                        >
+                                            View
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            startIcon={<EditIcon />}
                                             component={Link}
                                             to={`/projects/edit/${project.id}`}
                                             sx={{ borderRadius: '8px' }}
                                         >
-                                            View
+                                            Edit
                                         </Button>
                                         <Button
                                             variant="outlined"
@@ -643,6 +679,99 @@ const Projects = () => {
                     </Box>
                 </motion.div>
             )}
+
+            {/* View Project Dialog */}
+            <Dialog
+                open={openViewDialog}
+                onClose={handleCloseViewDialog}
+                maxWidth="md"
+                PaperProps={{
+                    sx: {
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                    }
+                }}
+            >
+                <DialogTitle sx={{
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                }}>
+                    <BusinessIcon color="primary" />
+                    <Typography variant="h6" component="span" color="primary.main">
+                        Project Details
+                    </Typography>
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2, minWidth: 400 }}>
+                    {selectedProject && (
+                        <Box>
+                            <Typography variant="h5" gutterBottom fontWeight="bold">
+                                {selectedProject.name}
+                            </Typography>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <StatusChip
+                                    label={selectedProject.status}
+                                    status={selectedProject.status}
+                                    size="small"
+                                />
+                            </Box>
+
+                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                Description
+                            </Typography>
+                            <Typography variant="body1" paragraph>
+                                {selectedProject.description}
+                            </Typography>
+
+                            <Box sx={{ mt: 3, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                        Budget
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {formatCurrency(selectedProject.budget)}
+                                    </Typography>
+                                </Box>
+
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                        Timeline
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedProject.start_date ? Dayjs(selectedProject.start_date).format('DD MMM YYYY') : 'No start date'}
+                                        {' — '}
+                                        {selectedProject.end_date ? Dayjs(selectedProject.end_date).format('DD MMM YYYY') : 'No end date'}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 3 }}>
+                    <Button
+                        onClick={handleCloseViewDialog}
+                        variant="outlined"
+                        sx={{ borderRadius: '8px' }}
+                    >
+                        Close
+                    </Button>
+                    <Button
+                        component={Link}
+                        to={`/projects/edit/${selectedProject?.id}`}
+                        color="primary"
+                        variant="contained"
+                        startIcon={<EditIcon />}
+                        sx={{
+                            borderRadius: '8px',
+                            px: 3
+                        }}
+                    >
+                        Edit Project
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog

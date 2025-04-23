@@ -25,7 +25,9 @@ import {
     Card,
     CardContent,
     CardActions,
-    Badge
+    Badge,
+    Grid,
+    Divider
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
@@ -36,7 +38,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewIcon from '@mui/icons-material/GridView';
@@ -48,6 +49,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PublicIcon from '@mui/icons-material/Public';
 import CakeIcon from '@mui/icons-material/Cake';
 import EventIcon from '@mui/icons-material/Event';
+import CloseIcon from '@mui/icons-material/Close';
 
 // Styled components
 const HeaderContainer = styled(Box)(({ theme }) => ({
@@ -155,6 +157,24 @@ const MemberCardHeader = styled(Box)(({ theme }) => ({
     }
 }));
 
+const DetailItem = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+    marginBottom: theme.spacing(2),
+}));
+
+const DetailIcon = styled(Box)(({ theme }) => ({
+    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    borderRadius: '8px',
+    width: 36,
+    height: 36,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: theme.palette.primary.main
+}));
+
 const Members = () => {
     // State initialization
     const [myData, setMyData] = useState([]);
@@ -165,6 +185,10 @@ const Members = () => {
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [memberToDelete, setMemberToDelete] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+
+    // New state for view member dialog
+    const [openViewDialog, setOpenViewDialog] = useState(false);
+    const [selectedMember, setSelectedMember] = useState(null);
 
     const theme = useTheme();
     const navigate = useNavigate();
@@ -217,6 +241,17 @@ const Members = () => {
         setOpenDeleteDialog(false);
         setMemberToDelete(null);
         setDeleteConfirmText('');
+    };
+
+    // Handle view member dialog
+    const handleOpenViewDialog = (member) => {
+        setSelectedMember(member);
+        setOpenViewDialog(true);
+    };
+
+    const handleCloseViewDialog = () => {
+        setOpenViewDialog(false);
+        setSelectedMember(null);
     };
 
     const handleDeleteMember = async () => {
@@ -462,7 +497,7 @@ const Members = () => {
                                 }
                             }}
                         >
-                            <RefreshIcon />
+
                         </IconButton>
                     </Tooltip>
                 </Box>
@@ -542,7 +577,19 @@ const Members = () => {
                         })}
                         renderRowActions={({ row }) => (
                             <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <Tooltip title="View/Edit Member">
+                                <Tooltip title="View Member Details">
+                                    <IconButton
+                                        color="info"
+                                        onClick={() => handleOpenViewDialog(row.original)}
+                                        sx={{
+                                            bgcolor: alpha(theme.palette.info.main, 0.1),
+                                            '&:hover': { bgcolor: alpha(theme.palette.info.main, 0.2) }
+                                        }}
+                                    >
+                                        <VisibilityIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit Member">
                                     <IconButton
                                         color="primary"
                                         component={Link}
@@ -654,11 +701,20 @@ const Members = () => {
                                             variant="outlined"
                                             size="small"
                                             startIcon={<VisibilityIcon />}
+                                            onClick={() => handleOpenViewDialog(member)}
+                                            sx={{ borderRadius: '8px' }}
+                                        >
+                                            View
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            startIcon={<EditIcon />}
                                             component={Link}
                                             to={`/member/editmember/${member.id}`}
                                             sx={{ borderRadius: '8px' }}
                                         >
-                                            View
+                                            Edit
                                         </Button>
                                         <Button
                                             variant="outlined"
@@ -677,6 +733,232 @@ const Members = () => {
                     </Box>
                 </motion.div>
             )}
+
+            {/* Member View Dialog */}
+            <Dialog
+                open={openViewDialog}
+                onClose={handleCloseViewDialog}
+                maxWidth="md"
+                PaperProps={{
+                    sx: {
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                        overflowX: 'hidden'
+                    }
+                }}
+            >
+                {selectedMember && (
+                    <>
+                        <Box sx={{ position: 'relative' }}>
+                            <Box sx={{
+                                bgcolor: theme.palette.primary.main,
+                                height: '120px',
+                                width: '100%',
+                                backgroundImage: 'linear-gradient(135deg, #00897B, #00695C)',
+                                position: 'relative',
+                                '&::after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 80%)',
+                                    zIndex: 0,
+                                }
+                            }} />
+
+                            <IconButton
+                                onClick={handleCloseViewDialog}
+                                sx={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    color: 'white',
+                                    bgcolor: 'rgba(0,0,0,0.2)',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(0,0,0,0.3)'
+                                    }
+                                }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+
+                            <Avatar
+                                sx={{
+                                    bgcolor: theme.palette.primary.main,
+                                    width: 100,
+                                    height: 100,
+                                    fontSize: '2.5rem',
+                                    fontWeight: 'bold',
+                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                    border: `4px solid ${theme.palette.background.paper}`,
+                                    position: 'absolute',
+                                    top: 70,
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 1
+                                }}
+                            >
+                                {getInitials(selectedMember.name)}
+                            </Avatar>
+                        </Box>
+
+                        <DialogContent sx={{ pt: 7, pb: 3, px: { xs: 2, sm: 4 }, width: { xs: '100%', sm: 600 } }}>
+                            <Box sx={{ textAlign: 'center', mb: 3 }}>
+                                <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom>
+                                    {selectedMember.name}
+                                </Typography>
+
+                                <RoleChip
+                                    label={selectedMember.role || 'Member'}
+                                    role={selectedMember.role}
+                                    sx={{ mt: 1 }}
+                                />
+                            </Box>
+
+                            <Divider sx={{ my: 3 }} />
+
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} sm={6}>
+                                    <DetailItem>
+                                        <DetailIcon>
+                                            <WorkIcon color="inherit" />
+                                        </DetailIcon>
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                Job
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {selectedMember.job || 'Not provided'}
+                                            </Typography>
+                                        </Box>
+                                    </DetailItem>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <DetailItem>
+                                        <DetailIcon>
+                                            <PublicIcon color="inherit" />
+                                        </DetailIcon>
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                Nationality
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {selectedMember.nationality || 'Not provided'}
+                                            </Typography>
+                                        </Box>
+                                    </DetailItem>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <DetailItem>
+                                        <DetailIcon>
+                                            <CakeIcon color="inherit" />
+                                        </DetailIcon>
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                Birth Date
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {selectedMember.birth_date ? Dayjs(selectedMember.birth_date).format('DD-MM-YYYY') : 'Not provided'}
+                                            </Typography>
+                                        </Box>
+                                    </DetailItem>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <DetailItem>
+                                        <DetailIcon>
+                                            <EventIcon color="inherit" />
+                                        </DetailIcon>
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                Joining Date
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {selectedMember.joining_date ? Dayjs(selectedMember.joining_date).format('DD-MM-YYYY') : 'Not provided'}
+                                            </Typography>
+                                        </Box>
+                                    </DetailItem>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <DetailItem>
+                                        <DetailIcon>
+                                            <HomeIcon color="inherit" />
+                                        </DetailIcon>
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                Address
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {selectedMember.address || 'Not provided'}
+                                            </Typography>
+                                        </Box>
+                                    </DetailItem>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <DetailItem>
+                                        <DetailIcon>
+                                            <AdminPanelSettingsIcon color="inherit" />
+                                        </DetailIcon>
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                Status
+                                            </Typography>
+                                            <Chip
+                                                label={selectedMember.active ? 'Active' : 'Inactive'}
+                                                color={selectedMember.active ? 'success' : 'default'}
+                                                size="small"
+                                                sx={{ mt: 0.5 }}
+                                            />
+                                        </Box>
+                                    </DetailItem>
+                                </Grid>
+                            </Grid>
+
+                            {selectedMember.notes && (
+                                <>
+                                    <Divider sx={{ my: 3 }} />
+                                    <Box>
+                                        <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
+                                            Notes:
+                                        </Typography>
+                                        <Paper sx={{ p: 2, bgcolor: alpha(theme.palette.background.default, 0.6), borderRadius: '8px' }}>
+                                            <Typography variant="body2">
+                                                {selectedMember.notes}
+                                            </Typography>
+                                        </Paper>
+                                    </Box>
+                                </>
+                            )}
+                        </DialogContent>
+
+                        <DialogActions sx={{ px: 4, pb: 3, justifyContent: 'space-between' }}>
+                            <Button
+                                onClick={handleCloseViewDialog}
+                                variant="outlined"
+                                sx={{ borderRadius: '8px' }}
+                            >
+                                Close
+                            </Button>
+                            <Button
+                                component={Link}
+                                to={`/member/editmember/${selectedMember.id}`}
+                                variant="contained"
+                                color="primary"
+                                startIcon={<EditIcon />}
+                                sx={{ borderRadius: '8px' }}
+                            >
+                                Edit Member
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog
