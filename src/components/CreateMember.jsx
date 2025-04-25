@@ -208,15 +208,23 @@ const CreateMember = () => {
             .substring(0, 2);
     };
 
+// Update the submission function in CreateMember.jsx
     const submission = async (data) => {
         setLoading(true);
         setError(null);
         try {
-            await AxiosInstance.post('/api/member/', {
+            // Create the data object with all required fields
+            const memberData = {
                 ...data,
                 birth_date: data.birth_date ? Dayjs(data.birth_date).format('YYYY-MM-DD') : null,
                 joining_date: data.joining_date ? Dayjs(data.joining_date).format('YYYY-MM-DD') : null,
-            });
+                needs_profile_completion: false
+            };
+
+            console.log("Submitting member data:", memberData);
+
+            const response = await AxiosInstance.post('/api/member/', memberData);
+
             setSuccess(true);
             reset();
             setTimeout(() => {
@@ -228,8 +236,34 @@ const CreateMember = () => {
                 });
             }, 1500);
         } catch (err) {
-            setError(err.response?.data?.message || 'An error occurred while creating the member. Please try again.');
-            console.error(err);
+            console.error('Error creating member:', err);
+
+            // Handle different types of error responses
+            let errorMessage;
+            if (err.response) {
+                if (typeof err.response.data === 'object') {
+                    // Handle object errors (field-specific errors)
+                    errorMessage = Object.entries(err.response.data)
+                        .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                        .join('; ');
+                } else if (err.response.data.error) {
+                    // Handle error property
+                    errorMessage = err.response.data.error;
+                } else if (err.response.data.detail) {
+                    // Handle detail property
+                    errorMessage = err.response.data.detail;
+                } else if (typeof err.response.data === 'string') {
+                    // Handle string error
+                    errorMessage = err.response.data;
+                } else {
+                    // Default error
+                    errorMessage = 'An error occurred while creating the member. Please try again.';
+                }
+            } else {
+                errorMessage = 'Network error. Please check your connection and try again.';
+            }
+
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

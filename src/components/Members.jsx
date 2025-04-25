@@ -34,6 +34,8 @@ import { motion } from 'framer-motion';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 // Icons
+import InfoIcon from '@mui/icons-material/Info';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
@@ -301,83 +303,54 @@ const Members = () => {
                 accessorKey: 'name',
                 header: 'Name',
                 size: 170,
-                Cell: ({ cell, row }) => (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
+                Cell: ({cell, row}) => (
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        <Badge
+                            invisible={!row.original.needs_profile_completion}
+                            badgeContent={<ErrorOutlineIcon fontSize="small"/>}
+                            color="warning"
+                            overlap="circular"
+                            anchorOrigin={{vertical: 'top', horizontal: 'right'}}
                             sx={{
-                                bgcolor: theme.palette.primary.main,
-                                width: 36,
-                                height: 36
+                                '& .MuiBadge-badge': {
+                                    backgroundColor: theme.palette.warning.main,
+                                    color: 'white',
+                                    width: 14,
+                                    height: 14,
+                                    minWidth: 14,
+                                    right: 6
+                                }
                             }}
                         >
-                            {getInitials(cell.getValue())}
-                        </Avatar>
+                            <Avatar
+                                sx={{
+                                    bgcolor: theme.palette.primary.main,
+                                    width: 36,
+                                    height: 36
+                                }}
+                            >
+                                {getInitials(cell.getValue())}
+                            </Avatar>
+                        </Badge>
                         <Box>
                             <Typography fontWeight={500}>{cell.getValue()}</Typography>
                             <Typography variant="caption" color="text.secondary">
                                 {row.original.email}
                             </Typography>
+                            {row.original.needs_profile_completion && (
+                                <Chip
+                                    label="Needs completion"
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    sx={{mt: 0.5, height: 20, '& .MuiChip-label': {px: 0.5, py: 0}}}
+                                />
+                            )}
                         </Box>
                     </Box>
                 ),
             },
-            {
-                accessorKey: 'role',
-                header: 'Role',
-                size: 150,
-                Cell: ({ cell }) => (
-                    <RoleChip
-                        label={cell.getValue() || 'Member'}
-                        role={cell.getValue()}
-                        size="small"
-                    />
-                ),
-            },
-            {
-                accessorKey: 'job',
-                header: 'Job',
-                size: 150,
-                Cell: ({ cell }) => (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <WorkIcon fontSize="small" color="action" />
-                        <Typography variant="body2">{cell.getValue() || '-'}</Typography>
-                    </Box>
-                ),
-            },
-            {
-                accessorKey: 'nationality',
-                header: 'Nationality',
-                size: 130,
-                Cell: ({ cell }) => (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PublicIcon fontSize="small" color="action" />
-                        <Typography variant="body2">{cell.getValue() || '-'}</Typography>
-                    </Box>
-                ),
-            },
-            {
-                accessorFn: (row) => row.birth_date ? Dayjs(row.birth_date).format('DD-MM-YYYY') : '-',
-                header: 'Birth Date',
-                size: 120,
-                Cell: ({ cell }) => (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CakeIcon fontSize="small" color="action" />
-                        <Typography variant="body2">{cell.getValue()}</Typography>
-                    </Box>
-                ),
-            },
-            {
-                accessorFn: (row) => row.joining_date ? Dayjs(row.joining_date).format('DD-MM-YYYY') : '-',
-                header: 'Joined',
-                size: 120,
-                Cell: ({ cell }) => (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <EventIcon fontSize="small" color="action" />
-                        <Typography variant="body2">{cell.getValue()}</Typography>
-                    </Box>
-                ),
-            }
-        ],
+            ],
         [theme]
     );
 
@@ -642,6 +615,30 @@ const Members = () => {
                                 <MemberCard>
                                     <MemberCardHeader />
 
+                                    {/* Add badge for profiles that need completion */}
+                                    {member.needs_profile_completion && (
+                                        <Box
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 10,
+                                                right: 10,
+                                                zIndex: 2
+                                            }}
+                                        >
+                                            <Tooltip title="This profile needs to be completed">
+                                                <Badge
+                                                    badgeContent={
+                                                        <ErrorOutlineIcon fontSize="small" sx={{ color: theme.palette.warning.main }} />
+                                                    }
+                                                    overlap="circular"
+                                                    color="warning"
+                                                >
+                                                    <Box width={24} height={24} />
+                                                </Badge>
+                                            </Tooltip>
+                                        </Box>
+                                    )}
+
                                     <MemberAvatar>
                                         {getInitials(member.name)}
                                     </MemberAvatar>
@@ -657,6 +654,26 @@ const Members = () => {
                                             size="small"
                                             sx={{ mb: 2 }}
                                         />
+
+                                        {/* Add notification banner for profiles that need completion */}
+                                        {member.needs_profile_completion && (
+                                            <Box
+                                                sx={{
+                                                    bgcolor: alpha(theme.palette.warning.main, 0.1),
+                                                    p: 1,
+                                                    borderRadius: '6px',
+                                                    mb: 2,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1
+                                                }}
+                                            >
+                                                <InfoIcon fontSize="small" color="warning" />
+                                                <Typography variant="caption" color="warning.main">
+                                                    Profile needs to be completed
+                                                </Typography>
+                                            </Box>
+                                        )}
 
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, justifyContent: 'center' }}>
                                             <WorkIcon fontSize="small" color="action" sx={{ mr: 1 }} />

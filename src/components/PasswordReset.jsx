@@ -64,7 +64,7 @@ const PasswordReset = () => {
             });
 
             setTimeout(() => {
-                navigate('/login');
+                navigate('/');
             }, 5000);
         } catch (error) {
             setResetError("Jeton invalide ou expiré. Veuillez demander un nouveau lien de réinitialisation.");
@@ -337,7 +337,7 @@ const PasswordReset = () => {
                         transition={{ duration: 0.5, delay: 1.5 }}
                     >
                         <Typography className="signup-prompt">
-                            Vous vous souvenez de votre mot de passe? <Link to="/login" className="signup-link">Connexion</Link>
+                            Vous vous souvenez de votre mot de passe? <Link to="/" className="signup-link">Connexion</Link>
                         </Typography>
                     </motion.div>
                 </motion.form>
