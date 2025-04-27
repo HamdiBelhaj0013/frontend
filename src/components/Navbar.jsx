@@ -33,6 +33,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import { useColorMode } from '../contexts/ThemeContext';
 
 // Icons
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'
 import MenuIcon from '@mui/icons-material/Menu';
 import InfoIcon from '@mui/icons-material/Info';
 import GroupIcon from '@mui/icons-material/Group';
@@ -295,6 +296,7 @@ const pages = [
     { name: 'Dashboard', path: '/home', icon: <DashboardIcon /> },
     { name: 'Projects', path: '/projects', icon: <BusinessIcon />, hasNotification: true },
     { name: 'Members', path: '/members', icon: <GroupIcon /> },
+    {name: 'Pending Users' , path: '/pending-users' , icon: <HourglassEmptyIcon />},
     { name: 'Finance', path: '/finance', icon: <AccountBalanceIcon /> },
     { name: 'Volunteer', path: '/volunteer', icon: <VolunteerActivismIcon /> },
     {name: 'AI Assitance' , path: '/chatbot' , icon: <SmartToyIcon />},
@@ -571,56 +573,66 @@ export default function NavBar(props) {
             </Box>
 
             <List sx={{ mt: 1, px: 1, flexGrow: 1, overflowY: 'auto' }}>
-                {pages.map((page, index) => (
-                    <ListItem key={page.name} disablePadding sx={{ mb: 0.5 }}>
-                        <ActiveNavItem
-                            component={Link}
-                            to={page.path}
-                            selected={page.path === location.pathname}
-                            onClick={isMobile ? handleDrawerToggle : undefined}
-                            disableRipple
-                            sx={{
-                                transition: 'all 0.3s ease',
-                                transform: 'scale(1)',
-                                '&:hover': {
-                                    transform: 'scale(1.02) translateX(4px)'
-                                }
-                            }}
-                        >
-                            <ListItemIcon sx={{
-                                minWidth: 40,
-                                color: page.path === location.pathname ?
-                                    theme.palette.primary.main :
-                                    alpha(theme.palette.text.primary, 0.7)
-                            }}>
-                                {page.icon}
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={page.name}
-                                primaryTypographyProps={{
-                                    fontSize: 15,
-                                    fontWeight: page.path === location.pathname ? 600 : 400
-                                }}
-                            />
+                {pages.map((page) => {
+                    // Skip the pending users page for non-admin users
+                    if (page.path === '/pending-users' &&
+                        !(userRole === 'Super Admin' || userRole === 'Admin' ||
+                            userRole === 'President' || userRole === 'Treasurer' ||
+                            userRole === 'Secretary')) {
+                        return null;
+                    }
 
-                            {/* Show notification badge */}
-                            {page.hasNotification && (
-                                <Box component="span">
-                                    <Badge
-                                        color="error"
-                                        variant="dot"
-                                        sx={{
-                                            '& .MuiBadge-dot': {
-                                                transform: 'scale(1.2)',
-                                                boxShadow: '0 0 0 2px ' + (darkMode ? '#2d2d2d' : '#ffffff')
-                                            }
-                                        }}
-                                    />
-                                </Box>
-                            )}
-                        </ActiveNavItem>
-                    </ListItem>
-                ))}
+                    return (
+                        <ListItem key={page.name} disablePadding sx={{ mb: 0.5 }}>
+                            <ActiveNavItem
+                                component={Link}
+                                to={page.path}
+                                selected={page.path === location.pathname}
+                                onClick={isMobile ? handleDrawerToggle : undefined}
+                                disableRipple
+                                sx={{
+                                    transition: 'all 0.3s ease',
+                                    transform: 'scale(1)',
+                                    '&:hover': {
+                                        transform: 'scale(1.02) translateX(4px)'
+                                    }
+                                }}
+                            >
+                                <ListItemIcon sx={{
+                                    minWidth: 40,
+                                    color: page.path === location.pathname ?
+                                        theme.palette.primary.main :
+                                        alpha(theme.palette.text.primary, 0.7)
+                                }}>
+                                    {page.icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={page.name}
+                                    primaryTypographyProps={{
+                                        fontSize: 15,
+                                        fontWeight: page.path === location.pathname ? 600 : 400
+                                    }}
+                                />
+
+                                {/* Show notification badge */}
+                                {page.hasNotification && (
+                                    <Box component="span">
+                                        <Badge
+                                            color="error"
+                                            variant="dot"
+                                            sx={{
+                                                '& .MuiBadge-dot': {
+                                                    transform: 'scale(1.2)',
+                                                    boxShadow: '0 0 0 2px ' + (darkMode ? '#2d2d2d' : '#ffffff')
+                                                }
+                                            }}
+                                        />
+                                    </Box>
+                                )}
+                            </ActiveNavItem>
+                        </ListItem>
+                    );
+                })}
             </List>
 
             <Box sx={{

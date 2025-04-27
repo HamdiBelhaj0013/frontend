@@ -56,7 +56,7 @@ const formatDate = (dateString) => {
     return dayjs(dateString).format('DD/MM/YYYY');
 };
 
-// Report generation dialog component
+// Report generation dialog component with improved validation and error handling
 const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
     const [formData, setFormData] = useState({
         report_type: 'monthly',
@@ -67,6 +67,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [generatingReport, setGeneratingReport] = useState(false);
 
     // Reset form when dialog opens
     useEffect(() => {
@@ -79,6 +80,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                 notes: ''
             });
             setError('');
+            setGeneratingReport(false);
         }
     }, [open]);
 
@@ -158,6 +160,9 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
         if (!validateForm()) return;
 
         setLoading(true);
+        setGeneratingReport(true);
+        setError('');
+
         try {
             const payload = {
                 report_type: formData.report_type,
@@ -171,19 +176,40 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                 payload.end_date = dayjs(formData.end_date).format('YYYY-MM-DD');
             }
 
-            await AxiosInstance.post('/finances/financial-reports/generate_report/', payload);
+            console.log("Sending report generation request:", payload);
+
+            const response = await AxiosInstance.post('/finances/financial-reports/generate_report/', payload);
+            console.log("Report generation response:", response.data);
+
             onSuccess();
             onClose();
         } catch (err) {
             console.error('Error generating report:', err);
-            setError(err.response?.data?.error || 'Failed to generate report');
+            let errorMessage = 'Failed to generate report';
+
+            if (err.response) {
+                if (err.response.data && err.response.data.error) {
+                    errorMessage = err.response.data.error;
+                } else if (err.response.status === 500) {
+                    errorMessage = 'Server error while generating report. Please try again later.';
+                }
+            }
+
+            setError(errorMessage);
         } finally {
             setLoading(false);
+            setGeneratingReport(false);
         }
     };
 
     return (
-        <Dialog open={open} onClose={loading ? undefined : onClose} maxWidth="md" fullWidth>
+        <Dialog
+            open={open}
+            onClose={loading ? undefined : onClose}
+            maxWidth="md"
+            fullWidth
+            disableEscapeKeyDown={loading}
+        >
             <DialogTitle>
                 <Box display="flex" alignItems="center">
                     <Description sx={{ mr: 1 }} />
@@ -199,6 +225,17 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                     </Alert>
                 )}
 
+                {generatingReport && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                            <Typography>
+                                Generating report... This may take a moment.
+                            </Typography>
+                        </Box>
+                    </Alert>
+                )}
+
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                         <FormControl fullWidth margin="normal">
@@ -208,6 +245,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                                 value={formData.report_type}
                                 onChange={handleChange}
                                 label="Report Type"
+                                disabled={loading}
                             >
                                 <MenuItem value="monthly">Monthly Report</MenuItem>
                                 <MenuItem value="quarterly">Quarterly Report</MenuItem>
@@ -225,6 +263,8 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                             margin="normal"
                             value={formData.title}
                             onChange={handleChange}
+                            disabled={loading}
+                            required
                         />
                     </Grid>
 
@@ -236,7 +276,14 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                                         label="Start Date"
                                         value={formData.start_date}
                                         onChange={(date) => handleDateChange('start_date', date)}
-                                        slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                margin: 'normal',
+                                                required: true,
+                                                disabled: loading
+                                            }
+                                        }}
                                     />
                                 </LocalizationProvider>
                             </Grid>
@@ -247,7 +294,14 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                                         label="End Date"
                                         value={formData.end_date}
                                         onChange={(date) => handleDateChange('end_date', date)}
-                                        slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                margin: 'normal',
+                                                required: true,
+                                                disabled: loading
+                                            }
+                                        }}
                                     />
                                 </LocalizationProvider>
                             </Grid>
@@ -264,6 +318,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                             margin="normal"
                             value={formData.notes}
                             onChange={handleChange}
+                            disabled={loading}
                         />
                     </Grid>
                 </Grid>
@@ -294,8 +349,9 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                     variant="contained"
                     color="primary"
                     disabled={loading}
+                    startIcon={loading ? <CircularProgress size={20} /> : null}
                 >
-                    {loading ? <CircularProgress size={24} /> : 'Generate Report'}
+                    {loading ? 'Generating...' : 'Generate Report'}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -430,9 +486,47 @@ const FinancialReports = ({ onRefresh }) => {
     };
 
     // Handle report download
+// Replace this function in FinancialReports.jsx
     const handleDownloadReport = (report) => {
-        if (report.report_file) {
-            window.open(report.report_file, '_blank');
+        if (report.id) {
+            // Get file from API download endpoint instead of direct URL
+            AxiosInstance.get(`/finances/financial-reports/${report.id}/download/`, {
+                responseType: 'blob'  // Important for file downloads
+            })
+                .then(response => {
+                    // Get filename from Content-Disposition header if available
+                    let filename;
+                    const contentDisposition = response.headers['content-disposition'];
+                    if (contentDisposition) {
+                        const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+                        if (fileNameMatch.length === 2) {
+                            filename = fileNameMatch[1];
+                        }
+                    }
+
+                    // Default filename if not found in header
+                    if (!filename) {
+                        filename = `report_${report.id}.xlsx`;
+                    }
+
+                    // Create a URL for the blob
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+
+                    // Create a temporary link element and trigger download
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', filename);
+                    document.body.appendChild(link);
+                    link.click();
+
+                    // Clean up
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('Error downloading report:', error);
+                    // You can add a notification here to show the user there was an error
+                });
         }
     };
 
@@ -445,12 +539,25 @@ const FinancialReports = ({ onRefresh }) => {
     };
 
     // Handle finalizing a report
+// Replace this function in FinancialReports.jsx
     const handleFinalizeReport = async (report) => {
         try {
-            await AxiosInstance.patch(`/finances/financial-reports/${report.id}/`, {
-                status: 'finalized'
-            });
-            fetchReports();
+            // Try to use PATCH first (this will work with the ModelViewSet change)
+            try {
+                await AxiosInstance.patch(`/finances/financial-reports/${report.id}/`, {
+                    status: 'finalized'
+                });
+                fetchReports();
+            } catch (err) {
+                // If PATCH fails, try the dedicated finalize endpoint
+                if (err.response && err.response.status === 405) {
+                    await AxiosInstance.post(`/finances/financial-reports/${report.id}/finalize/`);
+                    fetchReports();
+                } else {
+                    // If it's not a Method Not Allowed error, rethrow
+                    throw err;
+                }
+            }
         } catch (err) {
             console.error('Error finalizing report:', err);
             setError('Failed to finalize report');

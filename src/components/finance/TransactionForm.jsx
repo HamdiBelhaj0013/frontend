@@ -61,6 +61,9 @@ const expenseCategories = [
     { value: 'other_expense', label: 'Other Expense' }
 ];
 
+// Define income categories that don't need project association
+const nonProjectIncomeCategories = ['membership_fee', 'other_income'];
+
 // Common expense recipients based on the expense report
 const commonExpenseRecipients = [
     { id: 'team_member', name: 'Team Member' },
@@ -84,7 +87,7 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
-// Form validation schema
+// Form validation schema with conditional validation for project and donor
 const createTransactionSchema = yup.object({
     transaction_type: yup.string().required('Transaction type is required'),
     category: yup.string().required('Category is required'),
@@ -95,9 +98,15 @@ const createTransactionSchema = yup.object({
         .required('Amount is required'),
     description: yup.string().required('Description is required'),
     date: yup.date().required('Date is required'),
-    project: yup.number().when('is_project_wide', {
-        is: true,
-        then: schema => schema.required('Project is required for project-wide expenses')
+    // Project is required only for specific conditions:
+    // 1. For expenses that are project-wide
+    // 2. For income that is not membership fee or other income
+    project: yup.number().nullable().when(['transaction_type', 'category', 'is_project_wide'], {
+        is: (type, category, isProjectWide) =>
+            (type === 'expense' && isProjectWide) ||
+            (type === 'income' && !nonProjectIncomeCategories.includes(category)),
+        then: schema => schema.required('Project is required'),
+        otherwise: schema => schema.nullable()
     }),
     budget_allocation: yup.number().nullable(),
     paid_to: yup.string().nullable(), // For expense recipients
@@ -105,7 +114,13 @@ const createTransactionSchema = yup.object({
         is: 'non_member',
         then: schema => schema.required('Notes are required for non-member recipients')
     }),
-    donor: yup.number().nullable(),
+    // Donor is required only for specific conditions:
+    // For now, just for donations
+    donor: yup.number().nullable().when(['transaction_type', 'category'], {
+        is: (type, category) => type === 'income' && category === 'donation',
+        then: schema => schema.required('Donor is required for donations'),
+        otherwise: schema => schema.nullable()
+    }),
     reference_number: yup.string().nullable(),
     recipient_type: yup.string().when('transaction_type', {
         is: 'expense',
@@ -156,7 +171,13 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
     const watchProject = watch('project');
     const watchRecipientType = watch('recipient_type');
     const watchIsProjectWide = watch('is_project_wide');
-// Fetch team members from API
+
+    // Check if project is required
+    const isProjectRequired =
+        (watchTransactionType === 'expense' && watchIsProjectWide) ||
+        (watchTransactionType === 'income' && !nonProjectIncomeCategories.includes(watchCategory));
+
+    // Fetch team members from API
     useEffect(() => {
         const fetchTeamMembers = async () => {
             try {
@@ -231,6 +252,14 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
 
         fetchBudgetAllocations();
     }, [watchProject, setValue]);
+
+    // Update form when income category changes
+    useEffect(() => {
+        // If switched to a non-project income category, clear the project field
+        if (watchTransactionType === 'income' && nonProjectIncomeCategories.includes(watchCategory)) {
+            setValue('project', null);
+        }
+    }, [watchCategory, watchTransactionType, setValue]);
 
     // Reset form when modal opens
     useEffect(() => {
@@ -355,7 +384,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
             formData.append('description', data.description);
             formData.append('date', dayjs(data.date).format('YYYY-MM-DD'));
 
-            // Project is required if it's a project-wide expense
+            // Only include project if selected
             if (data.project !== null) {
                 formData.append('project', data.project);
             }
@@ -365,9 +394,12 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                 formData.append('budget_allocation', data.budget_allocation);
             }
 
-            // For income transactions, use donor field
-            if (data.transaction_type === 'income' && data.donor !== null) {
-                formData.append('donor', data.donor);
+            // For income transactions, always include donor field if available
+            if (data.transaction_type === 'income') {
+                if (data.donor !== null) {
+                    console.log("Adding donor ID to request:", data.donor);
+                    formData.append('donor', data.donor);
+                }
             }
             // For expense transactions with a recipient
             else if (data.transaction_type === 'expense' && data.paid_to) {
@@ -417,12 +449,20 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                 formData.append('document', selectedFile);
             }
 
+            // Log FormData entries for debugging
+            console.log("Submitting transaction with data:");
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
             // Submit form
-            await AxiosInstance.post('/finances/transactions/', formData, {
+            const response = await AxiosInstance.post('/finances/transactions/', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
+
+            console.log("Transaction saved successfully:", response.data);
 
             // Call success callback
             onSuccess();
@@ -436,6 +476,11 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
             setLoading(false);
         }
     };
+
+    // Determine if donor is required based on income category
+    const isDonorRequired =
+        watchTransactionType === 'income' &&
+        watchCategory === 'donation'; // Only require donor for donation category
 
     // Render recipient selection based on transaction type
     const renderRecipientField = () => {
@@ -452,13 +497,16 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                             value={donors.find(donor => donor.id === value) || null}
                             onChange={(_, newValue) => {
                                 onChange(newValue ? newValue.id : null);
+                                console.log("Donor selected:", newValue ? newValue.id : null);
                             }}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
-                                    label="Donor"
+                                    label={isDonorRequired ? "Donor (Required)" : "Donor"}
                                     error={!!errors.donor}
-                                    helperText={errors.donor?.message}
+                                    helperText={errors.donor?.message ||
+                                        (watchCategory === 'membership_fee' ?
+                                            "For membership fees, donor is optional" : "")}
                                     InputProps={{
                                         ...params.InputProps,
                                         startAdornment: (
@@ -754,7 +802,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                             </Divider>
                         </Grid>
 
-                        {/* Project - required if it's a project-wide expense */}
+                        {/* Project - only required for certain scenarios */}
                         <Grid item xs={12} sm={6}>
                             <Controller
                                 name="project"
@@ -767,12 +815,17 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                                         onChange={(_, newValue) => {
                                             onChange(newValue ? newValue.id : null);
                                         }}
+                                        disabled={watchTransactionType === 'income' && nonProjectIncomeCategories.includes(watchCategory)}
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
-                                                label={watchIsProjectWide ? "Related Project (Required)" : "Related Project"}
+                                                label={isProjectRequired ? "Related Project (Required)" : "Related Project"}
                                                 error={!!errors.project}
-                                                helperText={errors.project?.message}
+                                                helperText={
+                                                    errors.project?.message ||
+                                                    (watchTransactionType === 'income' && nonProjectIncomeCategories.includes(watchCategory) ?
+                                                        "Project not required for this income type" : "")
+                                                }
                                                 InputProps={{
                                                     ...params.InputProps,
                                                     startAdornment: (

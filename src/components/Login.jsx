@@ -7,12 +7,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { motion } from 'framer-motion';
 import Axios from './Axios.jsx';
+import { Button } from '@mui/material';
 import FormField from './forms/FormField';
 import MyButton from './forms/MyButton';
 import '../assets/Styles/login.css';
 import backgroundImage from '../assets/blue-stationery-table.jpg';
 import logo from '../assets/logowhite.png';
-
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 // Form validation schema
 const loginSchema = yup.object().shape({
     email: yup
@@ -136,25 +137,147 @@ const Login = () => {
                 navigate('/home');
             }, 1000);
 
-        } catch (error) {
+        }
+
+            // Replace the catch block in handleLogin function with this enhanced version
+
+        catch (error) {
             setLoading(false);
             console.error("Login Error:", error);
 
+            // More detailed debugging
+            console.log("Error full object:", error);
+            console.log("Error response exists:", !!error.response);
+            console.log("Error response status:", error.response?.status);
+
+            // Add more detailed logging to see exactly what's in the response
+            if (error.response && error.response.data) {
+                console.log("Response data type:", typeof error.response.data);
+                console.log("Raw response data:", error.response.data);
+
+                // If it's a string, log it directly
+                if (typeof error.response.data === 'string') {
+                    console.log("Response data as string:", error.response.data);
+                    // Try to parse it if it looks like JSON with single quotes
+                    if (error.response.data.includes("'error':")) {
+                        try {
+                            const fixedJson = error.response.data.replace(/'/g, '"');
+                            const parsedData = JSON.parse(fixedJson);
+                            console.log("Parsed from string:", parsedData);
+                        } catch (e) {
+                            console.log("Couldn't parse response data:", e);
+                        }
+                    }
+                }
+                // If it's an object, log its structure
+                else if (typeof error.response.data === 'object') {
+                    console.log("Response data keys:", Object.keys(error.response.data));
+                    console.log("Error field exists:", 'error' in error.response.data);
+                    if ('error' in error.response.data) {
+                        console.log("Error field value:", error.response.data.error);
+                    }
+                }
+            }
+
+            // EXTRA ROBUST VALIDATION MESSAGE DETECTION
+            // First check for the 403 status code
+            if (error.response && error.response.status === 403) {
+                console.log("403 Forbidden detected - Checking for validation message");
+
+                let messageToCheck = "";
+                const responseData = error.response.data;
+
+                // Handle different response formats
+                if (typeof responseData === 'string') {
+                    messageToCheck = responseData;
+                    // Try to extract error message from JSON-like string with single quotes
+                    if (responseData.includes("'error':")) {
+                        try {
+                            const fixedJson = responseData.replace(/'/g, '"');
+                            const parsedData = JSON.parse(fixedJson);
+                            if (parsedData.error) {
+                                messageToCheck = parsedData.error;
+                            }
+                        } catch (e) {
+                            console.log("String parse attempt failed:", e);
+                        }
+                    }
+                } else if (responseData && typeof responseData === 'object') {
+                    // Object format - extract from error field or stringify the whole object
+                    messageToCheck = responseData.error || responseData.message || responseData.detail || JSON.stringify(responseData);
+                }
+
+                console.log("Message being checked for validation keywords:", messageToCheck);
+
+                // Super comprehensive keyword check
+                const validationKeywords = ['pending', 'validation', 'approval', 'wait for', 'administrator', 'verify'];
+                const containsValidationKeyword = validationKeywords.some(keyword =>
+                    messageToCheck.toLowerCase().includes(keyword.toLowerCase())
+                );
+
+                console.log("Contains validation keyword:", containsValidationKeyword);
+
+                // Force direct check for the exact error message we're expecting
+                const isExactValidationMessage = messageToCheck.includes("Your account is pending validation");
+                console.log("Contains exact validation message:", isExactValidationMessage);
+
+                // Trigger validation message display for 403 + validation message
+                if (containsValidationKeyword || isExactValidationMessage) {
+                    console.log("SETTING VALIDATION PENDING MESSAGE");
+                    setLoginError("🌟 Votre compte est en cours de validation! 🌟\n\nUn administrateur examinera votre inscription très bientôt. Vous recevrez une notification dès que votre compte sera approuvé.");
+
+                    setNotification({
+                        open: true,
+                        message: "Patience est une vertu! Votre compte est en attente d'approbation. Nous vous enverrons un email dès que vous pourrez accéder à la plateforme.",
+                        severity: 'info'
+                    });
+
+                    return;
+                }
+            }
+
+            // Process other error types
             if (error.response) {
+                // Extract error message from response
+                const responseData = error.response.data;
+                let errorMessage = "";
+
+                if (typeof responseData === 'string') {
+                    errorMessage = responseData;
+                    // Try to extract error message from JSON-like string
+                    if (responseData.includes("'error':") || responseData.includes('"error":')) {
+                        try {
+                            const fixedJson = responseData.replace(/'/g, '"');
+                            const parsedData = JSON.parse(fixedJson);
+                            if (parsedData.error) {
+                                errorMessage = parsedData.error;
+                            }
+                        } catch (e) {
+                            // Keep original string if parsing fails
+                        }
+                    }
+                } else if (responseData && typeof responseData === 'object') {
+                    errorMessage = responseData.error || responseData.message || responseData.detail || "";
+                }
+
+                console.log("Final extracted error message:", errorMessage);
+
+                // Handle specific status codes
                 switch (error.response.status) {
                     case 401:
                         setError("email", { type: "manual", message: "Email ou mot de passe incorrect" });
                         setError("password", { type: "manual", message: "Email ou mot de passe incorrect" });
                         setLoginError("Les identifiants saisis ne correspondent pas à nos enregistrements. Veuillez vérifier et réessayer.");
                         break;
+                    case 403:
+                        // If we get here, it's a 403 that's not for pending validation
+                        setLoginError(errorMessage || "Accès refusé. Veuillez contacter l'administrateur.");
+                        break;
                     case 429:
                         setLoginError("Compte temporairement verrouillé en raison de trop nombreuses tentatives échouées. Veuillez patienter quelques minutes ou réinitialiser votre mot de passe.");
                         break;
-                    case 403:
-                        setLoginError("Votre compte a été suspendu. Veuillez contacter l'assistance pour obtenir de l'aide.");
-                        break;
                     default:
-                        setLoginError(error.response.data.message || "Échec de l'authentification. Veuillez réessayer plus tard.");
+                        setLoginError(errorMessage || "Échec de l'authentification. Veuillez vérifier vos identifiants et réessayer.");
                 }
             } else if (error.request) {
                 setLoginError("Erreur réseau. Veuillez vérifier votre connexion et réessayer.");
@@ -162,6 +285,102 @@ const Login = () => {
                 setLoginError("Échec de l'authentification. Veuillez vérifier vos identifiants et réessayer.");
             }
         }
+    };
+    const PendingUserMessage = () => {
+        // Add debug logging
+        console.log("PendingUserMessage - loginError value:", loginError);
+
+        // Enhanced detection - check for star emoji OR validation keywords
+        const hasStarEmoji = loginError && loginError.includes('🌟');
+        const hasValidationKeywords = loginError && (
+            loginError.toLowerCase().includes('validation') ||
+            loginError.toLowerCase().includes('pending') ||
+            loginError.toLowerCase().includes('approval') ||
+            loginError.toLowerCase().includes('attente') ||
+            loginError.toLowerCase().includes('administrator')
+        );
+
+        console.log("Should render based on emoji:", hasStarEmoji);
+        console.log("Should render based on keywords:", hasValidationKeywords);
+
+        // Show message if either condition is true
+        if (!hasStarEmoji && !hasValidationKeywords) {
+            console.log("PendingUserMessage - Not rendering");
+            return null;
+        }
+
+        console.log("PendingUserMessage - Rendering validation message");
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                style={{
+                    padding: '20px',
+                    borderRadius: '12px',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    border: '1px dashed #2196f3',
+                    marginBottom: '20px',
+                    textAlign: 'center'
+                }}
+            >
+                <motion.div
+                    animate={{
+                        y: [0, -5, 0],
+                        rotate: [0, 3, 0, -3, 0]
+                    }}
+                    transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "loop"
+                    }}
+                    style={{ display: 'inline-block', marginBottom: '10px' }}
+                >
+                    <Typography variant="h5" style={{ color: '#2196f3', fontWeight: 'bold' }}>
+                        🌟 Votre compte est presque prêt! 🌟
+                    </Typography>
+                </motion.div>
+
+                <Typography variant="body1" style={{ color: '#333', marginBottom: '15px' }}>
+                    Un administrateur examine actuellement votre inscription.
+                </Typography>
+
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.1, 1],
+                            opacity: [0.7, 1, 0.7]
+                        }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                        <HourglassEmptyIcon style={{ color: '#2196f3', fontSize: '2rem', marginRight: '5px' }} />
+                    </motion.div>
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.2, 1],
+                            opacity: [0.7, 1, 0.7]
+                        }}
+                        transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
+                    >
+                        <HourglassEmptyIcon style={{ color: '#2196f3', fontSize: '2rem', marginRight: '5px' }} />
+                    </motion.div>
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.1, 1],
+                            opacity: [0.7, 1, 0.7]
+                        }}
+                        transition={{ duration: 1.5, repeat: Infinity, delay: 1 }}
+                    >
+                        <HourglassEmptyIcon style={{ color: '#2196f3', fontSize: '2rem' }} />
+                    </motion.div>
+                </Box>
+
+                <Typography variant="body2" style={{ color: '#555' }}>
+                    Nous vous enverrons un email dès que vous pourrez accéder à la plateforme.
+                </Typography>
+            </motion.div>
+        );
     };
 
     const currentFeature = platformFeatures[featureIndex];
@@ -350,16 +569,24 @@ const Login = () => {
                     </motion.div>
 
                     {loginError && (
-                        <motion.div
-                            className="error-message"
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <span className="error-icon">!</span>
-                            <span>{loginError}</span>
-                        </motion.div>
+                        (loginError.includes('🌟') ||
+                            loginError.toLowerCase().includes('validation') ||
+                            loginError.toLowerCase().includes('pending') ||
+                            loginError.toLowerCase().includes('approval') ||
+                            loginError.toLowerCase().includes('administrator')) ? (
+                            <PendingUserMessage />
+                        ) : (
+                            <motion.div
+                                className="error-message"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <span className="error-icon">!</span>
+                                <span>{loginError}</span>
+                            </motion.div>
+                        )
                     )}
 
                     <motion.div

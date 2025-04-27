@@ -918,22 +918,7 @@ const Members = () => {
                                 </Grid>
 
                                 <Grid item xs={12} sm={6}>
-                                    <DetailItem>
-                                        <DetailIcon>
-                                            <AdminPanelSettingsIcon color="inherit" />
-                                        </DetailIcon>
-                                        <Box>
-                                            <Typography variant="subtitle2" color="text.secondary">
-                                                Status
-                                            </Typography>
-                                            <Chip
-                                                label={selectedMember.active ? 'Active' : 'Inactive'}
-                                                color={selectedMember.active ? 'success' : 'default'}
-                                                size="small"
-                                                sx={{ mt: 0.5 }}
-                                            />
-                                        </Box>
-                                    </DetailItem>
+
                                 </Grid>
                             </Grid>
 

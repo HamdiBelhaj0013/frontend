@@ -5,7 +5,7 @@ import { ThemeContextProvider } from './contexts/ThemeContext';
 import NavBar from "./components/NavBar";
 import AuthGuard from "./components/AuthGuard";
 
-// Lazy load components for better performance
+const PendingUsers = lazy(() => import("./components/PendingUsers"));
 const Home = lazy(() => import("./components/Home"));
 const About = lazy(() => import("./components/About"));
 const CreateProject = lazy(() => import("./components/CreateProject"));
@@ -84,6 +84,7 @@ function App() {
                                     <Route path="/member/delete/:id" element={<AuthGuard><DeleteMember /></AuthGuard>} />
                                     <Route path="/member/editmember/:id" element={<AuthGuard><EditMember /></AuthGuard>} />
                                     <Route path="/chatbot" element={<AuthGuard><NGOChatbot /></AuthGuard>} />
+                                    <Route path="/pending-users" element={<AuthGuard><PendingUsers /></AuthGuard>} />
                                 </Routes>
                             }
                         />

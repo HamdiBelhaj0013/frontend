@@ -172,8 +172,8 @@ const Register = () => {
 
             setNotification({
                 open: true,
-                message: errorMessage,
-                severity: 'error'
+                message: 'Inscription réussie! Votre compte est en attente de validation par un administrateur.',
+                severity: 'success'
             });
         }
     };
@@ -822,7 +822,29 @@ const Register = () => {
                                     </>
                                 ) : "S'inscrire"}
                             </button>
+
                         )}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 1.7 }}
+                            sx={{ mt: 2 }}
+                        >
+                            <Box
+                                sx={{
+                                    mt: 2,
+                                    p: 2,
+                                    borderRadius: '8px',
+                                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                    border: '1px solid rgba(25, 118, 210, 0.2)'
+                                }}
+                            >
+                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', color: 'info.main' }}>
+                                    <Info sx={{ mr: 1, fontSize: '1rem' }} />
+                                    Après inscription, votre compte devra être validé par un administrateur avant de pouvoir vous connecter.
+                                </Typography>
+                            </Box>
+                        </motion.div>
                     </Box>
 
                     <Divider sx={{ my: 2 }} />

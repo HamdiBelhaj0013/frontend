@@ -43,10 +43,10 @@ import {
     Visibility,
     Info
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import AxiosInstance from './Axios';
 import dayjs from 'dayjs';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 
 // Styled components
 const SectionTitle = styled(Typography)(({ theme }) => ({
@@ -143,6 +143,7 @@ const Home = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [pendingUsersCount, setPendingUsersCount] = useState(0);
     const [dashboardData, setDashboardData] = useState({
         association: null,
         members: [],
@@ -193,6 +194,22 @@ const Home = () => {
                     } catch (err) {
                         console.warn('Could not fetch verification status:', err);
                     }
+                }
+
+                try {
+                    // Only fetch if user is admin
+                    const userIsAdmin =
+                        userProfile.is_superuser ||
+                        userProfile.is_staff ||
+                        (userProfile.role && ['president', 'treasurer', 'secretary'].includes(userProfile.role.name.toLowerCase()));
+
+                    if (userIsAdmin) {
+                        // Updated endpoint from /api/user/ to /user/
+                        const pendingResponse = await AxiosInstance.get('/user/?validation_status=pending');
+                        setPendingUsersCount(pendingResponse.data.length || 0);
+                    }
+                } catch (err) {
+                    console.warn('Error fetching pending users:', err);
                 }
 
                 // Combine all data
@@ -315,6 +332,41 @@ const Home = () => {
                 />
             </Paper>
 
+            {/* Pending Users notification */}
+            {pendingUsersCount > 0 && (
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 2,
+                        mb: 3,
+                        borderRadius: 3,
+                        background: 'linear-gradient(135deg, #FF9800, #ED6C02)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <HourglassEmptyIcon sx={{ mr: 1.5 }} />
+                        <Typography variant="body1">
+                            {pendingUsersCount} {pendingUsersCount === 1 ? 'utilisateur en attente' : 'utilisateurs en attente'} de validation
+                        </Typography>
+                    </Box>
+                    <Button
+                        variant="contained"
+                        component={Link}
+                        to="/pending-users"
+                        sx={{
+                            bgcolor: 'rgba(255,255,255,0.2)',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
+                        }}
+                    >
+                        Examiner
+                    </Button>
+                </Paper>
+            )}
+
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
                     {error}
@@ -408,6 +460,7 @@ const Home = () => {
                 </Grid>
             </Grid>
 
+            {/* Rest of the component remains the same */}
             {/* Quick Actions Section */}
             <SectionTitle variant="h6">
                 <Dashboard /> Actions Rapides
