@@ -26,6 +26,11 @@ import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
+// Import permission components
+import { PermissionRequired } from '../contexts/ConditionalUI.jsx';
+import { usePermissions } from '../contexts/PermissionsContext.jsx';
+import { secureApi } from '../utils/secureApi.js';
+
 // Icons
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -154,6 +159,10 @@ const formatCurrency = (amount) => {
 };
 
 const Projects = () => {
+    // Get permission context
+    const { can, RESOURCES, ACTIONS } = usePermissions();
+    const api = secureApi();
+
     // State initialization
     const [myData, setMyData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -163,6 +172,11 @@ const Projects = () => {
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+
+    // Debug permissions
+    useEffect(() => {
+        console.log("User can delete projects:", can(ACTIONS.DELETE, RESOURCES.PROJECTS));
+    }, [can, ACTIONS, RESOURCES]);
 
     // Add view dialog state
     const [openViewDialog, setOpenViewDialog] = useState(false);
@@ -187,7 +201,8 @@ const Projects = () => {
     const fetchData = async () => {
         setRefreshing(true);
         try {
-            const response = await AxiosInstance.get('api/project/');
+            // Using secure API to ensure permission check
+            const response = await api.get(RESOURCES.PROJECTS, 'api/project/');
             setMyData(response.data);
         } catch (error) {
             console.error('Error fetching projects:', error);
@@ -236,7 +251,21 @@ const Projects = () => {
         if (!projectToDelete) return;
 
         try {
-            await AxiosInstance.delete(`api/project/${projectToDelete.id}/`);
+            // Check permissions before making the API call
+            if (!can(ACTIONS.DELETE, RESOURCES.PROJECTS)) {
+                console.error('Permission denied: Cannot delete projects');
+                setNotification({
+                    open: true,
+                    message: 'You do not have permission to delete projects.',
+                    severity: 'error'
+                });
+                handleCloseDeleteDialog();
+                return;
+            }
+
+            // Using secure API for delete operation
+            await api.delete(RESOURCES.PROJECTS, `api/project/${projectToDelete.id}/`);
+
             setNotification({
                 open: true,
                 message: `Project "${projectToDelete.name}" has been deleted`,
@@ -247,7 +276,7 @@ const Projects = () => {
             console.error('Error deleting project:', error);
             setNotification({
                 open: true,
-                message: 'Failed to delete project. Please try again.',
+                message: error.message || 'Failed to delete project. Please try again.',
                 severity: 'error'
             });
         }
@@ -452,15 +481,22 @@ const Projects = () => {
                         </IconButton>
                     </Tooltip>
                 </Box>
-                <ActionButton
-                    variant="contained"
-                    color="primary"
-                    component={Link}
-                    to="/CreateProject"
-                    startIcon={<AddIcon />}
+
+                {/* Only show Create button if user has create permission */}
+                <PermissionRequired
+                    resource={RESOURCES.PROJECTS}
+                    action={ACTIONS.CREATE}
                 >
-                    Create New Project
-                </ActionButton>
+                    <ActionButton
+                        variant="contained"
+                        color="primary"
+                        component={Link}
+                        to="/CreateProject"
+                        startIcon={<AddIcon />}
+                    >
+                        Create New Project
+                    </ActionButton>
+                </PermissionRequired>
             </Box>
 
             {/* Main Content */}
@@ -485,15 +521,22 @@ const Projects = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                         Get started by creating your first project
                     </Typography>
-                    <ActionButton
-                        variant="contained"
-                        color="primary"
-                        component={Link}
-                        to="/CreateProject"
-                        startIcon={<AddIcon />}
+
+                    {/* Only show Create button if user has create permission */}
+                    <PermissionRequired
+                        resource={RESOURCES.PROJECTS}
+                        action={ACTIONS.CREATE}
                     >
-                        Create New Project
-                    </ActionButton>
+                        <ActionButton
+                            variant="contained"
+                            color="primary"
+                            component={Link}
+                            to="/CreateProject"
+                            startIcon={<AddIcon />}
+                        >
+                            Create New Project
+                        </ActionButton>
+                    </PermissionRequired>
                 </Paper>
             ) : viewMode === 'table' ? (
                 <motion.div
@@ -540,31 +583,45 @@ const Projects = () => {
                                         <VisibilityIcon fontSize="small" />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Edit Project">
-                                    <IconButton
-                                        color="primary"
-                                        component={Link}
-                                        to={`/projects/edit/${row.original.id}`}
-                                        sx={{
-                                            bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) }
-                                        }}
-                                    >
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete Project">
-                                    <IconButton
-                                        color="error"
-                                        onClick={() => handleOpenDeleteDialog(row.original)}
-                                        sx={{
-                                            bgcolor: alpha(theme.palette.error.main, 0.1),
-                                            '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.2) }
-                                        }}
-                                    >
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
+
+                                {/* Edit button with permission check */}
+                                <PermissionRequired
+                                    resource={RESOURCES.PROJECTS}
+                                    action={ACTIONS.EDIT}
+                                >
+                                    <Tooltip title="Edit Project">
+                                        <IconButton
+                                            color="primary"
+                                            component={Link}
+                                            to={`/projects/edit/${row.original.id}`}
+                                            sx={{
+                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) }
+                                            }}
+                                        >
+                                            <EditIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </PermissionRequired>
+
+                                {/* Delete button with permission check */}
+                                <PermissionRequired
+                                    resource={RESOURCES.PROJECTS}
+                                    action={ACTIONS.DELETE}
+                                >
+                                    <Tooltip title="Delete Project">
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleOpenDeleteDialog(row.original)}
+                                            sx={{
+                                                bgcolor: alpha(theme.palette.error.main, 0.1),
+                                                '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.2) }
+                                            }}
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </PermissionRequired>
                             </Box>
                         )}
                     />
@@ -652,26 +709,42 @@ const Projects = () => {
                                         >
                                             View
                                         </Button>
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            startIcon={<EditIcon />}
-                                            component={Link}
-                                            to={`/projects/edit/${project.id}`}
-                                            sx={{ borderRadius: '8px' }}
+
+                                        {/* Edit button with permission check */}
+                                        <PermissionRequired
+                                            resource={RESOURCES.PROJECTS}
+                                            action={ACTIONS.EDIT}
+                                            fallback={<Box sx={{ width: '64px' }} />} // Spacer to maintain layout
                                         >
-                                            Edit
-                                        </Button>
-                                        <Button
-                                            variant="outlined"
-                                            color="error"
-                                            size="small"
-                                            startIcon={<DeleteIcon />}
-                                            onClick={() => handleOpenDeleteDialog(project)}
-                                            sx={{ borderRadius: '8px' }}
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                startIcon={<EditIcon />}
+                                                component={Link}
+                                                to={`/projects/edit/${project.id}`}
+                                                sx={{ borderRadius: '8px' }}
+                                            >
+                                                Edit
+                                            </Button>
+                                        </PermissionRequired>
+
+                                        {/* Delete button with permission check */}
+                                        <PermissionRequired
+                                            resource={RESOURCES.PROJECTS}
+                                            action={ACTIONS.DELETE}
+                                            fallback={<Box sx={{ width: '75px' }} />} // Spacer to maintain layout
                                         >
-                                            Delete
-                                        </Button>
+                                            <Button
+                                                variant="outlined"
+                                                color="error"
+                                                size="small"
+                                                startIcon={<DeleteIcon />}
+                                                onClick={() => handleOpenDeleteDialog(project)}
+                                                sx={{ borderRadius: '8px' }}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </PermissionRequired>
                                     </Box>
                                 </ProjectCard>
                             </motion.div>
@@ -757,19 +830,26 @@ const Projects = () => {
                     >
                         Close
                     </Button>
-                    <Button
-                        component={Link}
-                        to={`/projects/edit/${selectedProject?.id}`}
-                        color="primary"
-                        variant="contained"
-                        startIcon={<EditIcon />}
-                        sx={{
-                            borderRadius: '8px',
-                            px: 3
-                        }}
+
+                    {/* Edit button in dialog with permission check */}
+                    <PermissionRequired
+                        resource={RESOURCES.PROJECTS}
+                        action={ACTIONS.EDIT}
                     >
-                        Edit Project
-                    </Button>
+                        <Button
+                            component={Link}
+                            to={`/projects/edit/${selectedProject?.id}`}
+                            color="primary"
+                            variant="contained"
+                            startIcon={<EditIcon />}
+                            sx={{
+                                borderRadius: '8px',
+                                px: 3
+                            }}
+                        >
+                            Edit Project
+                        </Button>
+                    </PermissionRequired>
                 </DialogActions>
             </Dialog>
 

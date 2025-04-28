@@ -33,6 +33,11 @@ import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
+// Import permission components
+import { PermissionRequired } from '../contexts/ConditionalUI.jsx';
+import { usePermissions } from '../contexts/PermissionsContext.jsx';
+import { secureApi } from '../utils/secureApi.js';
+
 // Icons
 import InfoIcon from '@mui/icons-material/Info';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
@@ -40,6 +45,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import AddIcon from '@mui/icons-material/Add';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewIcon from '@mui/icons-material/GridView';
@@ -178,6 +184,10 @@ const DetailIcon = styled(Box)(({ theme }) => ({
 }));
 
 const Members = () => {
+    // Get permission context
+    const { can, RESOURCES, ACTIONS } = usePermissions();
+    const api = secureApi();
+
     // State initialization
     const [myData, setMyData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -187,6 +197,11 @@ const Members = () => {
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [memberToDelete, setMemberToDelete] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+
+    // Debug permissions
+    useEffect(() => {
+        console.log("User can delete members:", can(ACTIONS.DELETE, RESOURCES.MEMBERS));
+    }, [can, ACTIONS, RESOURCES]);
 
     // New state for view member dialog
     const [openViewDialog, setOpenViewDialog] = useState(false);
@@ -200,7 +215,8 @@ const Members = () => {
     const fetchData = async () => {
         setRefreshing(true);
         try {
-            const response = await AxiosInstance.get('/api/member/');
+            // Using secure API to ensure permission check
+            const response = await api.get(RESOURCES.MEMBERS, '/api/member/');
             setMyData(response.data);
         } catch (error) {
             console.error('Error fetching members:', error);
@@ -260,7 +276,21 @@ const Members = () => {
         if (!memberToDelete) return;
 
         try {
-            await AxiosInstance.delete(`/api/member/${memberToDelete.id}/`);
+            // Check permissions before making the API call
+            if (!can(ACTIONS.DELETE, RESOURCES.MEMBERS)) {
+                console.error('Permission denied: Cannot delete members');
+                setNotification({
+                    open: true,
+                    message: 'You do not have permission to delete members.',
+                    severity: 'error'
+                });
+                handleCloseDeleteDialog();
+                return;
+            }
+
+            // Using secure API for delete operation
+            await api.delete(RESOURCES.MEMBERS, `/api/member/${memberToDelete.id}/`);
+
             setNotification({
                 open: true,
                 message: `Member "${memberToDelete.name}" has been deleted`,
@@ -271,7 +301,7 @@ const Members = () => {
             console.error('Error deleting member:', error);
             setNotification({
                 open: true,
-                message: 'Failed to delete member. Please try again.',
+                message: error.message || 'Failed to delete member. Please try again.',
                 severity: 'error'
             });
         }
@@ -350,7 +380,7 @@ const Members = () => {
                     </Box>
                 ),
             },
-            ],
+        ],
         [theme]
     );
 
@@ -470,19 +500,26 @@ const Members = () => {
                                 }
                             }}
                         >
-
+                            <RefreshIcon />
                         </IconButton>
                     </Tooltip>
                 </Box>
-                <ActionButton
-                    variant="contained"
-                    color="primary"
-                    component={Link}
-                    to="/CreateMember"
-                    startIcon={<AddIcon />}
+
+                {/* Only show Add button if user has create permission */}
+                <PermissionRequired
+                    resource={RESOURCES.MEMBERS}
+                    action={ACTIONS.CREATE}
                 >
-                    Add New Member
-                </ActionButton>
+                    <ActionButton
+                        variant="contained"
+                        color="primary"
+                        component={Link}
+                        to="/CreateMember"
+                        startIcon={<AddIcon />}
+                    >
+                        Add New Member
+                    </ActionButton>
+                </PermissionRequired>
             </Box>
 
             {/* Main Content */}
@@ -507,15 +544,22 @@ const Members = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                         Get started by adding your first organization member
                     </Typography>
-                    <ActionButton
-                        variant="contained"
-                        color="primary"
-                        component={Link}
-                        to="/CreateMember"
-                        startIcon={<AddIcon />}
+
+                    {/* Only show Add button if user has create permission */}
+                    <PermissionRequired
+                        resource={RESOURCES.MEMBERS}
+                        action={ACTIONS.CREATE}
                     >
-                        Add New Member
-                    </ActionButton>
+                        <ActionButton
+                            variant="contained"
+                            color="primary"
+                            component={Link}
+                            to="/CreateMember"
+                            startIcon={<AddIcon />}
+                        >
+                            Add New Member
+                        </ActionButton>
+                    </PermissionRequired>
                 </Paper>
             ) : viewMode === 'table' ? (
                 <motion.div
@@ -562,31 +606,45 @@ const Members = () => {
                                         <VisibilityIcon fontSize="small" />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Edit Member">
-                                    <IconButton
-                                        color="primary"
-                                        component={Link}
-                                        to={`/member/editmember/${row.original.id}`}
-                                        sx={{
-                                            bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) }
-                                        }}
-                                    >
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete Member">
-                                    <IconButton
-                                        color="error"
-                                        onClick={() => handleOpenDeleteDialog(row.original)}
-                                        sx={{
-                                            bgcolor: alpha(theme.palette.error.main, 0.1),
-                                            '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.2) }
-                                        }}
-                                    >
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
+
+                                {/* Edit button with permission check */}
+                                <PermissionRequired
+                                    resource={RESOURCES.MEMBERS}
+                                    action={ACTIONS.EDIT}
+                                >
+                                    <Tooltip title="Edit Member">
+                                        <IconButton
+                                            color="primary"
+                                            component={Link}
+                                            to={`/member/editmember/${row.original.id}`}
+                                            sx={{
+                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) }
+                                            }}
+                                        >
+                                            <EditIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </PermissionRequired>
+
+                                {/* Delete button with permission check */}
+                                <PermissionRequired
+                                    resource={RESOURCES.MEMBERS}
+                                    action={ACTIONS.DELETE}
+                                >
+                                    <Tooltip title="Delete Member">
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleOpenDeleteDialog(row.original)}
+                                            sx={{
+                                                bgcolor: alpha(theme.palette.error.main, 0.1),
+                                                '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.2) }
+                                            }}
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </PermissionRequired>
                             </Box>
                         )}
                     />
@@ -692,7 +750,7 @@ const Members = () => {
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', mt: 2 }}>
                                             <Chip
                                                 icon={<PublicIcon fontSize="small" />}
-                                                label={member.nationality}
+                                                label={member.nationality || 'Unknown'}
                                                 size="small"
                                                 sx={{ bgcolor: alpha(theme.palette.background.default, 0.8) }}
                                             />
@@ -723,26 +781,42 @@ const Members = () => {
                                         >
                                             View
                                         </Button>
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            startIcon={<EditIcon />}
-                                            component={Link}
-                                            to={`/member/editmember/${member.id}`}
-                                            sx={{ borderRadius: '8px' }}
+
+                                        {/* Edit button with permission check */}
+                                        <PermissionRequired
+                                            resource={RESOURCES.MEMBERS}
+                                            action={ACTIONS.EDIT}
+                                            fallback={<Box sx={{ width: '64px' }} />} // Spacer to maintain layout
                                         >
-                                            Edit
-                                        </Button>
-                                        <Button
-                                            variant="outlined"
-                                            color="error"
-                                            size="small"
-                                            startIcon={<DeleteIcon />}
-                                            onClick={() => handleOpenDeleteDialog(member)}
-                                            sx={{ borderRadius: '8px' }}
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                startIcon={<EditIcon />}
+                                                component={Link}
+                                                to={`/member/editmember/${member.id}`}
+                                                sx={{ borderRadius: '8px' }}
+                                            >
+                                                Edit
+                                            </Button>
+                                        </PermissionRequired>
+
+                                        {/* Delete button with permission check */}
+                                        <PermissionRequired
+                                            resource={RESOURCES.MEMBERS}
+                                            action={ACTIONS.DELETE}
+                                            fallback={<Box sx={{ width: '75px' }} />} // Spacer to maintain layout
                                         >
-                                            Delete
-                                        </Button>
+                                            <Button
+                                                variant="outlined"
+                                                color="error"
+                                                size="small"
+                                                startIcon={<DeleteIcon />}
+                                                onClick={() => handleOpenDeleteDialog(member)}
+                                                sx={{ borderRadius: '8px' }}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </PermissionRequired>
                                     </CardActions>
                                 </MemberCard>
                             </motion.div>
@@ -947,16 +1021,23 @@ const Members = () => {
                             >
                                 Close
                             </Button>
-                            <Button
-                                component={Link}
-                                to={`/member/editmember/${selectedMember.id}`}
-                                variant="contained"
-                                color="primary"
-                                startIcon={<EditIcon />}
-                                sx={{ borderRadius: '8px' }}
+
+                            {/* Edit button with permission check */}
+                            <PermissionRequired
+                                resource={RESOURCES.MEMBERS}
+                                action={ACTIONS.EDIT}
                             >
-                                Edit Member
-                            </Button>
+                                <Button
+                                    component={Link}
+                                    to={`/member/editmember/${selectedMember.id}`}
+                                    variant="contained"
+                                    color="primary"
+                                    startIcon={<EditIcon />}
+                                    sx={{ borderRadius: '8px' }}
+                                >
+                                    Edit Member
+                                </Button>
+                            </PermissionRequired>
                         </DialogActions>
                     </>
                 )}

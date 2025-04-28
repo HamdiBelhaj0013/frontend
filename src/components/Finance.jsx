@@ -22,7 +22,9 @@ import {
 } from '@mui/icons-material';
 import AxiosInstance from './Axios';
 
-
+// Import permission components
+import { PermissionRequired } from '../contexts/ConditionalUI.jsx';
+import { usePermissions } from '../contexts/PermissionsContext.jsx';
 
 // Import child components
 import TransactionList from './finance/TransactionList.jsx';
@@ -52,6 +54,9 @@ function TabPanel(props) {
 }
 
 const Finance = () => {
+    // Get permission context
+    const { can, RESOURCES, ACTIONS, userRole } = usePermissions();
+
     const theme = useTheme();
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -85,23 +90,24 @@ const Finance = () => {
         severity: 'success'
     });
 
-    // Fetch financial statistics
+    // Fetch financial statistics - FIXED to avoid infinite loops
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
 
-                // Fetch financial statistics
+                // Use regular Axios instance, not secureApi which is causing the issues
                 const statsResponse = await AxiosInstance.get('/finances/dashboard/');
                 setStatistics(statsResponse.data);
 
-                // Fetch transactions
-                const transactionsResponse = await AxiosInstance.get('/finances/transactions/');
-                setTransactions(transactionsResponse.data);
+                // Only fetch transactions if user has permission to view them
+                if (can(ACTIONS.VIEW, RESOURCES.FINANCE) && userRole !== 'member') {
+                    const transactionsResponse = await AxiosInstance.get('/finances/transactions/');
+                    setTransactions(transactionsResponse.data);
 
-                // Fetch donors
-                const donorsResponse = await AxiosInstance.get('/finances/donors/');
-                setDonors(donorsResponse.data);
+                    const donorsResponse = await AxiosInstance.get('/finances/donors/');
+                    setDonors(donorsResponse.data);
+                }
 
                 setLoading(false);
             } catch (err) {
@@ -112,21 +118,74 @@ const Finance = () => {
         };
 
         fetchData();
-    }, [refreshTrigger]);
+        // Removed api from dependencies to prevent loops
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshTrigger, can, ACTIONS, RESOURCES, userRole]);
 
     // Handle tab change
     const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
+        // Check permissions before allowing tab change
+        const tabPermissionMap = {
+            0: true, // Dashboard - always visible
+            1: userRole !== 'member', // Transactions
+            2: userRole !== 'member', // Budgets
+            3: userRole !== 'member', // Donors
+            4: userRole !== 'member', // Reports
+        };
+
+        // Only change tab if user has permission
+        if (tabPermissionMap[newValue]) {
+            setActiveTab(newValue);
+        } else {
+            setNotification({
+                show: true,
+                message: 'You do not have permission to view this tab.',
+                severity: 'error'
+            });
+
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                setNotification(prev => ({ ...prev, show: false }));
+            }, 3000);
+        }
     };
 
     // Open transaction form
     const handleAddTransaction = (type) => {
+        // Check if user has create permission
+        if (!can(ACTIONS.CREATE, RESOURCES.FINANCE)) {
+            setNotification({
+                show: true,
+                message: 'You do not have permission to add transactions.',
+                severity: 'error'
+            });
+
+            setTimeout(() => {
+                setNotification(prev => ({ ...prev, show: false }));
+            }, 3000);
+            return;
+        }
+
         setFormType(type);
         setFormOpen(true);
     };
 
     // Open donor form
     const handleAddDonor = () => {
+        // Check if user has create permission
+        if (!can(ACTIONS.CREATE, RESOURCES.FINANCE)) {
+            setNotification({
+                show: true,
+                message: 'You do not have permission to add donors.',
+                severity: 'error'
+            });
+
+            setTimeout(() => {
+                setNotification(prev => ({ ...prev, show: false }));
+            }, 3000);
+            return;
+        }
+
         setDonorFormOpen(true);
     };
 
@@ -142,10 +201,7 @@ const Finance = () => {
 
         // Hide notification after 3 seconds
         setTimeout(() => {
-            setNotification({
-                ...notification,
-                show: false
-            });
+            setNotification(prev => ({ ...prev, show: false }));
         }, 3000);
     };
 
@@ -161,10 +217,7 @@ const Finance = () => {
 
         // Hide notification after 3 seconds
         setTimeout(() => {
-            setNotification({
-                ...notification,
-                show: false
-            });
+            setNotification(prev => ({ ...prev, show: false }));
         }, 3000);
     };
 
@@ -173,14 +226,21 @@ const Finance = () => {
         setRefreshTrigger(prev => prev + 1);
     };
 
-    // Tab labels and icons
-    const tabs = [
-        { label: 'Dashboard', icon: <BarChart fontSize="small" /> },
-        { label: 'Transactions', icon: <ReceiptLong fontSize="small" /> },
-        { label: 'Budgets', icon: <AccountBalance fontSize="small" /> },
-        { label: 'Donors', icon: <People fontSize="small" /> },
-        { label: 'Reports', icon: <AssignmentTurnedIn fontSize="small" /> }
+    // Calculate visible tabs based on permissions
+    // Moved outside of render to avoid rerenders and recalculations
+    const visibleTabs = [
+        { label: 'Dashboard', icon: <BarChart fontSize="small" /> }, // Dashboard is always visible
     ];
+
+    // Add other tabs only if user has proper permissions
+    if (can(ACTIONS.VIEW, RESOURCES.FINANCE) && userRole !== 'member') {
+        visibleTabs.push(
+            { label: 'Transactions', icon: <ReceiptLong fontSize="small" /> },
+            { label: 'Budgets', icon: <AccountBalance fontSize="small" /> },
+            { label: 'Donors', icon: <People fontSize="small" /> },
+            { label: 'Reports', icon: <AssignmentTurnedIn fontSize="small" /> }
+        );
+    }
 
     return (
         <Box>
@@ -204,23 +264,29 @@ const Finance = () => {
                     >
                         Refresh
                     </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleAddTransaction('income')}
-                        startIcon={<Add />}
-                        sx={{ mr: 1 }}
-                    >
-                        Add Income
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleAddTransaction('expense')}
-                        startIcon={<Add />}
-                    >
-                        Add Expense
-                    </Button>
+
+                    {/* Only show these buttons if user has create permission */}
+                    {can(ACTIONS.CREATE, RESOURCES.FINANCE) && (
+                        <>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleAddTransaction('income')}
+                                startIcon={<Add />}
+                                sx={{ mr: 1 }}
+                            >
+                                Add Income
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={() => handleAddTransaction('expense')}
+                                startIcon={<Add />}
+                            >
+                                Add Expense
+                            </Button>
+                        </>
+                    )}
                 </Grid>
             </Grid>
 
@@ -252,7 +318,7 @@ const Finance = () => {
                         borderBottom: `1px solid ${theme.palette.divider}`
                     }}
                 >
-                    {tabs.map((tab, index) => (
+                    {visibleTabs.map((tab, index) => (
                         <Tab
                             key={index}
                             label={tab.label}
@@ -275,7 +341,7 @@ const Finance = () => {
                     </Box>
                 ) : (
                     <>
-                        {/* Dashboard Tab */}
+                        {/* Dashboard Tab - Always visible */}
                         <TabPanel value={activeTab} index={0}>
                             <DashboardWidgets
                                 statistics={statistics}
@@ -283,63 +349,73 @@ const Finance = () => {
                             />
                         </TabPanel>
 
-                        {/* Transactions Tab */}
-                        <TabPanel value={activeTab} index={1}>
-                            <TransactionList
-                                transactions={transactions}
-                                onRefresh={handleRefresh}
-                                onAddTransaction={handleAddTransaction}
-                            />
-                        </TabPanel>
+                        {/* Only render these tabs if user has permission */}
+                        {can(ACTIONS.VIEW, RESOURCES.FINANCE) && userRole !== 'member' && (
+                            <>
+                                {/* Transactions Tab */}
+                                <TabPanel value={activeTab} index={1}>
+                                    <TransactionList
+                                        transactions={transactions}
+                                        onRefresh={handleRefresh}
+                                        onAddTransaction={handleAddTransaction}
+                                    />
+                                </TabPanel>
 
-                        {/* Budget Tab */}
-                        <TabPanel value={activeTab} index={2}>
-                            <BudgetDashboard
-                                projectBudgets={statistics.project_budget_utilization}
-                                onRefresh={handleRefresh}
-                            />
-                        </TabPanel>
+                                {/* Budget Tab */}
+                                <TabPanel value={activeTab} index={2}>
+                                    <BudgetDashboard
+                                        projectBudgets={statistics.project_budget_utilization}
+                                        onRefresh={handleRefresh}
+                                    />
+                                </TabPanel>
 
-                        {/* Donors Tab */}
-                        <TabPanel value={activeTab} index={3}>
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={handleAddDonor}
-                                    startIcon={<Add />}
-                                >
-                                    Add Donor
-                                </Button>
-                            </Box>
-                            <DonorList
-                                donors={donors}
-                                onRefresh={handleRefresh}
-                            />
-                        </TabPanel>
+                                {/* Donors Tab */}
+                                <TabPanel value={activeTab} index={3}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                                        {can(ACTIONS.CREATE, RESOURCES.FINANCE) && (
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={handleAddDonor}
+                                                startIcon={<Add />}
+                                            >
+                                                Add Donor
+                                            </Button>
+                                        )}
+                                    </Box>
+                                    <DonorList
+                                        donors={donors}
+                                        onRefresh={handleRefresh}
+                                    />
+                                </TabPanel>
 
-                        {/* Reports Tab */}
-                        <TabPanel value={activeTab} index={4}>
-                            <FinancialReports onRefresh={handleRefresh} />
-                        </TabPanel>
+                                {/* Reports Tab */}
+                                <TabPanel value={activeTab} index={4}>
+                                    <FinancialReports onRefresh={handleRefresh} />
+                                </TabPanel>
+                            </>
+                        )}
                     </>
                 )}
             </Paper>
 
-            {/* Transaction Form Modal */}
-            <TransactionForm
-                open={formOpen}
-                onClose={() => setFormOpen(false)}
-                type={formType}
-                onSuccess={handleFormSuccess}
-            />
+            {/* Transaction Form Modal - Only render if user has permission */}
+            {can(ACTIONS.CREATE, RESOURCES.FINANCE) && (
+                <>
+                    <TransactionForm
+                        open={formOpen}
+                        onClose={() => setFormOpen(false)}
+                        type={formType}
+                        onSuccess={handleFormSuccess}
+                    />
 
-            {/* Donor Form Modal */}
-            <DonorForm
-                open={donorFormOpen}
-                onClose={() => setDonorFormOpen(false)}
-                onSuccess={handleDonorFormSuccess}
-            />
+                    <DonorForm
+                        open={donorFormOpen}
+                        onClose={() => setDonorFormOpen(false)}
+                        onSuccess={handleDonorFormSuccess}
+                    />
+                </>
+            )}
         </Box>
     );
 };
