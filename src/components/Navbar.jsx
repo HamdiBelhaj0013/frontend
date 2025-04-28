@@ -23,6 +23,7 @@ import {
     Chip,
     SwipeableDrawer,
     Fade,
+    CircularProgress,
 
 } from '@mui/material';
 import { styled, alpha, useTheme } from '@mui/material/styles';
@@ -44,7 +45,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import CloseIcon from '@mui/icons-material/Close';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -52,7 +53,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import logo from '../assets/logowhite.png';
 import Axios from './Axios';
-
+import {usePermissions} from "../contexts/PermissionsContext.jsx";
 // Enhanced styled components for better appearance and smoothness
 const GlassAppBar = styled(AppBar)(({ theme }) => ({
     background: 'linear-gradient(135deg, rgba(0, 137, 123, 0.97), rgba(0, 105, 92, 0.95))',
@@ -292,14 +293,14 @@ const NotificationItem = styled(ListItem)(({ theme, read }) => ({
     },
 }));
 
-const pages = [
-    { name: 'Dashboard', path: '/home', icon: <DashboardIcon /> },
-    { name: 'Projects', path: '/projects', icon: <BusinessIcon />, hasNotification: true },
-    { name: 'Members', path: '/members', icon: <GroupIcon /> },
-    {name: 'Pending Users' , path: '/pending-users' , icon: <HourglassEmptyIcon />},
-    { name: 'Finance', path: '/finance', icon: <AccountBalanceIcon /> },
-    { name: 'Volunteer', path: '/volunteer', icon: <VolunteerActivismIcon /> },
-    {name: 'AI Assitance' , path: '/chatbot' , icon: <SmartToyIcon />},
+const navItems = [
+    { name: 'Dashboard', path: '/home', icon: <DashboardIcon />, resource: null, action: null },
+    { name: 'Projects', path: '/projects', icon: <BusinessIcon />, resource: 'projects', action: 'view' },
+    { name: 'Members', path: '/members', icon: <GroupIcon />, resource: 'members', action: 'view' },
+    { name: 'Pending Users', path: '/pending-users', icon: <HourglassEmptyIcon />, resource: 'members', action: 'validate_user' },
+    { name: 'Finance', path: '/finance', icon: <AccountBalanceIcon />, resource: 'finance', action: 'view' },
+    { name: 'Meetings', path: '/meetings', icon: <MeetingRoomIcon />, resource: 'meetings', action: 'view' },
+    { name: 'AI Assistance', path: '/chatbot', icon: <SmartToyIcon />, resource: 'chatbot', action: 'view' },
 ];
 
 export default function NavBar(props) {
@@ -310,6 +311,7 @@ export default function NavBar(props) {
     const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const location = useLocation();
     const navigate = useNavigate();
+    const { can, isLoading } = usePermissions();
 
     // Use the color mode context
     const colorMode = useColorMode();
@@ -325,6 +327,7 @@ export default function NavBar(props) {
     const [userInitial, setUserInitial] = useState('');
     const [associationName, setAssociationName] = useState('');
     const [scrolled, setScrolled] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const isUserMenuOpen = Boolean(userMenuAnchorEl);
     const isNotificationsMenuOpen = Boolean(notificationsAnchorEl);
@@ -370,24 +373,22 @@ export default function NavBar(props) {
 
                 const response = await Axios.get('/users/profile/');
 
+                // Inside the fetchUserData function in useEffect
                 if (response.data) {
-                    // Set user data
                     const fullName = response.data.full_name || 'User';
                     setUserName(fullName);
                     setUserInitial(fullName.charAt(0).toUpperCase());
 
-                    // Set organization name
+                    // Set role name from API response
+                    const roleName = response.data.role?.name?.toLowerCase() || 'member';
+                    setUserRole(roleName);
+
+                    // Set admin status if user is superuser
+                    setIsAdmin(response.data.is_superuser || false);
+
+                    // Set association name
                     if (response.data.association) {
                         setAssociationName(response.data.association.name);
-
-                        // Set role based on permissions
-                        if (response.data.is_superuser) {
-                            setUserRole('Super Admin');
-                        } else if (response.data.is_staff) {
-                            setUserRole('Admin');
-                        } else {
-                            setUserRole('Member');
-                        }
                     }
                 }
             } catch (error) {
@@ -448,6 +449,17 @@ export default function NavBar(props) {
         localStorage.removeItem('token');
         navigate('/');
     };
+
+    // Filter navigation items based on user permissions
+    const filteredNavItems = navItems.filter(item => {
+        // If no resource/action is specified, show to everyone
+        if (!item.resource || !item.action) return true;
+
+        // Otherwise check permissions
+        return can(item.action, item.resource);
+    });
+
+    // Rest of the component remains the same, but use filteredNavItems instead of pages
 
     const drawer = (
         <GlassDrawer>
@@ -556,7 +568,7 @@ export default function NavBar(props) {
                 </Typography>
 
                 <Chip
-                    label={userRole}
+                    label={userRole.charAt(0).toUpperCase() + userRole.slice(1)} // Capitalize first letter
                     size="small"
                     sx={{
                         backgroundColor: alpha(theme.palette.primary.main, 0.1),
@@ -565,29 +577,23 @@ export default function NavBar(props) {
                         borderRadius: '50px',
                         padding: '0 8px',
                         height: '24px',
-                        '& .MuiChip-label': {
-                            padding: '0 8px'
-                        }
+                        '& .MuiChip-label': { padding: '0 8px' }
                     }}
                 />
             </Box>
 
             <List sx={{ mt: 1, px: 1, flexGrow: 1, overflowY: 'auto' }}>
-                {pages.map((page) => {
-                    // Skip the pending users page for non-admin users
-                    if (page.path === '/pending-users' &&
-                        !(userRole === 'Super Admin' || userRole === 'Admin' ||
-                            userRole === 'President' || userRole === 'Treasurer' ||
-                            userRole === 'Secretary')) {
-                        return null;
-                    }
-
-                    return (
-                        <ListItem key={page.name} disablePadding sx={{ mb: 0.5 }}>
+                {isLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    filteredNavItems.map((item) => (
+                        <ListItem key={item.name} disablePadding sx={{ mb: 0.5 }}>
                             <ActiveNavItem
                                 component={Link}
-                                to={page.path}
-                                selected={page.path === location.pathname}
+                                to={item.path}
+                                selected={item.path === location.pathname}
                                 onClick={isMobile ? handleDrawerToggle : undefined}
                                 disableRipple
                                 sx={{
@@ -600,22 +606,22 @@ export default function NavBar(props) {
                             >
                                 <ListItemIcon sx={{
                                     minWidth: 40,
-                                    color: page.path === location.pathname ?
+                                    color: item.path === location.pathname ?
                                         theme.palette.primary.main :
                                         alpha(theme.palette.text.primary, 0.7)
                                 }}>
-                                    {page.icon}
+                                    {item.icon}
                                 </ListItemIcon>
                                 <ListItemText
-                                    primary={page.name}
+                                    primary={item.name}
                                     primaryTypographyProps={{
                                         fontSize: 15,
-                                        fontWeight: page.path === location.pathname ? 600 : 400
+                                        fontWeight: item.path === location.pathname ? 600 : 400
                                     }}
                                 />
 
-                                {/* Show notification badge */}
-                                {page.hasNotification && (
+                                {/* Show notification badge if the item has one */}
+                                {item.hasNotification && (
                                     <Box component="span">
                                         <Badge
                                             color="error"
@@ -631,8 +637,7 @@ export default function NavBar(props) {
                                 )}
                             </ActiveNavItem>
                         </ListItem>
-                    );
-                })}
+                    )))}
             </List>
 
             <Box sx={{
@@ -822,7 +827,7 @@ export default function NavBar(props) {
                         flex: 1,
                         gap: 1
                     }}>
-                        {pages.map((page) => (
+                        {filteredNavItems.map((page) => ( // Changed from pages to filteredNavItems
                             <Tooltip
                                 title={page.name}
                                 key={page.name}
@@ -1074,22 +1079,22 @@ export default function NavBar(props) {
                                         <Typography
                                             variant="caption"
                                             sx={{
-                                                color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
+                                                color: theme.palette.mode === 'dark'
+                                                    ? 'rgba(255,255,255,0.6)'
+                                                    : 'rgba(0,0,0,0.6)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: 0.5
                                             }}
                                         >
-                                            <Box
-                                                sx={{
-                                                    width: 8,
-                                                    height: 8,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: '#4caf50',
-                                                    display: 'inline-block'
-                                                }}
-                                            />
-                                            Active now • {userRole}
+                                            <Box sx={{
+                                                width: 8,
+                                                height: 8,
+                                                borderRadius: '50%',
+                                                backgroundColor: '#4caf50',
+                                                display: 'inline-block'
+                                            }}/>
+                                            Active now • {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
                                         </Typography>
                                     </Box>
                                 </Box>

@@ -8,6 +8,7 @@ import {
     Card,
     CardContent,
     Chip,
+    Button,
     Grid,
     LinearProgress,
     List,
@@ -412,65 +413,77 @@ const DonutChart = ({ data, title, emptyMessage }) => {
 // Financial Trend Chart - For income/expense trends
 const TrendChart = ({ data, title }) => {
     const theme = useTheme();
+    const [showCumulative, setShowCumulative] = useState(false);
 
     return (
         <DashboardCard title={title} icon={ShowChart}>
             <Box sx={{ height: 300, mt: 1 }}>
-                {data.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                            data={data}
-                            margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                            <XAxis
-                                dataKey="name"
-                                tick={{ fontSize: 12 }}
-                                stroke={theme.palette.text.secondary}
-                            />
-                            <YAxis
-                                tickFormatter={formatCompactCurrency}
-                                stroke={theme.palette.text.secondary}
-                            />
-                            <RechartsTooltip
-                                formatter={(value) => formatCurrency(value)}
-                                labelFormatter={(label) => `Period: ${label}`}
-                                contentStyle={{
-                                    backgroundColor: theme.palette.background.paper,
-                                    borderRadius: 8,
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                    border: 'none'
-                                }}
-                            />
-                            <Legend />
-                            <Line
-                                type="monotone"
-                                dataKey="income"
-                                stroke={theme.palette.success.main}
-                                strokeWidth={2}
-                                activeDot={{ r: 6 }}
-                                name="Income"
-                                dot={{ strokeWidth: 0, r: 3 }}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="expense"
-                                stroke={theme.palette.error.main}
-                                strokeWidth={2}
-                                name="Expense"
-                                dot={{ strokeWidth: 0, r: 3 }}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="balance"
-                                stroke={theme.palette.primary.main}
-                                strokeWidth={2}
-                                name="Net Balance"
-                                dot={{ strokeWidth: 0, r: 3 }}
-                                strokeDasharray="4 4"
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
+                {data && data.length > 0 ? (
+                    <>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                            <Button
+                                size="small"
+                                onClick={() => setShowCumulative(!showCumulative)}
+                                sx={{ textTransform: 'none' }}
+                            >
+                                {showCumulative ? 'Show Daily Values' : 'Show Cumulative Values'}
+                            </Button>
+                        </Box>
+                        <ResponsiveContainer width="100%" height="90%">
+                            <LineChart
+                                data={data}
+                                margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                <XAxis
+                                    dataKey="name"
+                                    tick={{ fontSize: 12 }}
+                                    stroke={theme.palette.text.secondary}
+                                />
+                                <YAxis
+                                    tickFormatter={formatCompactCurrency}
+                                    stroke={theme.palette.text.secondary}
+                                />
+                                <RechartsTooltip
+                                    formatter={(value) => formatCurrency(value)}
+                                    labelFormatter={(label) => `Date: ${label}`}
+                                    contentStyle={{
+                                        backgroundColor: theme.palette.background.paper,
+                                        borderRadius: 8,
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                        border: 'none'
+                                    }}
+                                />
+                                <Legend />
+                                <Line
+                                    type="monotone"
+                                    dataKey={showCumulative ? "cumulativeIncome" : "income"}
+                                    stroke={theme.palette.success.main}
+                                    strokeWidth={2}
+                                    activeDot={{ r: 6 }}
+                                    name={showCumulative ? "Cumulative Income" : "Daily Income"}
+                                    dot={{ strokeWidth: 0, r: 3 }}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey={showCumulative ? "cumulativeExpense" : "expense"}
+                                    stroke={theme.palette.error.main}
+                                    strokeWidth={2}
+                                    name={showCumulative ? "Cumulative Expense" : "Daily Expense"}
+                                    dot={{ strokeWidth: 0, r: 3 }}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey={showCumulative ? "cumulativeBalance" : "balance"}
+                                    stroke={theme.palette.primary.main}
+                                    strokeWidth={2}
+                                    name={showCumulative ? "Cumulative Balance" : "Daily Balance"}
+                                    dot={{ strokeWidth: 0, r: 3 }}
+                                    strokeDasharray="4 4"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </>
                 ) : (
                     <Box sx={{
                         height: '100%',
@@ -494,7 +507,8 @@ const TrendChart = ({ data, title }) => {
     );
 };
 
-// =============== MAIN DASHBOARD COMPONENT ===============
+
+
 
 const EnhancedDashboard = ({ statistics, recentTransactions }) => {
     const navigate = useNavigate();
@@ -506,111 +520,96 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
     const [incomeTrend, setIncomeTrend] = useState(null);
     const [expenseTrend, setExpenseTrend] = useState(null);
 
-    // Generate monthly trend data using actual statistics and transaction dates
-    const generateMonthlyTrendData = () => {
-        // Find the earliest transaction date to determine start month
-        let startDate = dayjs();
-
-        if (recentTransactions && recentTransactions.length > 0) {
-            // Sort transactions by date to find earliest
-            const sortedByDate = [...recentTransactions].sort((a, b) =>
-                dayjs(a.date).valueOf() - dayjs(b.date).valueOf()
-            );
-
-            if (sortedByDate[0]?.date) {
-                startDate = dayjs(sortedByDate[0].date);
-            }
-        }
-
-        // Ensure we don't go back more than 6 months
-        const sixMonthsAgo = dayjs().subtract(6, 'month');
-        if (startDate.isBefore(sixMonthsAgo)) {
-            startDate = sixMonthsAgo;
-        }
-
-        // Get current month and months back to the first transaction (or 6 months max)
-        const months = [];
+    const generateDailyTrendData = () => {
+        // Get current date and determine start/end dates for the month
         const currentDate = dayjs();
+        const startOfMonth = currentDate.startOf('month');
+        const endOfMonth = currentDate.endOf('month');
+        const daysInMonth = endOfMonth.date();
 
-        // Calculate how many months to show
-        let monthDiff = currentDate.diff(startDate, 'month');
-        monthDiff = Math.min(monthDiff, 5); // Limit to 6 months total (0-5)
+        // Create array to hold daily data
+        const dailyData = [];
 
-        for (let i = monthDiff; i >= 0; i--) {
-            const month = currentDate.subtract(i, 'month');
-            months.push({
-                name: month.format('MMM YY'),
-                month: month.month(),
-                year: month.year(),
-                startOfMonth: month.startOf('month').format('YYYY-MM-DD'),
-                endOfMonth: month.endOf('month').format('YYYY-MM-DD')
-            });
-        }
+        // Generate data for each day of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = startOfMonth.date(day);
 
-        // If we have real transactions, calculate actual monthly values
-        if (recentTransactions && recentTransactions.length > 0) {
-            return months.map(month => {
-                // Filter transactions for this month
-                const monthTrans = recentTransactions.filter(t =>
-                    dayjs(t.date).isBetween(month.startOfMonth, month.endOfMonth, null, '[]')
-                );
+            // Don't include future days
+            if (date.isAfter(currentDate)) {
+                break;
+            }
 
-                // Calculate monthly totals from actual transactions
-                const monthIncome = monthTrans
+            // Format for display
+            const name = date.format('DD MMM');
+
+            let dayIncome = 0;
+            let dayExpense = 0;
+
+            // If we have real transactions, calculate actual daily values
+            if (recentTransactions && recentTransactions.length > 0) {
+                // Filter transactions for this day
+                const dayTrans = recentTransactions.filter(t => {
+                    if (!t.date) return false;
+                    const transDate = dayjs(t.date);
+                    return transDate.format('YYYY-MM-DD') === date.format('YYYY-MM-DD');
+                });
+
+                // Calculate daily totals from actual transactions
+                dayIncome = dayTrans
                     .filter(t => t.transaction_type === 'income')
-                    .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
 
-                const monthExpense = monthTrans
+                dayExpense = dayTrans
                     .filter(t => t.transaction_type === 'expense')
-                    .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            } else {
+                // If no transactions but we have statistics, create smooth trend
+                if (statistics && statistics.total_income !== undefined && statistics.total_expenses !== undefined) {
+                    const totalIncome = parseFloat(statistics.total_income) || 0;
+                    const totalExpense = parseFloat(statistics.total_expenses) || 0;
 
-                return {
-                    name: month.name,
-                    income: monthIncome,
-                    expense: monthExpense,
-                    balance: monthIncome - monthExpense
-                };
+                    // Simple distribution algorithm
+                    // Creates a curve that peaks in the middle of the month
+                    const dayFactor = 0.5 + Math.sin(Math.PI * day / daysInMonth) * 0.5;
+
+                    // Daily values that sum up to match the monthly total
+                    dayIncome = (totalIncome / daysInMonth) * dayFactor * 1.5;
+                    dayExpense = (totalExpense / daysInMonth) * dayFactor * 1.5;
+                } else {
+                    // Fallback mock data with reasonable daily values
+                    const baseAmount = 300 + (day * 10);
+                    dayIncome = baseAmount + Math.floor(Math.random() * 200);
+                    dayExpense = baseAmount * 0.7 + Math.floor(Math.random() * 100);
+                }
+            }
+
+            dailyData.push({
+                name,
+                date: date.format('YYYY-MM-DD'),
+                day,
+                income: dayIncome,
+                expense: dayExpense,
+                balance: dayIncome - dayExpense
             });
         }
 
-        // If no transactions but we have statistics, create smooth trend
-        if (statistics && statistics.total_income !== undefined && statistics.total_expenses !== undefined) {
-            const totalIncome = parseFloat(statistics.total_income);
-            const totalExpense = parseFloat(statistics.total_expenses);
+        // Calculate running totals (cumulative)
+        let cumulativeIncome = 0;
+        let cumulativeExpense = 0;
 
-            return months.map((month, index) => {
-                // Base amounts with smooth progression
-                const progressFactor = 0.7 + (index * 0.06);
-
-                // Calculate month values
-                const monthIncome = Math.round((totalIncome / months.length) * progressFactor);
-                const monthExpense = Math.round((totalExpense / months.length) * progressFactor);
-
-                return {
-                    name: month.name,
-                    income: monthIncome,
-                    expense: monthExpense,
-                    balance: monthIncome - monthExpense
-                };
-            });
-        }
-
-        // Fallback to reasonable mock data
-        return months.map((month, index) => {
-            const baseAmount = 10000 + (index * 500);
-            const income = baseAmount + Math.floor(Math.random() * 1000);
-            const expense = baseAmount * 0.8 + Math.floor(Math.random() * 500);
+        return dailyData.map(day => {
+            cumulativeIncome += day.income;
+            cumulativeExpense += day.expense;
 
             return {
-                name: month.name,
-                income: income,
-                expense: expense,
-                balance: income - expense
+                ...day,
+                cumulativeIncome,
+                cumulativeExpense,
+                cumulativeBalance: cumulativeIncome - cumulativeExpense
             };
         });
     };
 
-    // Calculate trends based on monthly data
     const calculateTrends = (trendData) => {
         if (!trendData || trendData.length < 2) return { incomeTrend: null, expenseTrend: null };
 
@@ -625,6 +624,30 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
 
         const expenseTrend = previousMonth.expense !== 0
             ? Math.round(((currentMonth.expense - previousMonth.expense) / previousMonth.expense) * 100)
+            : null;
+
+        return { incomeTrend, expenseTrend };
+    };
+    const calculateDailyTrends = (trendData) => {
+        if (!trendData || trendData.length < 7) return { incomeTrend: null, expenseTrend: null };
+
+        // Compare the last 3 days with the previous 3 days
+        const last3Days = trendData.slice(-3);
+        const prev3Days = trendData.slice(-6, -3);
+
+        // Calculate total income and expense for each period
+        const recentIncome = last3Days.reduce((sum, day) => sum + day.income, 0);
+        const previousIncome = prev3Days.reduce((sum, day) => sum + day.income, 0);
+        const recentExpense = last3Days.reduce((sum, day) => sum + day.expense, 0);
+        const previousExpense = prev3Days.reduce((sum, day) => sum + day.expense, 0);
+
+        // Calculate percent changes
+        const incomeTrend = previousIncome !== 0
+            ? Math.round(((recentIncome - previousIncome) / previousIncome) * 100)
+            : null;
+
+        const expenseTrend = previousExpense !== 0
+            ? Math.round(((recentExpense - previousExpense) / previousExpense) * 100)
             : null;
 
         return { incomeTrend, expenseTrend };
@@ -653,14 +676,16 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
                 }));
             setExpenseChartData(expenseData);
 
-            // Generate monthly trend data
-            const trendData = generateMonthlyTrendData();
-            setMonthlyTrendData(trendData);
+            // Generate daily trend data for the current month
+            const trendData = generateDailyTrendData();
+            if (trendData && trendData.length > 0) {
+                setMonthlyTrendData(trendData);
 
-            // Calculate trends from the data
-            const { incomeTrend, expenseTrend } = calculateTrends(trendData);
-            setIncomeTrend(incomeTrend);
-            setExpenseTrend(expenseTrend);
+                // Calculate trends using the last few days rather than months
+                const { incomeTrend, expenseTrend } = calculateDailyTrends(trendData);
+                setIncomeTrend(incomeTrend);
+                setExpenseTrend(expenseTrend);
+            }
         } catch (error) {
             console.error("Error processing statistics data:", error);
         }

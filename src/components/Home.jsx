@@ -47,7 +47,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AxiosInstance from './Axios';
 import dayjs from 'dayjs';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-
+import UpcomingMeetingsCalendar from './UpcomingMeetingsCalendar';
 // Styled components
 const SectionTitle = styled(Typography)(({ theme }) => ({
     fontWeight: 600,
@@ -204,8 +204,8 @@ const Home = () => {
                         (userProfile.role && ['president', 'treasurer', 'secretary'].includes(userProfile.role.name.toLowerCase()));
 
                     if (userIsAdmin) {
-                        // Updated endpoint from /api/user/ to /user/
-                        const pendingResponse = await AxiosInstance.get('/user/?validation_status=pending');
+
+                        const pendingResponse = await AxiosInstance.get('/users/?validation_status=pending');
                         setPendingUsersCount(pendingResponse.data.length || 0);
                     }
                 } catch (err) {
@@ -934,27 +934,7 @@ const Home = () => {
 
             {/* Calendar Section (Placeholder for future development) */}
             <Box sx={{ mt: 4 }}>
-                <SectionTitle variant="h6">
-                    <CalendarToday /> Calendrier des Événements
-                </SectionTitle>
-                <Paper
-                    elevation={0}
-                    sx={{
-                        p: 3,
-                        borderRadius: 3,
-                        bgcolor: 'background.paper',
-                        border: '1px dashed',
-                        borderColor: 'divider',
-                        textAlign: 'center'
-                    }}
-                >
-                    <Typography color="text.secondary" sx={{ mb: 1 }}>
-                        La fonctionnalité de calendrier sera disponible prochainement.
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Vous pourrez planifier et suivre les événements de votre association.
-                    </Typography>
-                </Paper>
+                <UpcomingMeetingsCalendar />
             </Box>
         </Box>
     );
