@@ -168,18 +168,19 @@ const CreateProject = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const schema = yup.object({
-        name: yup.string().required('Name is required'),
+        name: yup.string().required('Le nom est requis'),
         budget: yup.number()
-            .typeError('Budget must be a number')
-            .positive('Budget must be a positive number')
-            .required('Budget is required'),
-        start_date: yup.date().required('Start date is required'),
+            .typeError('Le budget doit être un nombre')
+            .positive('Le budget doit être un nombre positif')
+            .required('Le budget est requis'),
+        start_date: yup.date().required('La date de début est requise'),
         end_date: yup.date()
-            .required('End date is required')
-            .min(yup.ref('start_date'),'The end date should be after the start date'),
-        status: yup.string().required('Status is required'),
-        description: yup.string().required('Description is required'),
+            .required('La date de fin est requise')
+            .min(yup.ref('start_date'), 'La date de fin doit être postérieure à la date de début'),
+        status: yup.string().required('Le statut est requis'),
+        description: yup.string().required('La description est requise'),
     });
+
 
     const { handleSubmit, control, reset, formState: { errors, isValid, isDirty } } = useForm({
         resolver: yupResolver(schema),
@@ -228,17 +229,17 @@ const CreateProject = () => {
     };
 
     const statusOptions = [
-        { value: "Not Started", label: "Not Started" },
-        { value: "In Progress", label: "In Progress" },
-        { value: "Completed", label: "Completed" },
-        { value: "On Hold", label: "On Hold" },
-        { value: "Cancelled", label: "Cancelled" },
+        { value: "Non commencé", label: "Non commencé" },
+        { value: "En cours", label: "En cours" },
+        { value: "Terminé", label: "Terminé" },
+        { value: "En pause", label: "En pause" },
+        { value: "Annulé", label: "Annulé" },
     ];
 
     const steps = [
         {
-            label: 'Project Information',
-            description: 'Enter basic project details',
+            label: 'Informations sur le projet',
+            description: 'Entrez les détails de base du projet',
             icon: <BusinessIcon color="primary" />,
             fields: (
                 <Grid container spacing={3}>
@@ -246,12 +247,12 @@ const CreateProject = () => {
                         <FormBox>
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <BusinessIcon color="primary" sx={{ mr: 1 }} />
-                                <Typography variant="subtitle2">Project Name</Typography>
+                                <Typography variant="subtitle2">Nom du projet</Typography>
                             </Box>
                             <MyTextField
                                 name="name"
                                 control={control}
-                                placeholder="Enter project name"
+                                placeholder="Entrez le nom du projet"
                                 error={!!errors.name}
                                 helperText={errors.name?.message}
                             />
@@ -267,7 +268,7 @@ const CreateProject = () => {
                             <MyMultilineField
                                 name="description"
                                 control={control}
-                                placeholder="Enter project description"
+                                placeholder="Entrez la description du projet"
                                 rows={4}
                                 error={!!errors.description}
                                 helperText={errors.description?.message}
@@ -278,8 +279,8 @@ const CreateProject = () => {
             )
         },
         {
-            label: 'Timeline & Budget',
-            description: 'Set project timeline and budget',
+            label: 'Calendrier et budget',
+            description: 'Définir le calendrier et le budget du projet',
             icon: <AttachMoneyIcon color="primary" />,
             fields: (
                 <Grid container spacing={3}>
@@ -287,7 +288,7 @@ const CreateProject = () => {
                         <FormBox>
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <CalendarTodayIcon color="primary" sx={{ mr: 1 }} />
-                                <Typography variant="subtitle2">Start Date</Typography>
+                                <Typography variant="subtitle2">Date de début</Typography>
                             </Box>
                             <MyDatePickerField
                                 name="start_date"
@@ -302,7 +303,7 @@ const CreateProject = () => {
                         <FormBox>
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <EventIcon color="primary" sx={{ mr: 1 }} />
-                                <Typography variant="subtitle2">End Date</Typography>
+                                <Typography variant="subtitle2">Date Fin</Typography>
                             </Box>
                             <MyDatePickerField
                                 name="end_date"
@@ -333,7 +334,7 @@ const CreateProject = () => {
                         <FormBox>
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <TaskAltIcon color="primary" sx={{ mr: 1 }} />
-                                <Typography variant="subtitle2">Status</Typography>
+                                <Typography variant="subtitle2">Statut</Typography>
                             </Box>
                             <MySelectField
                                 name="status"
@@ -348,21 +349,21 @@ const CreateProject = () => {
             )
         },
         {
-            label: 'Review & Submit',
-            description: 'Review project details before submission',
+            label: 'Vérifier et soumettre',
+            description: 'Examiner les détails du projet avant la soumission',
             icon: <CheckCircleIcon color="primary" />,
             fields: (
                 <Box sx={{ py: 2 }}>
                     <Typography variant="h6" gutterBottom>
-                        Review Your Project
+                        Examinez votre projet
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                        Please review your project details below before submitting. You can go back to make changes if needed.
+                        Veuillez vérifier les détails de votre projet ci-dessous avant de le soumettre. Vous pourrez y revenir pour apporter des modifications si nécessaire.
                     </Typography>
 
                     <InfoChip
                         icon={<InfoOutlinedIcon />}
-                        label="All fields will be editable after creation"
+                        label="Tous les champs seront modifiables après création"
                         sx={{ mb: 3 }}
                     />
 
@@ -376,7 +377,7 @@ const CreateProject = () => {
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Project Name
+                                    Nom du projet
                                 </Typography>
                                 <Typography variant="body1" gutterBottom>
                                     {control._formValues.name || 'Not provided'}
@@ -392,7 +393,7 @@ const CreateProject = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Start Date
+                                    Date de début
                                 </Typography>
                                 <Typography variant="body1" gutterBottom>
                                     {control._formValues.start_date ? Dayjs(control._formValues.start_date).format('YYYY-MM-DD') : 'Not provided'}
@@ -400,7 +401,7 @@ const CreateProject = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    End Date
+                                    Date de fin
                                 </Typography>
                                 <Typography variant="body1" gutterBottom>
                                     {control._formValues.end_date ? Dayjs(control._formValues.end_date).format('YYYY-MM-DD') : 'Not provided'}
@@ -408,7 +409,7 @@ const CreateProject = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Status
+                                    Statut du Projet
                                 </Typography>
                                 <Typography variant="body1" gutterBottom>
                                     {control._formValues.status || 'Not provided'}
@@ -470,7 +471,7 @@ const CreateProject = () => {
                             }
                         }}
                     >
-                        Back to Projects
+                        Retour aux projets
                     </Button>
 
                     {/* Header */}
@@ -479,10 +480,10 @@ const CreateProject = () => {
                             <BusinessIcon sx={{ mr: 2, fontSize: 28 }} />
                             <Box sx={{ zIndex: 1 }}>
                                 <Typography variant="h5" component="h1" fontWeight="bold">
-                                    Create New Project
+                                    Créer un nouveau projet
                                 </Typography>
                                 <Typography variant="subtitle2">
-                                    Enter the details to create a new project for your organization
+                                    Saisissez les détails pour créer un nouveau projet pour votre organisation
                                 </Typography>
                             </Box>
                             {/* Decorative circles */}
@@ -576,7 +577,7 @@ const CreateProject = () => {
                                         onClick={handleBack}
                                         startIcon={<NavigateBeforeIcon />}
                                     >
-                                        Back
+                                        Précédente
                                     </BackButton>
                                     <Box>
                                         <Button
@@ -589,7 +590,7 @@ const CreateProject = () => {
                                             }}
                                             disabled={loading || !isDirty}
                                         >
-                                            Reset
+                                            Réinitialiser
                                         </Button>
 
                                         {activeStep === steps.length - 1 ? (
@@ -611,7 +612,7 @@ const CreateProject = () => {
                                                 }
                                                 endIcon={<NavigateNextIcon />}
                                             >
-                                                Continue
+                                                Continuer
                                             </SubmitButton>
                                         )}
                                     </Box>

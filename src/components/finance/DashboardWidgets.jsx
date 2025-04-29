@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
-// Style components with Tailwind-inspired approach
+// Composants de style avec une approche inspirée de Tailwind
 import {
     Box,
     Card,
@@ -18,7 +18,7 @@ import {
     useTheme
 } from '@mui/material';
 
-// Icons
+// Icônes
 import {
     AccountBalance,
     Assignment,
@@ -30,7 +30,7 @@ import {
     TrendingUp
 } from '@mui/icons-material';
 
-// Recharts for visualizations
+// Recharts pour les visualisations
 import {
     CartesianGrid,
     Cell,
@@ -45,9 +45,9 @@ import {
     YAxis
 } from 'recharts';
 
-// =============== UTILITY FUNCTIONS ===============
+// =============== FONCTIONS UTILITAIRES ===============
 
-// Format currency with proper TND formatting
+// Formater la devise avec le formatage TND approprié
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-TN', {
         style: 'currency',
@@ -56,7 +56,7 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
-// Format compact currency for axes
+// Formater la devise compact pour les axes
 const formatCompactCurrency = (amount) => {
     return new Intl.NumberFormat('fr-TN', {
         style: 'currency',
@@ -66,20 +66,20 @@ const formatCompactCurrency = (amount) => {
     }).format(amount);
 };
 
-// Generate beautiful color palette for charts
+// Générer une belle palette de couleurs pour les graphiques
 const generateColorPalette = (count) => {
-    // Modern, vibrant color palette
+    // Palette de couleurs moderne et vibrante
     const baseColors = [
         '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
         '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#06B6D4'
     ];
 
-    // Return needed colors
+    // Retourner les couleurs nécessaires
     if (count <= baseColors.length) {
         return baseColors.slice(0, count);
     }
 
-    // Generate additional colors if needed
+    // Générer des couleurs supplémentaires si nécessaire
     const extendedColors = [...baseColors];
     while (extendedColors.length < count) {
         const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
@@ -89,16 +89,16 @@ const generateColorPalette = (count) => {
     return extendedColors;
 };
 
-// Format category names for better display
+// Formater les noms de catégorie pour un meilleur affichage
 const formatCategoryName = (name) => {
     return name
         .replace(/_/g, ' ')
         .replace(/\b\w/g, letter => letter.toUpperCase());
 };
 
-// =============== COMPONENT DEFINITIONS ===============
+// =============== DÉFINITIONS DES COMPOSANTS ===============
 
-// Dashboard Card - Base component for displaying summary data
+// Carte de Tableau de Bord - Composant de base pour afficher des données récapitulatives
 const DashboardCard = ({ title, icon, children, height = 'auto' }) => {
     const Icon = icon;
 
@@ -144,7 +144,7 @@ const DashboardCard = ({ title, icon, children, height = 'auto' }) => {
     );
 };
 
-// Stat Card - For displaying financial metrics
+// Carte de Statistiques - Pour afficher les métriques financières
 const StatCard = ({ title, amount, icon, color = 'primary', trend, subtitle }) => {
     const theme = useTheme();
     const colorMap = {
@@ -197,7 +197,7 @@ const StatCard = ({ title, amount, icon, color = 'primary', trend, subtitle }) =
                         color={trend > 0 ? 'success.main' : 'error.main'}
                         fontWeight="medium"
                     >
-                        {trend > 0 ? '+' : ''}{trend}% {trend > 0 ? 'increase' : 'decrease'}
+                        {trend > 0 ? '+' : ''}{trend}% {trend > 0 ? 'augmentation' : 'diminution'}
                     </Typography>
                 </Box>
             )}
@@ -205,7 +205,7 @@ const StatCard = ({ title, amount, icon, color = 'primary', trend, subtitle }) =
     );
 };
 
-// Transaction Item - Individual transaction in the list
+// Élément de Transaction - Transaction individuelle dans la liste
 const TransactionItem = ({ transaction }) => {
     const formattedDate = dayjs(transaction.date).format('DD MMM, YYYY');
     const isIncome = transaction.transaction_type === 'income';
@@ -223,7 +223,7 @@ const TransactionItem = ({ transaction }) => {
             }}
         >
             <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-                {/* Transaction indicator */}
+                {/* Indicateur de transaction */}
                 <Box
                     sx={{
                         width: 10,
@@ -234,7 +234,7 @@ const TransactionItem = ({ transaction }) => {
                     }}
                 />
 
-                {/* Transaction details */}
+                {/* Détails de la transaction */}
                 <ListItemText
                     primary={
                         <Typography variant="body2" fontWeight="500">
@@ -247,7 +247,7 @@ const TransactionItem = ({ transaction }) => {
                     sx={{ flex: 2 }}
                 />
 
-                {/* Transaction amount and type */}
+                {/* Montant et type de transaction */}
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                     <Typography
                         variant="body2"
@@ -260,7 +260,7 @@ const TransactionItem = ({ transaction }) => {
                         {isIncome ? '+' : '-'} {formatCurrency(transaction.amount)}
                     </Typography>
                     <Chip
-                        label={isIncome ? 'Income' : 'Expense'}
+                        label={isIncome ? 'Revenu' : 'Dépense'}
                         size="small"
                         sx={{
                             backgroundColor: isIncome ? 'success.light' : 'error.light',
@@ -276,11 +276,11 @@ const TransactionItem = ({ transaction }) => {
     );
 };
 
-// Budget Progress Bar - For project budget visualization
+// Barre de Progression du Budget - Pour la visualisation du budget de projet
 const BudgetProgress = ({ project, utilization, allocated, used }) => {
     const theme = useTheme();
 
-    // Determine color based on utilization percentage
+    // Déterminer la couleur en fonction du pourcentage d'utilisation
     const getColor = (percent) => {
         if (percent < 50) return theme.palette.success.main;
         if (percent < 75) return theme.palette.warning.main;
@@ -311,7 +311,7 @@ const BudgetProgress = ({ project, utilization, allocated, used }) => {
             />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
                 <Typography variant="caption" color="text.secondary">
-                    Used: {formatCurrency(used)}
+                    Utilisé: {formatCurrency(used)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                     Budget: {formatCurrency(allocated)}
@@ -321,18 +321,18 @@ const BudgetProgress = ({ project, utilization, allocated, used }) => {
     );
 };
 
-// Chart Components
+// Composants de Graphiques
 const DonutChart = ({ data, title, emptyMessage }) => {
     const colors = generateColorPalette(data.length);
 
-    // Custom pie chart label renderer for better readability
+    // Rendu personnalisé d'étiquette de graphique en secteurs pour une meilleure lisibilité
     const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
         const RADIAN = Math.PI / 180;
         const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-        // Only show label if percentage is significant enough
+        // Afficher l'étiquette uniquement si le pourcentage est suffisamment significatif
         if (percent < 0.05) return null;
 
         return (
@@ -402,7 +402,7 @@ const DonutChart = ({ data, title, emptyMessage }) => {
                     flexDirection: 'column'
                 }}>
                     <Typography variant="body1" color="text.secondary" textAlign="center">
-                        {emptyMessage || 'No data available'}
+                        {emptyMessage || 'Aucune donnée disponible'}
                     </Typography>
                 </Box>
             )}
@@ -410,7 +410,7 @@ const DonutChart = ({ data, title, emptyMessage }) => {
     );
 };
 
-// Financial Trend Chart - For income/expense trends
+// Graphique de Tendance Financière - Pour les tendances des revenus/dépenses
 const TrendChart = ({ data, title }) => {
     const theme = useTheme();
     const [showCumulative, setShowCumulative] = useState(false);
@@ -426,7 +426,7 @@ const TrendChart = ({ data, title }) => {
                                 onClick={() => setShowCumulative(!showCumulative)}
                                 sx={{ textTransform: 'none' }}
                             >
-                                {showCumulative ? 'Show Daily Values' : 'Show Cumulative Values'}
+                                {showCumulative ? 'Afficher les valeurs quotidiennes' : 'Afficher les valeurs cumulatives'}
                             </Button>
                         </Box>
                         <ResponsiveContainer width="100%" height="90%">
@@ -461,7 +461,7 @@ const TrendChart = ({ data, title }) => {
                                     stroke={theme.palette.success.main}
                                     strokeWidth={2}
                                     activeDot={{ r: 6 }}
-                                    name={showCumulative ? "Cumulative Income" : "Daily Income"}
+                                    name={showCumulative ? "Revenu Cumulatif" : "Revenu Quotidien"}
                                     dot={{ strokeWidth: 0, r: 3 }}
                                 />
                                 <Line
@@ -469,7 +469,7 @@ const TrendChart = ({ data, title }) => {
                                     dataKey={showCumulative ? "cumulativeExpense" : "expense"}
                                     stroke={theme.palette.error.main}
                                     strokeWidth={2}
-                                    name={showCumulative ? "Cumulative Expense" : "Daily Expense"}
+                                    name={showCumulative ? "Dépense Cumulative" : "Dépense Quotidienne"}
                                     dot={{ strokeWidth: 0, r: 3 }}
                                 />
                                 <Line
@@ -477,7 +477,7 @@ const TrendChart = ({ data, title }) => {
                                     dataKey={showCumulative ? "cumulativeBalance" : "balance"}
                                     stroke={theme.palette.primary.main}
                                     strokeWidth={2}
-                                    name={showCumulative ? "Cumulative Balance" : "Daily Balance"}
+                                    name={showCumulative ? "Solde Cumulatif" : "Solde Quotidien"}
                                     dot={{ strokeWidth: 0, r: 3 }}
                                     strokeDasharray="4 4"
                                 />
@@ -495,10 +495,10 @@ const TrendChart = ({ data, title }) => {
                         flexDirection: 'column'
                     }}>
                         <Typography variant="body1" color="text.secondary" textAlign="center">
-                            No trend data available
+                            Aucune donnée de tendance disponible
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            Start recording transactions to see financial trends
+                            Commencez à enregistrer des transactions pour voir les tendances financières
                         </Typography>
                     </Box>
                 )}
@@ -521,40 +521,40 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
     const [expenseTrend, setExpenseTrend] = useState(null);
 
     const generateDailyTrendData = () => {
-        // Get current date and determine start/end dates for the month
+        // Obtenir la date actuelle et déterminer les dates de début/fin du mois
         const currentDate = dayjs();
         const startOfMonth = currentDate.startOf('month');
         const endOfMonth = currentDate.endOf('month');
         const daysInMonth = endOfMonth.date();
 
-        // Create array to hold daily data
+        // Créer un tableau pour contenir les données quotidiennes
         const dailyData = [];
 
-        // Generate data for each day of the month
+        // Générer des données pour chaque jour du mois
         for (let day = 1; day <= daysInMonth; day++) {
             const date = startOfMonth.date(day);
 
-            // Don't include future days
+            // Ne pas inclure les jours futurs
             if (date.isAfter(currentDate)) {
                 break;
             }
 
-            // Format for display
+            // Format pour l'affichage
             const name = date.format('DD MMM');
 
             let dayIncome = 0;
             let dayExpense = 0;
 
-            // If we have real transactions, calculate actual daily values
+            // Si nous avons des transactions réelles, calculer les valeurs quotidiennes réelles
             if (recentTransactions && recentTransactions.length > 0) {
-                // Filter transactions for this day
+                // Filtrer les transactions pour ce jour
                 const dayTrans = recentTransactions.filter(t => {
                     if (!t.date) return false;
                     const transDate = dayjs(t.date);
                     return transDate.format('YYYY-MM-DD') === date.format('YYYY-MM-DD');
                 });
 
-                // Calculate daily totals from actual transactions
+                // Calculer les totaux quotidiens à partir des transactions réelles
                 dayIncome = dayTrans
                     .filter(t => t.transaction_type === 'income')
                     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
@@ -563,20 +563,20 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
                     .filter(t => t.transaction_type === 'expense')
                     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
             } else {
-                // If no transactions but we have statistics, create smooth trend
+                // Si pas de transactions mais nous avons des statistiques, créer une tendance lisse
                 if (statistics && statistics.total_income !== undefined && statistics.total_expenses !== undefined) {
                     const totalIncome = parseFloat(statistics.total_income) || 0;
                     const totalExpense = parseFloat(statistics.total_expenses) || 0;
 
-                    // Simple distribution algorithm
-                    // Creates a curve that peaks in the middle of the month
+                    // Algorithme de distribution simple
+                    // Crée une courbe qui atteint son maximum au milieu du mois
                     const dayFactor = 0.5 + Math.sin(Math.PI * day / daysInMonth) * 0.5;
 
-                    // Daily values that sum up to match the monthly total
+                    // Valeurs quotidiennes qui s'additionnent pour correspondre au total mensuel
                     dayIncome = (totalIncome / daysInMonth) * dayFactor * 1.5;
                     dayExpense = (totalExpense / daysInMonth) * dayFactor * 1.5;
                 } else {
-                    // Fallback mock data with reasonable daily values
+                    // Données fictives de secours avec des valeurs quotidiennes raisonnables
                     const baseAmount = 300 + (day * 10);
                     dayIncome = baseAmount + Math.floor(Math.random() * 200);
                     dayExpense = baseAmount * 0.7 + Math.floor(Math.random() * 100);
@@ -593,7 +593,7 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
             });
         }
 
-        // Calculate running totals (cumulative)
+        // Calculer les totaux cumulatifs
         let cumulativeIncome = 0;
         let cumulativeExpense = 0;
 
@@ -613,11 +613,11 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
     const calculateTrends = (trendData) => {
         if (!trendData || trendData.length < 2) return { incomeTrend: null, expenseTrend: null };
 
-        // Get the last two months of data
+        // Obtenir les données des deux derniers mois
         const currentMonth = trendData[trendData.length - 1];
         const previousMonth = trendData[trendData.length - 2];
 
-        // Calculate percent changes
+        // Calculer les changements en pourcentage
         const incomeTrend = previousMonth.income !== 0
             ? Math.round(((currentMonth.income - previousMonth.income) / previousMonth.income) * 100)
             : null;
@@ -631,17 +631,17 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
     const calculateDailyTrends = (trendData) => {
         if (!trendData || trendData.length < 7) return { incomeTrend: null, expenseTrend: null };
 
-        // Compare the last 3 days with the previous 3 days
+        // Comparer les 3 derniers jours avec les 3 jours précédents
         const last3Days = trendData.slice(-3);
         const prev3Days = trendData.slice(-6, -3);
 
-        // Calculate total income and expense for each period
+        // Calculer le revenu et les dépenses totales pour chaque période
         const recentIncome = last3Days.reduce((sum, day) => sum + day.income, 0);
         const previousIncome = prev3Days.reduce((sum, day) => sum + day.income, 0);
         const recentExpense = last3Days.reduce((sum, day) => sum + day.expense, 0);
         const previousExpense = prev3Days.reduce((sum, day) => sum + day.expense, 0);
 
-        // Calculate percent changes
+        // Calculer les changements en pourcentage
         const incomeTrend = previousIncome !== 0
             ? Math.round(((recentIncome - previousIncome) / previousIncome) * 100)
             : null;
@@ -653,122 +653,122 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
         return { incomeTrend, expenseTrend };
     };
 
-    // Process data when statistics or transactions change
+    // Traiter les données lorsque les statistiques ou les transactions changent
     useEffect(() => {
         if (!statistics) return;
 
         try {
-            // Process income by category data for pie chart
+            // Traiter les données de revenus par catégorie pour le graphique circulaire
             const incomeData = Object.entries(statistics?.income_by_category || {})
-                .filter(([name, value]) => parseFloat(value) > 0) // Filter out zero values
+                .filter(([name, value]) => parseFloat(value) > 0) // Filtrer les valeurs nulles
                 .map(([name, value]) => ({
                     name: formatCategoryName(name),
                     value: parseFloat(value)
                 }));
             setIncomeChartData(incomeData);
 
-            // Process expense by category data for pie chart
+            // Traiter les données de dépenses par catégorie pour le graphique circulaire
             const expenseData = Object.entries(statistics?.expenses_by_category || {})
-                .filter(([name, value]) => parseFloat(value) > 0) // Filter out zero values
+                .filter(([name, value]) => parseFloat(value) > 0) // Filtrer les valeurs nulles
                 .map(([name, value]) => ({
                     name: formatCategoryName(name),
                     value: parseFloat(value)
                 }));
             setExpenseChartData(expenseData);
 
-            // Generate daily trend data for the current month
+            // Générer des données de tendance quotidienne pour le mois en cours
             const trendData = generateDailyTrendData();
             if (trendData && trendData.length > 0) {
                 setMonthlyTrendData(trendData);
 
-                // Calculate trends using the last few days rather than months
+                // Calculer les tendances en utilisant les derniers jours plutôt que les mois
                 const { incomeTrend, expenseTrend } = calculateDailyTrends(trendData);
                 setIncomeTrend(incomeTrend);
                 setExpenseTrend(expenseTrend);
             }
         } catch (error) {
-            console.error("Error processing statistics data:", error);
+            console.error("Erreur lors du traitement des données statistiques:", error);
         }
     }, [statistics, recentTransactions]);
 
     return (
         <Box sx={{ pb: 6 }}>
-            {/* Dashboard Header */}
+            {/* En-tête du tableau de bord */}
             <Box sx={{ mb: 4 }}>
                 <Typography variant="h4" fontWeight="700" sx={{ mb: 1 }}>
-                    Financial Dashboard
+                    Tableau de Bord Financier
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                    Track your organization's financial health and performance
+                    Suivez la santé financière et la performance de votre organisation
                 </Typography>
             </Box>
 
             <Grid container spacing={3}>
-                {/* Top Row - Financial Summary Cards */}
+                {/* Première ligne - Cartes de synthèse financière */}
                 <Grid item xs={12} sm={6} md={4} lg={2.4}>
                     <StatCard
-                        title="Total Income"
+                        title="Revenu Total"
                         amount={formatCurrency(statistics?.total_income || 0)}
                         icon={TrendingUp}
                         color="success"
                         trend={incomeTrend}
-                        subtitle="Last 30 days"
+                        subtitle="30 derniers jours"
                     />
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4} lg={2.4}>
                     <StatCard
-                        title="Total Expenses"
+                        title="Dépenses Totales"
                         amount={formatCurrency(statistics?.total_expenses || 0)}
                         icon={TrendingDown}
                         color="error"
                         trend={expenseTrend}
-                        subtitle="Last 30 days"
+                        subtitle="30 derniers jours"
                     />
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4} lg={2.4}>
                     <StatCard
-                        title="Net Balance"
+                        title="Solde Net"
                         amount={formatCurrency(statistics?.net_balance || 0)}
                         icon={AccountBalance}
                         color="primary"
-                        subtitle="Current balance"
+                        subtitle="Solde actuel"
                     />
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4} lg={2.4}>
                     <StatCard
-                        title="Donations"
+                        title="Dons"
                         amount={formatCurrency(statistics?.total_donations || 0)}
                         icon={Paid}
                         color="warning"
-                        subtitle="Last 30 days"
+                        subtitle="30 derniers jours"
                     />
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4} lg={2.4}>
                     <StatCard
-                        title="Membership Fees"
+                        title="Cotisations"
                         amount={formatCurrency(statistics?.total_membership_fees || 0)}
                         icon={Person}
                         color="info"
-                        subtitle="Last 30 days"
+                        subtitle="30 derniers jours"
                     />
                 </Grid>
 
-                {/* Middle Section - Charts */}
+                {/* Section médiane - Graphiques */}
                 <Grid item xs={12} md={8}>
                     <TrendChart
                         data={monthlyTrendData}
-                        title="Financial Trends"
+                        title="Tendances Financières"
                     />
                 </Grid>
 
-                {/* Right Column - Recent Transactions */}
+                {/* Colonne droite - Transactions récentes */}
                 <Grid item xs={12} md={4}>
                     <DashboardCard
-                        title="Recent Transactions"
+                        title="Transactions Récentes"
                         height="100%"
                     >
                         <List sx={{
@@ -794,7 +794,7 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
                             ) : (
                                 <ListItem>
                                     <ListItemText
-                                        primary="No recent transactions"
+                                        primary="Aucune transaction récente"
                                         primaryTypographyProps={{
                                             align: 'center',
                                             color: 'text.secondary',
@@ -807,26 +807,26 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
                     </DashboardCard>
                 </Grid>
 
-                {/* Bottom Row - Pie Charts and Project Budgets */}
+                {/* Ligne inférieure - Graphiques circulaires et budgets de projet */}
                 <Grid item xs={12} md={4}>
                     <DonutChart
                         data={incomeChartData}
-                        title="Income by Category"
-                        emptyMessage="No income data available"
+                        title="Revenus par Catégorie"
+                        emptyMessage="Aucune donnée de revenu disponible"
                     />
                 </Grid>
 
                 <Grid item xs={12} md={4}>
                     <DonutChart
                         data={expenseChartData}
-                        title="Expenses by Category"
-                        emptyMessage="No expense data available"
+                        title="Dépenses par Catégorie"
+                        emptyMessage="Aucune donnée de dépense disponible"
                     />
                 </Grid>
 
                 <Grid item xs={12} md={4}>
                     <DashboardCard
-                        title="Project Budgets"
+                        title="Budgets des Projets"
                         icon={Assignment}
                         height="100%"
                     >
@@ -853,7 +853,7 @@ const EnhancedDashboard = ({ statistics, recentTransactions }) => {
                                 flexDirection: 'column'
                             }}>
                                 <Typography variant="body1" color="text.secondary">
-                                    No project budgets available
+                                    Aucun budget de projet disponible
                                 </Typography>
                             </Box>
                         )}

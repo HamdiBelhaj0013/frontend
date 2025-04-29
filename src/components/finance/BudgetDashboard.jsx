@@ -61,13 +61,13 @@ const BudgetAdjustmentDialog = ({ open, onClose, budget, onSuccess }) => {
 
     const handleSubmit = async () => {
         if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-            setError('Please enter a valid amount');
+            setError('Veuillez saisir un montant valide');
             return;
         }
 
         // Check if amount is less than used amount
         if (parseFloat(amount) < parseFloat(budget.used_amount)) {
-            setError('New budget cannot be less than the amount already used');
+            setError('Le nouveau budget ne peut pas être inférieur au montant déjà utilisé');
             return;
         }
 
@@ -80,7 +80,7 @@ const BudgetAdjustmentDialog = ({ open, onClose, budget, onSuccess }) => {
             onClose();
         } catch (err) {
             console.error('Error adjusting budget:', err);
-            setError(err.response?.data?.error || 'Failed to adjust budget');
+            setError(err.response?.data?.error || 'Échec de l\'ajustement du budget');
         } finally {
             setLoading(false);
         }
@@ -92,7 +92,7 @@ const BudgetAdjustmentDialog = ({ open, onClose, budget, onSuccess }) => {
                 <Box display="flex" alignItems="center">
                     <AccountBalance sx={{ mr: 1 }} />
                     <Typography variant="h6">
-                        Adjust Budget Allocation
+                        Ajuster l'Allocation Budgétaire
                     </Typography>
                 </Box>
             </DialogTitle>
@@ -106,24 +106,24 @@ const BudgetAdjustmentDialog = ({ open, onClose, budget, onSuccess }) => {
                 {budget && (
                     <Box>
                         <Typography variant="subtitle1" gutterBottom>
-                            Project: {budget.project_details?.name}
+                            Projet : {budget.project_details?.name}
                         </Typography>
 
                         <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid item xs={12} sm={6}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Current Budget: {formatCurrency(budget.allocated_amount)}
+                                    Budget Actuel : {formatCurrency(budget.allocated_amount)}
                                 </Typography>
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Used Amount: {formatCurrency(budget.used_amount)}
+                                    Montant Utilisé : {formatCurrency(budget.used_amount)}
                                 </Typography>
                             </Grid>
                         </Grid>
 
                         <TextField
-                            label="New Budget Amount"
+                            label="Nouveau Montant du Budget"
                             fullWidth
                             type="number"
                             margin="normal"
@@ -132,14 +132,14 @@ const BudgetAdjustmentDialog = ({ open, onClose, budget, onSuccess }) => {
                             error={!!error}
                             inputProps={{ min: budget.used_amount }}
                             disabled={loading}
-                            helperText={error ? error : "Amount must be greater than or equal to the used amount"}
+                            helperText={error ? error : "Le montant doit être supérieur ou égal au montant déjà utilisé"}
                         />
                     </Box>
                 )}
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} disabled={loading}>
-                    Cancel
+                    Annuler
                 </Button>
                 <Button
                     onClick={handleSubmit}
@@ -147,7 +147,7 @@ const BudgetAdjustmentDialog = ({ open, onClose, budget, onSuccess }) => {
                     color="primary"
                     disabled={loading}
                 >
-                    {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+                    {loading ? <CircularProgress size={24} /> : 'Enregistrer les Modifications'}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -167,7 +167,7 @@ const DeleteBudgetDialog = ({ open, onClose, budget, onSuccess }) => {
 
     const handleDelete = async () => {
         if (confirmText !== 'delete') {
-            setError('Please type "delete" to confirm');
+            setError('Veuillez taper "delete" pour confirmer');
             return;
         }
 
@@ -178,7 +178,7 @@ const DeleteBudgetDialog = ({ open, onClose, budget, onSuccess }) => {
             onClose();
         } catch (err) {
             console.error('Error deleting budget:', err);
-            setError(err.response?.data?.error || 'Failed to delete budget');
+            setError(err.response?.data?.error || 'Échec de la suppression du budget');
         } finally {
             setLoading(false);
         }
@@ -190,7 +190,7 @@ const DeleteBudgetDialog = ({ open, onClose, budget, onSuccess }) => {
                 <Box display="flex" alignItems="center">
                     <Delete sx={{ mr: 1, color: 'error.main' }} />
                     <Typography variant="h6" color="error">
-                        Delete Budget
+                        Supprimer le Budget
                     </Typography>
                 </Box>
             </DialogTitle>
@@ -205,19 +205,19 @@ const DeleteBudgetDialog = ({ open, onClose, budget, onSuccess }) => {
                     <Box>
                         <Alert severity="warning" sx={{ mb: 2 }}>
                             <Typography variant="body1" gutterBottom>
-                                You are about to delete the budget allocation for:
+                                Vous êtes sur le point de supprimer l'allocation budgétaire pour :
                             </Typography>
                             <Typography variant="subtitle1" fontWeight="bold">
                                 {budget.project_details?.name}
                             </Typography>
                             <Typography variant="body2" sx={{ mt: 1 }}>
-                                This action cannot be undone. All budget allocation data will be permanently removed.
+                                Cette action ne peut pas être annulée. Toutes les données d'allocation budgétaire seront définitivement supprimées.
                             </Typography>
                         </Alert>
 
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="body2" gutterBottom>
-                                To confirm, type "delete" below:
+                                Pour confirmer, tapez "delete" ci-dessous :
                             </Typography>
                             <TextField
                                 fullWidth
@@ -235,7 +235,7 @@ const DeleteBudgetDialog = ({ open, onClose, budget, onSuccess }) => {
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} disabled={loading}>
-                    Cancel
+                    Annuler
                 </Button>
                 <Button
                     onClick={handleDelete}
@@ -243,7 +243,7 @@ const DeleteBudgetDialog = ({ open, onClose, budget, onSuccess }) => {
                     color="error"
                     disabled={loading || confirmText !== 'delete'}
                 >
-                    {loading ? <CircularProgress size={24} /> : 'Delete Budget'}
+                    {loading ? <CircularProgress size={24} /> : 'Supprimer le Budget'}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -276,7 +276,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
             setProjects(response.data);
         } catch (err) {
             console.error('Error fetching projects:', err);
-            setError('Failed to load projects');
+            setError('Échec du chargement des projets');
         } finally {
             setProjectsLoading(false);
         }
@@ -294,12 +294,12 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
     const handleSubmit = async () => {
         // Validate form
         if (!formData.project) {
-            setError('Please select a project');
+            setError('Veuillez sélectionner un projet');
             return;
         }
 
         if (!formData.allocated_amount || isNaN(formData.allocated_amount) || parseFloat(formData.allocated_amount) <= 0) {
-            setError('Please enter a valid amount');
+            setError('Veuillez saisir un montant valide');
             return;
         }
 
@@ -310,7 +310,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
             onClose();
         } catch (err) {
             console.error('Error creating budget allocation:', err);
-            setError(err.response?.data?.detail || 'Failed to create budget allocation');
+            setError(err.response?.data?.detail || 'Échec de la création de l\'allocation budgétaire');
         } finally {
             setLoading(false);
         }
@@ -322,7 +322,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
                 <Box display="flex" alignItems="center">
                     <AccountBalance sx={{ mr: 1 }} />
                     <Typography variant="h6">
-                        New Budget Allocation
+                        Nouvelle Allocation Budgétaire
                     </Typography>
                 </Box>
             </DialogTitle>
@@ -335,7 +335,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
 
                 <TextField
                     select
-                    label="Project"
+                    label="Projet"
                     name="project"
                     fullWidth
                     margin="normal"
@@ -346,7 +346,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
                         native: true,
                     }}
                 >
-                    <option value="">Select a project</option>
+                    <option value=""></option>
                     {projects.map((project) => (
                         <option key={project.id} value={project.id}>
                             {project.name}
@@ -355,7 +355,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
                 </TextField>
 
                 <TextField
-                    label="Budget Amount"
+                    label="Montant du Budget"
                     name="allocated_amount"
                     fullWidth
                     type="number"
@@ -380,7 +380,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} disabled={loading}>
-                    Cancel
+                    Annuler
                 </Button>
                 <Button
                     onClick={handleSubmit}
@@ -388,7 +388,7 @@ const NewBudgetDialog = ({ open, onClose, onSuccess }) => {
                     color="primary"
                     disabled={loading}
                 >
-                    {loading ? <CircularProgress size={24} /> : 'Create Budget'}
+                    {loading ? <CircularProgress size={24} /> : 'Créer le Budget'}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -428,12 +428,12 @@ const BudgetCard = ({ budget, onAdjust, onDelete }) => {
                         {budget.project_details.name}
                     </Typography>
                     <Box>
-                        <Tooltip title="Adjust Budget">
+                        <Tooltip title="Ajuster le Budget">
                             <IconButton size="small" onClick={() => onAdjust(budget)} sx={{ mr: 0.5 }}>
                                 <Edit fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Delete Budget">
+                        <Tooltip title="Supprimer le Budget">
                             <IconButton size="small" onClick={() => onDelete(budget)} color="error">
                                 <Delete fontSize="small" />
                             </IconButton>
@@ -444,7 +444,7 @@ const BudgetCard = ({ budget, onAdjust, onDelete }) => {
                 <Box sx={{ mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
-                            Budget Utilization
+                            Utilisation du Budget
                         </Typography>
                         <Typography variant="body2" fontWeight="medium" sx={{ color: progressColor }}>
                             {Math.round(utilization)}%
@@ -468,7 +468,7 @@ const BudgetCard = ({ budget, onAdjust, onDelete }) => {
                 <Grid container spacing={2}>
                     <Grid item xs={4}>
                         <Typography variant="caption" color="text.secondary" component="div">
-                            Total Budget
+                            Budget Total
                         </Typography>
                         <Typography variant="body1" fontWeight="medium">
                             {formatCurrency(budget.allocated_amount)}
@@ -476,7 +476,7 @@ const BudgetCard = ({ budget, onAdjust, onDelete }) => {
                     </Grid>
                     <Grid item xs={4}>
                         <Typography variant="caption" color="text.secondary" component="div">
-                            Used
+                            Utilisé
                         </Typography>
                         <Typography variant="body1" fontWeight="medium" color={theme.palette.error.main}>
                             {formatCurrency(budget.used_amount)}
@@ -484,7 +484,7 @@ const BudgetCard = ({ budget, onAdjust, onDelete }) => {
                     </Grid>
                     <Grid item xs={4}>
                         <Typography variant="caption" color="text.secondary" component="div">
-                            Remaining
+                            Restant
                         </Typography>
                         <Typography variant="body1" fontWeight="medium" color={theme.palette.success.main}>
                             {formatCurrency(budget.remaining_amount)}
@@ -496,7 +496,7 @@ const BudgetCard = ({ budget, onAdjust, onDelete }) => {
                     <Box sx={{ mt: 2 }}>
                         <Divider sx={{ mb: 1 }} />
                         <Typography variant="caption" color="text.secondary">
-                            Notes:
+                            Notes :
                         </Typography>
                         <Typography variant="body2">
                             {budget.notes}
@@ -527,7 +527,7 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
             setBudgets(response.data);
         } catch (err) {
             console.error('Error fetching budgets:', err);
-            setError('Failed to load budget allocations. Please try again.');
+            setError('Échec du chargement des allocations budgétaires. Veuillez réessayer.');
         } finally {
             setLoading(false);
         }
@@ -563,7 +563,7 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
             {/* Header with action buttons */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h5" component="h2" fontWeight="bold">
-                    Project Budget
+                    Budget des Projets
                 </Typography>
                 <Box>
                     <Button
@@ -573,7 +573,7 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
                         sx={{ mr: 1 }}
                         disabled={loading}
                     >
-                        Refresh
+                        Actualiser
                     </Button>
                     <Button
                         variant="contained"
@@ -581,7 +581,7 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
                         onClick={() => setNewBudgetDialogOpen(true)}
                         disabled={loading}
                     >
-                        New Budget
+                        Nouveau Budget
                     </Button>
                 </Box>
             </Box>
@@ -607,17 +607,17 @@ const BudgetDashboard = ({ projectBudgets, onRefresh }) => {
                         <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
                             <Info color="info" sx={{ fontSize: 48, mb: 2, opacity: 0.7 }} />
                             <Typography variant="h6" gutterBottom>
-                                No Budget Allocations
+                                Aucune Allocation Budgétaire
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                There are no budget allocations created yet. Create your first budget to start tracking expenses by project.
+                                Aucune allocation budgétaire n'a encore été créée. Créez votre premier budget pour commencer à suivre les dépenses par projet.
                             </Typography>
                             <Button
                                 variant="contained"
                                 startIcon={<Add />}
                                 onClick={() => setNewBudgetDialogOpen(true)}
                             >
-                                Create First Budget
+                                Créer le Premier Budget
                             </Button>
                         </Paper>
                     ) : (

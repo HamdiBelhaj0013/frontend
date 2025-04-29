@@ -41,6 +41,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import AxiosInstance from '../Axios.jsx';
 import { motion } from 'framer-motion';
 
+// Import permission components
+import { PermissionRequired } from '../../contexts/ConditionalUI.jsx';
+import { usePermissions } from '../../contexts/PermissionsContext.jsx';
+
 // Setup the localizer
 const localizer = momentLocalizer(moment);
 
@@ -191,11 +195,22 @@ const StatusChip = ({ status }) => {
 };
 
 const MeetingsCalendar = () => {
+    // Get permission context
+    const { can, RESOURCES, ACTIONS, userRole } = usePermissions();
+    const canCreateMeetings = can(ACTIONS.CREATE, RESOURCES.MEETINGS);
+    const canEditMeetings = can(ACTIONS.EDIT, RESOURCES.MEETINGS);
+
     const [meetings, setMeetings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedMeeting, setSelectedMeeting] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [notification, setNotification] = useState({
+        show: false,
+        message: '',
+        severity: 'error'
+    });
+
     const navigate = useNavigate();
     const theme = useTheme();
 
@@ -246,6 +261,24 @@ const MeetingsCalendar = () => {
     const handleSelectEvent = (event) => {
         setSelectedMeeting(event.resource);
         setShowModal(true);
+    };
+
+    // Handle navigation to create meeting
+    const handleCreateMeeting = () => {
+        if (!canCreateMeetings) {
+            setNotification({
+                show: true,
+                message: 'You do not have permission to create meetings.',
+                severity: 'error'
+            });
+
+            setTimeout(() => {
+                setNotification(prev => ({ ...prev, show: false }));
+            }, 3000);
+            return;
+        }
+
+        navigate('/meetings/create');
     };
 
     // Event styling
@@ -309,6 +342,12 @@ const MeetingsCalendar = () => {
         window.location.reload();
     };
 
+    // Navigate to meeting details or edit based on permissions
+    const handleViewDetails = (meetingId) => {
+        setShowModal(false);
+        navigate(`/meetings/${meetingId}`);
+    };
+
     return (
         <Container maxWidth="xl">
             <motion.div
@@ -329,18 +368,21 @@ const MeetingsCalendar = () => {
                                 </Typography>
 
                                 <Box sx={{ display: 'flex', mt: 2, gap: 2 }}>
-                                    <Button
-                                        variant="contained"
-                                        component={Link}
-                                        to="/meetings/create"
-                                        startIcon={<Add />}
-                                        sx={{
-                                            bgcolor: 'rgba(255,255,255,0.2)',
-                                            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
-                                        }}
-                                    >
-                                        New Meeting
-                                    </Button>
+                                    {/* Only show New Meeting button if user has create permission */}
+                                    {canCreateMeetings && (
+                                        <Button
+                                            variant="contained"
+                                            component={Link}
+                                            to="/meetings/create"
+                                            startIcon={<Add />}
+                                            sx={{
+                                                bgcolor: 'rgba(255,255,255,0.2)',
+                                                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
+                                            }}
+                                        >
+                                            New Meeting
+                                        </Button>
+                                    )}
 
                                     <Button
                                         variant="outlined"
@@ -404,31 +446,36 @@ const MeetingsCalendar = () => {
                     </HeaderContainer>
                 </motion.div>
 
-                {/* Quick Actions */}
+                {/* Quick Actions - Only show appropriate actions based on permissions */}
                 <motion.div variants={itemVariants}>
                     <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={12} sm={4}>
-                            <QuickActionCard>
-                                <CardActionArea
-                                    component={Link}
-                                    to="/meetings/create"
-                                    sx={{ height: '100%', p: 2 }}
-                                >
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main, mr: 2 }}>
-                                            <Add />
-                                        </Avatar>
-                                        <Box>
-                                            <Typography variant="h6" fontWeight="medium">Create Meeting</Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Schedule a new meeting
-                                            </Typography>
+                        {/* Create Meeting Card - Only shown if user has permission */}
+                        {canCreateMeetings && (
+                            <Grid item xs={12} sm={4}>
+                                <QuickActionCard>
+                                    <CardActionArea
+                                        component={Link}
+                                        to="/meetings/create"
+                                        sx={{ height: '100%', p: 2 }}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main, mr: 2 }}>
+                                                <Add />
+                                            </Avatar>
+                                            <Box>
+                                                <Typography variant="h6" fontWeight="medium">Create Meeting</Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Schedule a new meeting
+                                                </Typography>
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                </CardActionArea>
-                            </QuickActionCard>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
+                                    </CardActionArea>
+                                </QuickActionCard>
+                            </Grid>
+                        )}
+
+                        {/* Always show Upcoming Meetings card */}
+                        <Grid item xs={12} sm={canCreateMeetings ? 4 : 6}>
                             <QuickActionCard>
                                 <CardActionArea
                                     component={Link}
@@ -449,7 +496,9 @@ const MeetingsCalendar = () => {
                                 </CardActionArea>
                             </QuickActionCard>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+
+                        {/* Report-related card - Adjust width based on permissions */}
+                        <Grid item xs={12} sm={canCreateMeetings ? 4 : 6}>
                             <QuickActionCard>
                                 <CardActionArea
                                     component={Link}
@@ -473,10 +522,20 @@ const MeetingsCalendar = () => {
                     </Grid>
                 </motion.div>
 
+                {/* Error Alert */}
                 {error && (
                     <motion.div variants={itemVariants}>
                         <Alert severity="error" sx={{ mb: 3 }}>
                             {error}
+                        </Alert>
+                    </motion.div>
+                )}
+
+                {/* Permission notification */}
+                {notification.show && (
+                    <motion.div variants={itemVariants}>
+                        <Alert severity={notification.severity} sx={{ mb: 3 }}>
+                            {notification.message}
                         </Alert>
                     </motion.div>
                 )}
@@ -623,15 +682,14 @@ const MeetingsCalendar = () => {
                                     >
                                         Close
                                     </Button>
+
+                                    {/* View Details button - label changes based on permissions */}
                                     <Button
                                         variant="contained"
-                                        onClick={() => {
-                                            setShowModal(false);
-                                            navigate(`/meetings/${selectedMeeting.id}`);
-                                        }}
+                                        onClick={() => handleViewDetails(selectedMeeting.id)}
                                         endIcon={<ArrowForward />}
                                     >
-                                        View Details
+                                        {canEditMeetings ? 'View & Edit Details' : 'View Details'}
                                     </Button>
                                 </Box>
                             </>

@@ -133,7 +133,7 @@ const PendingUsers = () => {
             console.error('Error fetching pending users:', error);
             setNotification({
                 open: true,
-                message: 'Failed to load pending users. Please try again.',
+                message: 'Échec du chargement des utilisateurs en attente. Veuillez réessayer.',
                 severity: 'error'
             });
         } finally {
@@ -159,7 +159,6 @@ const PendingUsers = () => {
     };
 
     // Handle validation or rejection
-// In PendingUsers.jsx - around line 135
     const handleAction = async (userId, action) => {
         try {
             // This is the correct endpoint for validating/rejecting users
@@ -169,7 +168,7 @@ const PendingUsers = () => {
 
             setNotification({
                 open: true,
-                message: response.data.message || `User has been ${action === 'validate' ? 'approved' : 'rejected'} successfully`,
+                message: response.data.message || `L'utilisateur a été ${action === 'validate' ? 'approuvé' : 'rejeté'} avec succès`,
                 severity: 'success'
             });
 
@@ -180,7 +179,7 @@ const PendingUsers = () => {
             console.error(`Error ${action === 'validate' ? 'validating' : 'rejecting'} user:`, error);
             setNotification({
                 open: true,
-                message: `Failed to ${action} user. ${error.response?.data?.error || 'Please try again.'}`,
+                message: `Échec de ${action === 'validate' ? 'validation' : 'rejet'} de l'utilisateur. ${error.response?.data?.error || 'Veuillez réessayer.'}`,
                 severity: 'error'
             });
         }
@@ -235,10 +234,10 @@ const PendingUsers = () => {
                     <HourglassEmptyIcon sx={{ mr: 2, fontSize: 28 }} />
                     <Box sx={{ zIndex: 1 }}>
                         <Typography variant="h5" component="h1" fontWeight="bold">
-                            Pending User Validation
+                            Validation des Utilisateurs en Attente
                         </Typography>
                         <Typography variant="subtitle2">
-                            Approve or reject new user registrations
+                            Approuver ou rejeter les nouvelles inscriptions d'utilisateurs
                         </Typography>
                     </Box>
                     {/* Decorative circles */}
@@ -285,7 +284,7 @@ const PendingUsers = () => {
                         }
                     }}
                 >
-                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                    {refreshing ? 'Actualisation...' : 'Actualiser'}
                 </Button>
             </Box>
 
@@ -294,7 +293,7 @@ const PendingUsers = () => {
                 <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh" flexDirection="column" gap={2}>
                     <CircularProgress size={50} color="primary" />
                     <Typography variant="body1" color="text.secondary">
-                        Loading pending users...
+                        Chargement des utilisateurs en attente...
                     </Typography>
                 </Box>
             ) : pendingUsers.length === 0 ? (
@@ -307,9 +306,9 @@ const PendingUsers = () => {
                         border: `1px dashed ${theme.palette.divider}`
                     }}
                 >
-                    <Typography variant="h6" gutterBottom>No pending users found</Typography>
+                    <Typography variant="h6" gutterBottom>Aucun utilisateur en attente trouvé</Typography>
                     <Typography variant="body2" color="text.secondary">
-                        All user registrations have been processed
+                        Toutes les inscriptions d'utilisateurs ont été traitées
                     </Typography>
                 </Paper>
             ) : (
@@ -343,7 +342,7 @@ const PendingUsers = () => {
                                             zIndex: 2
                                         }}
                                     >
-                                        <Tooltip title="Pending validation">
+                                        <Tooltip title="En attente de validation">
                                             <Badge
                                                 badgeContent={
                                                     <HourglassEmptyIcon fontSize="small" sx={{ color: theme.palette.warning.main }} />
@@ -362,11 +361,11 @@ const PendingUsers = () => {
 
                                     <CardContent sx={{ textAlign: 'center', pb: 1 }}>
                                         <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                            {user.full_name || 'No name provided'}
+                                            {user.full_name || 'Aucun nom fourni'}
                                         </Typography>
 
                                         <Chip
-                                            label="Pending Approval"
+                                            label="En Attente d'Approbation"
                                             size="small"
                                             sx={{
                                                 mb: 2,
@@ -386,7 +385,7 @@ const PendingUsers = () => {
 
                                         <Box sx={{ mt: 2, p: 2, bgcolor: alpha(theme.palette.warning.light, 0.1), borderRadius: '8px' }}>
                                             <Typography variant="caption" color="text.secondary">
-                                                This user is waiting for approval to access the system.
+                                                Cet utilisateur attend l'approbation pour accéder au système.
                                             </Typography>
                                         </Box>
                                     </CardContent>
@@ -407,7 +406,7 @@ const PendingUsers = () => {
                                             onClick={() => openConfirmDialog(user, 'validate')}
                                             sx={{ borderRadius: '8px' }}
                                         >
-                                            Approve
+                                            Approuver
                                         </Button>
                                         <Button
                                             variant="contained"
@@ -417,7 +416,7 @@ const PendingUsers = () => {
                                             onClick={() => openConfirmDialog(user, 'reject')}
                                             sx={{ borderRadius: '8px' }}
                                         >
-                                            Reject
+                                            Rejeter
                                         </Button>
                                     </CardActions>
                                 </MemberCard>
@@ -451,14 +450,14 @@ const PendingUsers = () => {
                         : <WarningIcon color="error" />
                     }
                     <Typography variant="h6" component="span" color={confirmDialog.type === 'validate' ? "success.main" : "error.main"}>
-                        {confirmDialog.type === 'validate' ? 'Approve User' : 'Reject User'}
+                        {confirmDialog.type === 'validate' ? 'Approuver l\'Utilisateur' : 'Rejeter l\'Utilisateur'}
                     </Typography>
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                     <DialogContentText>
                         {confirmDialog.type === 'validate'
-                            ? `Are you sure you want to approve ${confirmDialog.user?.full_name || confirmDialog.user?.email}? They will gain access to the system.`
-                            : `Are you sure you want to reject ${confirmDialog.user?.full_name || confirmDialog.user?.email}? They will not be able to access the system until approved.`
+                            ? `Êtes-vous sûr de vouloir approuver ${confirmDialog.user?.full_name || confirmDialog.user?.email}? Ils auront accès au système.`
+                            : `Êtes-vous sûr de vouloir rejeter ${confirmDialog.user?.full_name || confirmDialog.user?.email}? Ils ne pourront pas accéder au système jusqu'à leur approbation.`
                         }
                     </DialogContentText>
                 </DialogContent>
@@ -468,7 +467,7 @@ const PendingUsers = () => {
                         variant="outlined"
                         sx={{ borderRadius: '8px' }}
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={() => handleAction(confirmDialog.user?.id, confirmDialog.type)}
@@ -479,7 +478,7 @@ const PendingUsers = () => {
                             px: 3
                         }}
                     >
-                        {confirmDialog.type === 'validate' ? 'Approve' : 'Reject'}
+                        {confirmDialog.type === 'validate' ? 'Approuver' : 'Rejeter'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -198,20 +198,20 @@ const EditMember = () => {
 
     // Form validation schema
     const schema = yup.object({
-        name: yup.string().required('Name is required'),
-        address: yup.string().required('Address is required'),
-        email: yup.string().email('Invalid email').required('Email is required'),
-        nationality: yup.string().required('Nationality is required'),
+        name: yup.string().required('Le nom est requis'),
+        address: yup.string().required('L\'adresse est requise'),
+        email: yup.string().email('Email invalide').required('L\'email est requis'),
+        nationality: yup.string().required('La nationalité est requise'),
         birth_date: yup.date()
             .nullable()
-            .typeError('Birth date must be a valid date')
-            .required('Birth date is required'),
-        job: yup.string().required('Job is required'),
+            .typeError('La date de naissance doit être une date valide')
+            .required('La date de naissance est requise'),
+        job: yup.string().required('L\'emploi est requis'),
         joining_date: yup.date()
             .nullable()
-            .typeError('Joining date must be a valid date')
-            .required('Joining date is required'),
-        role: yup.string().required('Role is required'),
+            .typeError('La date d\'adhésion doit être une date valide')
+            .required('La date d\'adhésion est requise'),
+        role: yup.string().required('Le rôle est requis'),
     });
 
     const { handleSubmit, control, setValue, watch, formState: { errors, isValid, isDirty } } = useForm({
@@ -262,7 +262,7 @@ const EditMember = () => {
                 setMemberData(data);
             } catch (err) {
                 console.error('Error fetching member:', err);
-                setError('Failed to load member data. Please try again.');
+                setError('Échec du chargement des données du membre. Veuillez réessayer.');
             } finally {
                 setLoading(false);
             }
@@ -277,7 +277,6 @@ const EditMember = () => {
     };
 
     // Form submission handler
-// Update the onSubmit function in EditMember.jsx
     const onSubmit = async (data) => {
         setSaving(true);
         setError(null);
@@ -291,7 +290,7 @@ const EditMember = () => {
                 needs_profile_completion: false
             };
 
-            console.log("Updating member data:", memberData);
+            console.log("Mise à jour des données du membre:", memberData);
 
             const response = await AxiosInstance.put(`/api/member/${id}/`, memberData);
 
@@ -300,12 +299,12 @@ const EditMember = () => {
                 navigate('/members', {
                     state: {
                         success: true,
-                        message: `Member "${data.name}" was updated successfully`
+                        message: `Le membre "${data.name}" a été mis à jour avec succès`
                     }
                 });
             }, 1500);
         } catch (err) {
-            console.error('Error updating member:', err);
+            console.error('Erreur lors de la mise à jour du membre:', err);
 
             // Handle different types of error responses
             let errorMessage;
@@ -326,10 +325,10 @@ const EditMember = () => {
                     errorMessage = err.response.data;
                 } else {
                     // Default error
-                    errorMessage = 'Failed to update member. Please try again.';
+                    errorMessage = 'Échec de la mise à jour du membre. Veuillez réessayer.';
                 }
             } else {
-                errorMessage = 'Network error. Please check your connection and try again.';
+                errorMessage = 'Erreur réseau. Veuillez vérifier votre connexion et réessayer.';
             }
 
             setError(errorMessage);
@@ -348,6 +347,7 @@ const EditMember = () => {
         { value: "Autre", label: "Autre" },
     ];
 
+    // Liste simplifiée de pays pour l'exemple
     const countries = [
         { value: "Afghanistan", label: "Afghanistan" },
         { value: "Albania", label: "Albania" },
@@ -587,7 +587,7 @@ const EditMember = () => {
                             }
                         }}
                     >
-                        Back to Members
+                        Retour aux Membres
                     </Button>
 
                     {/* Header */}
@@ -596,10 +596,10 @@ const EditMember = () => {
                             <PersonIcon sx={{ mr: 2, fontSize: 28 }} />
                             <Box sx={{ zIndex: 1 }}>
                                 <Typography variant="h5" component="h1" fontWeight="bold">
-                                    Edit Member
+                                    Modifier le Membre
                                 </Typography>
                                 <Typography variant="subtitle2">
-                                    {memberData?.name ? `Editing: ${memberData.name}` : 'Update member details'}
+                                    {memberData?.name ? `Modification de : ${memberData.name}` : 'Mettre à jour les informations du membre'}
                                 </Typography>
                             </Box>
                             {/* Decorative circles */}
@@ -636,10 +636,10 @@ const EditMember = () => {
                                 <PriorityHighIcon color="warning" fontSize="large" />
                                 <Box>
                                     <Typography variant="subtitle1" fontWeight="bold" color="warning.main">
-                                        This profile needs to be completed
+                                        Ce profil doit être complété
                                     </Typography>
                                     <Typography variant="body2">
-                                        Please review and update all information for this member to complete their profile.
+                                        Veuillez vérifier et mettre à jour toutes les informations de ce membre pour compléter son profil.
                                     </Typography>
                                 </Box>
                             </CompletionBanner>
@@ -657,7 +657,7 @@ const EditMember = () => {
                             sx={{ mb: 3, borderRadius: '8px' }}
                             action={
                                 <Button color="inherit" size="small" onClick={() => navigate('/members')}>
-                                    Go Back
+                                    Retour
                                 </Button>
                             }
                         >
@@ -675,8 +675,8 @@ const EditMember = () => {
                                         indicatorColor="primary"
                                         textColor="primary"
                                     >
-                                        <StyledTab label="Personal Information" icon={<PersonIcon />} iconPosition="start" />
-                                        <StyledTab label="Professional & Dates" icon={<WorkIcon />} iconPosition="start" />
+                                        <StyledTab label="Informations Personnelles" icon={<PersonIcon />} iconPosition="start" />
+                                        <StyledTab label="Informations Professionnelles & Dates" icon={<WorkIcon />} iconPosition="start" />
                                     </Tabs>
                                 </Box>
 
@@ -698,12 +698,12 @@ const EditMember = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <PersonIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Full Name</Typography>
+                                                                <Typography variant="subtitle2">Nom Complet</Typography>
                                                             </Box>
                                                             <MyTextField
                                                                 name="name"
                                                                 control={control}
-                                                                placeholder="Enter full name"
+                                                                placeholder="Entrez le nom complet"
                                                                 error={!!errors.name}
                                                                 helperText={errors.name?.message}
                                                             />
@@ -719,7 +719,7 @@ const EditMember = () => {
                                                             <MyTextField
                                                                 name="email"
                                                                 control={control}
-                                                                placeholder="Enter email address"
+                                                                placeholder="Entrez l'adresse email"
                                                                 error={!!errors.email}
                                                                 helperText={errors.email?.message}
                                                             />
@@ -730,12 +730,12 @@ const EditMember = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <HomeIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Address</Typography>
+                                                                <Typography variant="subtitle2">Adresse</Typography>
                                                             </Box>
                                                             <MyTextField
                                                                 name="address"
                                                                 control={control}
-                                                                placeholder="Enter residential address"
+                                                                placeholder="Entrez l'adresse de résidence"
                                                                 error={!!errors.address}
                                                                 helperText={errors.address?.message}
                                                             />
@@ -753,7 +753,7 @@ const EditMember = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <PublicIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Nationality</Typography>
+                                                                <Typography variant="subtitle2">Nationalité</Typography>
                                                             </Box>
                                                             <MySelectField
                                                                 name="nationality"
@@ -769,12 +769,12 @@ const EditMember = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <WorkIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Job</Typography>
+                                                                <Typography variant="subtitle2">Emploi</Typography>
                                                             </Box>
                                                             <MyTextField
                                                                 name="job"
                                                                 control={control}
-                                                                placeholder="Enter job title"
+                                                                placeholder="Entrez l'intitulé du poste"
                                                                 error={!!errors.job}
                                                                 helperText={errors.job?.message}
                                                             />
@@ -785,7 +785,7 @@ const EditMember = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <AdminPanelSettingsIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Role</Typography>
+                                                                <Typography variant="subtitle2">Rôle</Typography>
                                                             </Box>
                                                             <MySelectField
                                                                 name="role"
@@ -801,7 +801,7 @@ const EditMember = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <CakeIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Birth Date</Typography>
+                                                                <Typography variant="subtitle2">Date de Naissance</Typography>
                                                             </Box>
                                                             <MyDatePickerField
                                                                 name="birth_date"
@@ -816,7 +816,7 @@ const EditMember = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <EventIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Joining Date</Typography>
+                                                                <Typography variant="subtitle2">Date d'Adhésion</Typography>
                                                             </Box>
                                                             <MyDatePickerField
                                                                 name="joining_date"
@@ -835,7 +835,7 @@ const EditMember = () => {
                                     <Box sx={{ mb: 3 }}>
                                         <InfoChip
                                             icon={<InfoOutlinedIcon />}
-                                            label="All changes will be applied immediately upon saving"
+                                            label="Toutes les modifications seront appliquées immédiatement après l'enregistrement"
                                         />
                                     </Box>
 
@@ -850,7 +850,7 @@ const EditMember = () => {
                                             startIcon={<DeleteIcon />}
                                             onClick={() => navigate(`/member/delete/${id}`)}
                                         >
-                                            Delete Member
+                                            Supprimer le Membre
                                         </DeleteButton>
 
                                         <Box sx={{ display: 'flex', gap: 2, ml: 'auto' }}>
@@ -859,7 +859,7 @@ const EditMember = () => {
                                                 onClick={() => navigate('/members')}
                                                 sx={{ borderRadius: '8px' }}
                                             >
-                                                Cancel
+                                                Annuler
                                             </Button>
 
                                             <SaveButton
@@ -868,7 +868,7 @@ const EditMember = () => {
                                                 disabled={saving || !isValid || !isDirty}
                                                 startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                                             >
-                                                {saving ? 'Saving...' : success ? 'Saved!' : memberData?.needs_profile_completion ? 'Complete Profile' : 'Save Changes'}
+                                                {saving ? 'Enregistrement...' : success ? 'Enregistré !' : memberData?.needs_profile_completion ? 'Compléter le Profil' : 'Enregistrer les Modifications'}
                                             </SaveButton>
                                         </Box>
                                     </Box>
@@ -915,7 +915,7 @@ const EditMember = () => {
                     severity="success"
                     sx={{ width: '100%', borderRadius: '8px' }}
                 >
-                    Member updated successfully! Redirecting to members list...
+                    Membre mis à jour avec succès ! Redirection vers la liste des membres...
                 </Alert>
             </Snackbar>
         </Container>

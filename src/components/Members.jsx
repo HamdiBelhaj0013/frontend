@@ -293,15 +293,15 @@ const Members = () => {
 
             setNotification({
                 open: true,
-                message: `Member "${memberToDelete.name}" has been deleted`,
+                message: `Le membre "${memberToDelete.name}"  a été supprimé`,
                 severity: 'success'
             });
             fetchData(); // Refresh data
         } catch (error) {
-            console.error('Error deleting member:', error);
+            console.error('Échec de la suppression du membre Veuillez réessayer:', error);
             setNotification({
                 open: true,
-                message: error.message || 'Failed to delete member. Please try again.',
+                message: error.message || 'Échec de la suppression du membre Veuillez réessayer.',
                 severity: 'error'
             });
         }
@@ -331,7 +331,7 @@ const Members = () => {
         () => [
             {
                 accessorKey: 'name',
-                header: 'Name',
+                header: 'Nom',
                 size: 170,
                 Cell: ({cell, row}) => (
                     <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
@@ -369,7 +369,7 @@ const Members = () => {
                             </Typography>
                             {row.original.needs_profile_completion && (
                                 <Chip
-                                    label="Needs completion"
+                                    label="Complétion nécessaire"
                                     size="small"
                                     color="warning"
                                     variant="outlined"
@@ -417,10 +417,10 @@ const Members = () => {
                     <PersonIcon sx={{ mr: 2, fontSize: 28 }} />
                     <Box sx={{ zIndex: 1 }}>
                         <Typography variant="h5" component="h1" fontWeight="bold">
-                            Members Management
+                            Gestion des Membres
                         </Typography>
                         <Typography variant="subtitle2">
-                            Manage your organization's members information
+                            Gérez les informations des membres de votre organisation
                         </Typography>
                     </Box>
                     {/* Decorative circles */}
@@ -463,7 +463,7 @@ const Members = () => {
                 }}
             >
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Tooltip title="Grid View">
+                    <Tooltip title="Vue en Grille">
                         <IconButton
                             color={viewMode === 'grid' ? 'primary' : 'default'}
                             onClick={() => setViewMode('grid')}
@@ -475,7 +475,7 @@ const Members = () => {
                             <GridViewIcon />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Table View">
+                    <Tooltip title="Vue en Tableau">
                         <IconButton
                             color={viewMode === 'table' ? 'primary' : 'default'}
                             onClick={() => setViewMode('table')}
@@ -487,7 +487,7 @@ const Members = () => {
                             <ViewListIcon />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Refresh Members">
+                    <Tooltip title="Actualiser les Membres">
                         <IconButton
                             onClick={fetchData}
                             disabled={refreshing}
@@ -517,7 +517,7 @@ const Members = () => {
                         to="/CreateMember"
                         startIcon={<AddIcon />}
                     >
-                        Add New Member
+                        Ajouter un Nouveau Membre
                     </ActionButton>
                 </PermissionRequired>
             </Box>
@@ -527,7 +527,7 @@ const Members = () => {
                 <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh" flexDirection="column" gap={2}>
                     <CircularProgress size={50} color="primary" />
                     <Typography variant="body1" color="text.secondary">
-                        Loading members...
+                        Chargement des membres...
                     </Typography>
                 </Box>
             ) : myData.length === 0 ? (
@@ -540,9 +540,9 @@ const Members = () => {
                         border: `1px dashed ${theme.palette.divider}`
                     }}
                 >
-                    <Typography variant="h6" gutterBottom>No members found</Typography>
+                    <Typography variant="h6" gutterBottom>Aucun membre trouvé</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Get started by adding your first organization member
+                        Commencez par ajouter votre premier membre à l'organisation
                     </Typography>
 
                     {/* Only show Add button if user has create permission */}
@@ -594,7 +594,7 @@ const Members = () => {
                         })}
                         renderRowActions={({ row }) => (
                             <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <Tooltip title="View Member Details">
+                                <Tooltip title="Voir les Détails du Membre">
                                     <IconButton
                                         color="info"
                                         onClick={() => handleOpenViewDialog(row.original)}
@@ -612,7 +612,7 @@ const Members = () => {
                                     resource={RESOURCES.MEMBERS}
                                     action={ACTIONS.EDIT}
                                 >
-                                    <Tooltip title="Edit Member">
+                                    <Tooltip title="Modifier le Membre">
                                         <IconButton
                                             color="primary"
                                             component={Link}
@@ -632,7 +632,7 @@ const Members = () => {
                                     resource={RESOURCES.MEMBERS}
                                     action={ACTIONS.DELETE}
                                 >
-                                    <Tooltip title="Delete Member">
+                                    <Tooltip title="Supprimer le Membre">
                                         <IconButton
                                             color="error"
                                             onClick={() => handleOpenDeleteDialog(row.original)}
@@ -683,7 +683,7 @@ const Members = () => {
                                                 zIndex: 2
                                             }}
                                         >
-                                            <Tooltip title="This profile needs to be completed">
+                                            <Tooltip title="Ce profil doit être complété">
                                                 <Badge
                                                     badgeContent={
                                                         <ErrorOutlineIcon fontSize="small" sx={{ color: theme.palette.warning.main }} />
@@ -728,7 +728,7 @@ const Members = () => {
                                             >
                                                 <InfoIcon fontSize="small" color="warning" />
                                                 <Typography variant="caption" color="warning.main">
-                                                    Profile needs to be completed
+                                                    Le profil doit être complété
                                                 </Typography>
                                             </Box>
                                         )}
@@ -736,7 +736,7 @@ const Members = () => {
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, justifyContent: 'center' }}>
                                             <WorkIcon fontSize="small" color="action" sx={{ mr: 1 }} />
                                             <Typography variant="body2" color="text.secondary">
-                                                {member.job || 'No job specified'}
+                                                {member.job || 'Aucun emploi spécifié'}
                                             </Typography>
                                         </Box>
 
@@ -750,13 +750,13 @@ const Members = () => {
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', mt: 2 }}>
                                             <Chip
                                                 icon={<PublicIcon fontSize="small" />}
-                                                label={member.nationality || 'Unknown'}
+                                                label={member.nationality || 'Inconnu'}
                                                 size="small"
                                                 sx={{ bgcolor: alpha(theme.palette.background.default, 0.8) }}
                                             />
                                             <Chip
                                                 icon={<EventIcon fontSize="small" />}
-                                                label={member.joining_date ? Dayjs(member.joining_date).format('DD/MM/YYYY') : 'No date'}
+                                                label={member.joining_date ? Dayjs(member.joining_date).format('DD/MM/YYYY') : 'Aucune date'}
                                                 size="small"
                                                 sx={{ bgcolor: alpha(theme.palette.background.default, 0.8) }}
                                             />
@@ -779,7 +779,7 @@ const Members = () => {
                                             onClick={() => handleOpenViewDialog(member)}
                                             sx={{ borderRadius: '8px' }}
                                         >
-                                            View
+                                            Voir
                                         </Button>
 
                                         {/* Edit button with permission check */}
@@ -796,7 +796,7 @@ const Members = () => {
                                                 to={`/member/editmember/${member.id}`}
                                                 sx={{ borderRadius: '8px' }}
                                             >
-                                                Edit
+                                                Modifier
                                             </Button>
                                         </PermissionRequired>
 
@@ -814,7 +814,7 @@ const Members = () => {
                                                 onClick={() => handleOpenDeleteDialog(member)}
                                                 sx={{ borderRadius: '8px' }}
                                             >
-                                                Delete
+                                                Supprimer
                                             </Button>
                                         </PermissionRequired>
                                     </CardActions>
@@ -918,7 +918,7 @@ const Members = () => {
                                         </DetailIcon>
                                         <Box>
                                             <Typography variant="subtitle2" color="text.secondary">
-                                                Job
+                                                Emploi
                                             </Typography>
                                             <Typography variant="body1">
                                                 {selectedMember.job || 'Not provided'}
@@ -934,7 +934,7 @@ const Members = () => {
                                         </DetailIcon>
                                         <Box>
                                             <Typography variant="subtitle2" color="text.secondary">
-                                                Nationality
+                                                Nationalité
                                             </Typography>
                                             <Typography variant="body1">
                                                 {selectedMember.nationality || 'Not provided'}
@@ -950,7 +950,7 @@ const Members = () => {
                                         </DetailIcon>
                                         <Box>
                                             <Typography variant="subtitle2" color="text.secondary">
-                                                Birth Date
+                                                Date de Naissance
                                             </Typography>
                                             <Typography variant="body1">
                                                 {selectedMember.birth_date ? Dayjs(selectedMember.birth_date).format('DD-MM-YYYY') : 'Not provided'}
@@ -966,7 +966,7 @@ const Members = () => {
                                         </DetailIcon>
                                         <Box>
                                             <Typography variant="subtitle2" color="text.secondary">
-                                                Joining Date
+                                                Date d'Adhésion
                                             </Typography>
                                             <Typography variant="body1">
                                                 {selectedMember.joining_date ? Dayjs(selectedMember.joining_date).format('DD-MM-YYYY') : 'Not provided'}
@@ -982,10 +982,10 @@ const Members = () => {
                                         </DetailIcon>
                                         <Box>
                                             <Typography variant="subtitle2" color="text.secondary">
-                                                Address
+                                                Addresse
                                             </Typography>
                                             <Typography variant="body1">
-                                                {selectedMember.address || 'Not provided'}
+                                                {selectedMember.address || 'Non renseigné'}
                                             </Typography>
                                         </Box>
                                     </DetailItem>
@@ -1019,7 +1019,7 @@ const Members = () => {
                                 variant="outlined"
                                 sx={{ borderRadius: '8px' }}
                             >
-                                Close
+                                Fermer
                             </Button>
 
                             {/* Edit button with permission check */}
@@ -1035,7 +1035,7 @@ const Members = () => {
                                     startIcon={<EditIcon />}
                                     sx={{ borderRadius: '8px' }}
                                 >
-                                    Edit Member
+                                    Modifier un membre
                                 </Button>
                             </PermissionRequired>
                         </DialogActions>
@@ -1067,20 +1067,20 @@ const Members = () => {
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                     <DialogContentText>
-                        Are you sure you want to delete "{memberToDelete?.name}"? This action <strong>cannot</strong> be undone.
+                        Êtes-vous sûr de vouloir supprimer "{memberToDelete?.name}"? Cette action <strong>ne peut pas</strong> "être annulée.
                     </DialogContentText>
                     <DialogContentText sx={{ mt: 2, mb: 1 }}>
-                        Type <strong>delete</strong> to confirm:
+                        Type <strong>delete</strong> pour confirmer :
                     </DialogContentText>
                     <TextField
                         fullWidth
                         value={deleteConfirmText}
                         onChange={(e) => setDeleteConfirmText(e.target.value)}
-                        placeholder="Type 'delete' here"
+                        placeholder="Tapez 'delete' ici"
                         variant="outlined"
                         error={deleteConfirmText.length > 0 && deleteConfirmText !== 'delete'}
                         helperText={deleteConfirmText.length > 0 && deleteConfirmText !== 'delete' ?
-                            "Please type 'delete' exactly to confirm" : ""}
+                            "Veuillez taper exactement 'delete' pour confirmer" : ""}
                         sx={{ mt: 1 }}
                     />
                 </DialogContent>
@@ -1090,7 +1090,7 @@ const Members = () => {
                         variant="outlined"
                         sx={{ borderRadius: '8px' }}
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={handleDeleteMember}

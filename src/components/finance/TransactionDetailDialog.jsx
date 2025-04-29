@@ -31,7 +31,7 @@ import {
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
-// Helper function to format amount with currency
+// Fonction utilitaire pour formater les montants avec la devise
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-TN', {
         style: 'currency',
@@ -43,7 +43,7 @@ const formatCurrency = (amount) => {
 const TransactionDetailDialog = ({ open, onClose, transaction }) => {
     if (!transaction) return null;
 
-    // Status chip based on transaction status
+    // Chip de statut basée sur le statut de la transaction
     const getStatusChip = (status) => {
         switch (status) {
             case 'verified':
@@ -51,7 +51,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                     <Chip
                         color="success"
                         icon={<Check />}
-                        label="Verified"
+                        label="Vérifié"
                         sx={{ fontWeight: 600 }}
                     />
                 );
@@ -60,7 +60,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                     <Chip
                         color="error"
                         icon={<Close />}
-                        label="Rejected"
+                        label="Rejeté"
                         sx={{ fontWeight: 600 }}
                     />
                 );
@@ -69,14 +69,14 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                     <Chip
                         color="warning"
                         icon={<Warning />}
-                        label="Pending"
+                        label="En attente"
                         sx={{ fontWeight: 600 }}
                     />
                 );
         }
     };
 
-    // Handle document download if available
+    // Gérer le téléchargement du document si disponible
     const handleDocumentDownload = () => {
         if (transaction.document) {
             window.open(transaction.document, '_blank');
@@ -89,13 +89,13 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                 <Box display="flex" alignItems="center">
                     <Receipt sx={{ mr: 1 }} />
                     <Typography variant="h6" component="span">
-                        Transaction Details
+                        Détails de la Transaction
                     </Typography>
                 </Box>
             </DialogTitle>
             <DialogContent dividers>
                 <Grid container spacing={3}>
-                    {/* Header with amount and type */}
+                    {/* En-tête avec montant et type */}
                     <Grid item xs={12}>
                         <Paper
                             elevation={0}
@@ -112,7 +112,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                         >
                             <Box>
                                 <Typography variant="overline" sx={{ fontWeight: 'bold' }}>
-                                    {transaction.transaction_type === 'income' ? 'INCOME' : 'EXPENSE'}
+                                    {transaction.transaction_type === 'income' ? 'REVENU' : 'DÉPENSE'}
                                 </Typography>
                                 <Typography variant="h4" sx={{
                                     fontWeight: 'bold',
@@ -125,7 +125,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                         </Paper>
                     </Grid>
 
-                    {/* Main transaction details */}
+                    {/* Détails principaux de la transaction */}
                     <Grid item xs={12} md={6}>
                         <Box sx={{ mb: 3 }}>
                             <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
@@ -133,14 +133,14 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                                 Description
                             </Typography>
                             <Typography variant="body1">
-                                {transaction.description || 'No description provided'}
+                                {transaction.description || 'Aucune description fournie'}
                             </Typography>
                         </Box>
 
                         <Box sx={{ mb: 3 }}>
                             <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Category sx={{ fontSize: 18, mr: 1 }} />
-                                Category
+                                Catégorie
                             </Typography>
                             <Typography variant="body1">
                                 {transaction.category.split('_').map(word =>
@@ -163,7 +163,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                     <Assignment sx={{ fontSize: 18, mr: 1 }} />
-                                    Reference Number
+                                    Numéro de Référence
                                 </Typography>
                                 <Typography variant="body1">
                                     {transaction.reference_number}
@@ -172,13 +172,13 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                         )}
                     </Grid>
 
-                    {/* Related entities and verification */}
+                    {/* Entités liées et vérification */}
                     <Grid item xs={12} md={6}>
                         {transaction.project && transaction.project_details && (
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                     <AccountBalance sx={{ fontSize: 18, mr: 1 }} />
-                                    Related Project
+                                    Projet Associé
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                     <Avatar
@@ -204,7 +204,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                     <Person sx={{ fontSize: 18, mr: 1 }} />
-                                    {transaction.transaction_type === 'income' ? 'Donor' : 'Paid To'}
+                                    {transaction.transaction_type === 'income' ? 'Donateur' : 'Payé À'}
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                     <Avatar sx={{ width: 30, height: 30, mr: 1, fontSize: '0.875rem' }}>
@@ -221,7 +221,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                                     <Check sx={{ fontSize: 18, mr: 1 }} />
-                                    Verified By
+                                    Vérifié Par
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                     <Avatar sx={{ width: 30, height: 30, mr: 1, fontSize: '0.875rem' }}>
@@ -234,7 +234,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                                     </Typography>
                                 </Box>
                                 <Typography variant="caption" color="text.secondary">
-                                    on {dayjs(transaction.verification_date).format('DD MMMM YYYY, HH:mm')}
+                                    le {dayjs(transaction.verification_date).format('DD MMMM YYYY, HH:mm')}
                                 </Typography>
                             </Box>
                         )}
@@ -242,7 +242,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                         {transaction.verification_notes && (
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="subtitle2" gutterBottom>
-                                    Verification Notes
+                                    Notes de Vérification
                                 </Typography>
                                 <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 1 }}>
                                     <Typography variant="body2">
@@ -253,7 +253,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                         )}
                     </Grid>
 
-                    {/* Supporting document section */}
+                    {/* Section des documents justificatifs */}
                     {transaction.document && (
                         <Grid item xs={12}>
                             <Divider sx={{ my: 2 }} />
@@ -281,7 +281,7 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                                     </Avatar>
                                     <Box>
                                         <Typography variant="subtitle2">
-                                            Supporting Document
+                                            Document Justificatif
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
                                             {transaction.document.split('/').pop()}
@@ -299,24 +299,24 @@ const TransactionDetailDialog = ({ open, onClose, transaction }) => {
                         </Grid>
                     )}
 
-                    {/* Created info */}
+                    {/* Informations de création */}
                     <Grid item xs={12}>
                         <Divider sx={{ my: 1 }} />
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                             <Typography variant="body2" color="text.secondary">
-                                Created by: {transaction.created_by_details
+                                Créé par: {transaction.created_by_details
                                 ? (transaction.created_by_details.full_name || transaction.created_by_details.email)
-                                : 'System'}
+                                : 'Système'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Transaction ID: {transaction.id}
+                                ID de Transaction: {transaction.id}
                             </Typography>
                         </Box>
                     </Grid>
                 </Grid>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>Close</Button>
+                <Button onClick={onClose}>Fermer</Button>
             </DialogActions>
         </Dialog>
     );

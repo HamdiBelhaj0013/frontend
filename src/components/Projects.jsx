@@ -100,11 +100,11 @@ const ProjectCard = styled(Paper)(({ theme }) => ({
 const ProjectCardHeader = styled(Box)(({ theme, status }) => {
     // Status color mapping
     const colors = {
-        'Not Started': theme.palette.info.main,
-        'In Progress': theme.palette.success.main,
-        'Completed': theme.palette.primary.main,
-        'On Hold': theme.palette.warning.main,
-        'Cancelled': theme.palette.error.main,
+        'Non commencé': theme.palette.info.main,
+        'En cours': theme.palette.success.main,
+        'Terminé': theme.palette.primary.main,
+        'En pause': theme.palette.warning.main,
+        'Annulé': theme.palette.error.main,
     };
 
     const bgColor = colors[status] || theme.palette.primary.main;
@@ -131,14 +131,14 @@ const ProjectCardHeader = styled(Box)(({ theme, status }) => {
 const StatusChip = styled(Chip)(({ theme, status }) => {
     // Status color and icon mapping
     const statusConfig = {
-        'Not Started': { color: theme.palette.info.main, bgcolor: alpha(theme.palette.info.main, 0.1) },
-        'In Progress': { color: theme.palette.success.main, bgcolor: alpha(theme.palette.success.main, 0.1) },
-        'Completed': { color: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.1) },
-        'On Hold': { color: theme.palette.warning.main, bgcolor: alpha(theme.palette.warning.main, 0.1) },
-        'Cancelled': { color: theme.palette.error.main, bgcolor: alpha(theme.palette.error.main, 0.1) }
+        'Non commencé': { color: theme.palette.info.main, bgcolor: alpha(theme.palette.info.main, 0.1) },
+        'En cours': { color: theme.palette.success.main, bgcolor: alpha(theme.palette.success.main, 0.1) },
+        'Terminé': { color: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.1) },
+        'En pause': { color: theme.palette.warning.main, bgcolor: alpha(theme.palette.warning.main, 0.1) },
+        'Annulé': { color: theme.palette.error.main, bgcolor: alpha(theme.palette.error.main, 0.1) }
     };
 
-    const config = statusConfig[status] || statusConfig['Not Started'];
+    const config = statusConfig[status] || statusConfig['Non commencé'];
 
     return {
         fontWeight: 500,
@@ -225,7 +225,7 @@ const Projects = () => {
         if (location.state?.success) {
             setNotification({
                 open: true,
-                message: location.state.message || 'Operation completed successfully',
+                message: location.state.message || 'Opération terminée avec succès',
                 severity: 'success'
             });
 
@@ -268,7 +268,7 @@ const Projects = () => {
 
             setNotification({
                 open: true,
-                message: `Project "${projectToDelete.name}" has been deleted`,
+                message: `Projet "${projectToDelete.name}" a été supprimé`,
                 severity: 'success'
             });
             fetchData(); // Refresh data
@@ -276,7 +276,7 @@ const Projects = () => {
             console.error('Error deleting project:', error);
             setNotification({
                 open: true,
-                message: error.message || 'Failed to delete project. Please try again.',
+                message: error.message || 'Échec de la suppression du projet. Veuillez réessayer.',
                 severity: 'error'
             });
         }
@@ -295,7 +295,7 @@ const Projects = () => {
         () => [
             {
                 accessorKey: 'name',
-                header: 'Project Name',
+                header: 'Nom du Projet',
                 size: 180,
                 Cell: ({ cell }) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -306,7 +306,7 @@ const Projects = () => {
             },
             {
                 accessorKey: 'status',
-                header: 'Status',
+                header: 'Statut',
                 size: 150,
                 Cell: ({ cell }) => (
                     <StatusChip
@@ -348,12 +348,12 @@ const Projects = () => {
             },
             {
                 accessorFn: (row) => row.start_date ? Dayjs(row.start_date).format('DD-MM-YYYY') : 'Not set',
-                header: 'Start Date',
+                header: 'Date de début',
                 size: 120,
             },
             {
                 accessorFn: (row) => row.end_date ? Dayjs(row.end_date).format('DD-MM-YYYY') : 'Not set',
-                header: 'End Date',
+                header: 'Date de fin',
                 size: 120,
             }
         ],
@@ -394,10 +394,10 @@ const Projects = () => {
                     <BusinessIcon sx={{ mr: 2, fontSize: 28 }} />
                     <Box sx={{ zIndex: 1 }}>
                         <Typography variant="h5" component="h1" fontWeight="bold">
-                            Projects Management
+                            Gestion de projets
                         </Typography>
                         <Typography variant="subtitle2">
-                            Create, manage and track all your organization's projects
+                            Créez, gérez et suivez tous les projets de votre organisation
                         </Typography>
                     </Box>
                     {/* Decorative circles */}
@@ -494,7 +494,7 @@ const Projects = () => {
                         to="/CreateProject"
                         startIcon={<AddIcon />}
                     >
-                        Create New Project
+                        Créer un nouveau projet
                     </ActionButton>
                 </PermissionRequired>
             </Box>
@@ -571,7 +571,7 @@ const Projects = () => {
                         })}
                         renderRowActions={({ row }) => (
                             <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <Tooltip title="View Project">
+                                <Tooltip title="Voir le projet">
                                     <IconButton
                                         color="info"
                                         onClick={() => handleOpenViewDialog(row.original)}
@@ -589,7 +589,7 @@ const Projects = () => {
                                     resource={RESOURCES.PROJECTS}
                                     action={ACTIONS.EDIT}
                                 >
-                                    <Tooltip title="Edit Project">
+                                    <Tooltip title="Modifier le projet">
                                         <IconButton
                                             color="primary"
                                             component={Link}
@@ -609,7 +609,7 @@ const Projects = () => {
                                     resource={RESOURCES.PROJECTS}
                                     action={ACTIONS.DELETE}
                                 >
-                                    <Tooltip title="Delete Project">
+                                    <Tooltip title="Supprimer le projet">
                                         <IconButton
                                             color="error"
                                             onClick={() => handleOpenDeleteDialog(row.original)}
@@ -707,7 +707,7 @@ const Projects = () => {
                                             onClick={() => handleOpenViewDialog(project)}
                                             sx={{ borderRadius: '8px' }}
                                         >
-                                            View
+                                            Voir
                                         </Button>
 
                                         {/* Edit button with permission check */}
@@ -724,7 +724,7 @@ const Projects = () => {
                                                 to={`/projects/edit/${project.id}`}
                                                 sx={{ borderRadius: '8px' }}
                                             >
-                                                Edit
+                                                Modifier
                                             </Button>
                                         </PermissionRequired>
 
@@ -742,7 +742,7 @@ const Projects = () => {
                                                 onClick={() => handleOpenDeleteDialog(project)}
                                                 sx={{ borderRadius: '8px' }}
                                             >
-                                                Delete
+                                                Supprimer
                                             </Button>
                                         </PermissionRequired>
                                     </Box>
@@ -773,7 +773,7 @@ const Projects = () => {
                 }}>
                     <BusinessIcon color="primary" />
                     <Typography variant="h6" component="span" color="primary.main">
-                        Project Details
+                        Détails du projet
                     </Typography>
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2, minWidth: 400 }}>
@@ -810,7 +810,7 @@ const Projects = () => {
 
                                 <Box>
                                     <Typography variant="subtitle2" color="text.secondary">
-                                        Timeline
+                                        Chronologie
                                     </Typography>
                                     <Typography variant="body1">
                                         {selectedProject.start_date ? Dayjs(selectedProject.start_date).format('DD MMM YYYY') : 'No start date'}
@@ -872,25 +872,25 @@ const Projects = () => {
                 }}>
                     <WarningAmberIcon color="error" />
                     <Typography variant="h6" component="span" color="error.main">
-                        Delete Project
+                        Supprimer le projet
                     </Typography>
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                     <DialogContentText>
-                        Are you sure you want to delete "{projectToDelete?.name}"? This action <strong>cannot</strong> be undone.
+                        Êtes-vous sûr de vouloir supprimer "{projectToDelete?.name}"? Cette action <strong>ne peut pas</strong> être défait.
                     </DialogContentText>
                     <DialogContentText sx={{ mt: 2, mb: 1 }}>
-                        Type <strong>delete</strong> to confirm:
+                        Taper <strong>supprimer</strong> pour confirmer:
                     </DialogContentText>
                     <TextField
                         fullWidth
                         value={deleteConfirmText}
                         onChange={(e) => setDeleteConfirmText(e.target.value)}
-                        placeholder="Type 'delete' here"
+                        placeholder="Tapez « supprimer » ici"
                         variant="outlined"
                         error={deleteConfirmText.length > 0 && deleteConfirmText !== 'delete'}
                         helperText={deleteConfirmText.length > 0 && deleteConfirmText !== 'delete' ?
-                            "Please type 'delete' exactly to confirm" : ""}
+                            "Veuillez taper « supprimer » exactement pour confirmer" : ""}
                         sx={{ mt: 1 }}
                     />
                 </DialogContent>
@@ -900,19 +900,19 @@ const Projects = () => {
                         variant="outlined"
                         sx={{ borderRadius: '8px' }}
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={handleDeleteProject}
                         color="error"
                         variant="contained"
-                        disabled={deleteConfirmText !== 'delete'}
+                        disabled={deleteConfirmText !== 'supprimer'}
                         sx={{
                             borderRadius: '8px',
                             px: 3
                         }}
                     >
-                        Delete
+                        Supprimer
                     </Button>
                 </DialogActions>
             </Dialog>

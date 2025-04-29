@@ -57,9 +57,10 @@ import {
     InfoOutlined,
     HelpOutline
 } from '@mui/icons-material';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import AxiosInstance from '../Axios.jsx';
 import { motion } from 'framer-motion';
+import { usePermissions } from '../../contexts/PermissionsContext';
 
 // Styled components
 const HeaderContainer = styled(Paper)(({ theme }) => ({
@@ -124,11 +125,13 @@ const NOTIFICATION_METHODS = [
 
 const steps = ['Basic Information', 'Schedule & Location', 'Additional Options', 'Review & Create'];
 
-const MeetingCreateForm = () => {
+const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const { can, RESOURCES, ACTIONS } = usePermissions();
     const [activeStep, setActiveStep] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(isEditMode);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -169,6 +172,67 @@ const MeetingCreateForm = () => {
 
     // Field validation errors
     const [errors, setErrors] = useState({});
+
+
+
+    useEffect(() => {
+        if (isEditMode && meetingId) {
+            const fetchMeetingData = async () => {
+                try {
+                    setInitialLoading(true);
+                    setError(null);
+
+                    console.log(`Fetching meeting data for ID: ${meetingId}`);
+
+                    // Fetch meeting data
+                    const response = await AxiosInstance.get(`/meetings/meetings/${meetingId}/`);
+                    const meetingData = response.data;
+
+                    console.log("Meeting data retrieved:", meetingData);
+
+                    // Convert to form data format
+                    setFormData({
+                        title: meetingData.title || '',
+                        description: meetingData.description || '',
+                        meeting_type: meetingData.meeting_type || 'regular',
+                        start_date: moment(meetingData.start_date),
+                        end_date: moment(meetingData.end_date),
+                        location: meetingData.location || '',
+                        is_virtual: meetingData.is_virtual || false,
+                        meeting_link: meetingData.meeting_link || '',
+                        agenda: meetingData.agenda || '',
+                        is_recurring: meetingData.is_recurring || false,
+                        recurrence_pattern: meetingData.recurrence_pattern || {
+                            frequency: 'monthly',
+                            interval: 1,
+                            day_of_month: moment(meetingData.start_date).date(),
+                            end_after: 12
+                        },
+                        notification_method: meetingData.notification_method || 'both',
+                        reminder_days_before: meetingData.reminder_days_before || 2
+                    });
+
+                    setInitialLoading(false);
+                } catch (err) {
+                    console.error('Error fetching meeting data:', err);
+
+                    // Log more detailed error info
+                    if (err.response) {
+                        console.error("Response error:", err.response.status, err.response.data);
+                    } else if (err.request) {
+                        console.error("Request error:", err.request);
+                    } else {
+                        console.error("Error message:", err.message);
+                    }
+
+                    setError('Failed to load meeting data. Please try again.');
+                    setInitialLoading(false);
+                }
+            };
+
+            fetchMeetingData();
+        }
+    }, [isEditMode, meetingId]);
 
     // Handle text field changes
     const handleInputChange = (e) => {
@@ -363,16 +427,25 @@ const MeetingCreateForm = () => {
 
             console.log("Sending request data:", requestData);
 
-            const response = await AxiosInstance.post('/meetings/meetings/', requestData);
-            console.log("Meeting created successfully:", response.data);
+            let response;
+            if (isEditMode) {
+                // Update existing meeting
+                response = await AxiosInstance.put(`/meetings/meetings/${meetingId}/`, requestData);
+                console.log("Meeting updated successfully:", response.data);
+            } else {
+                // Create new meeting
+                response = await AxiosInstance.post('/meetings/meetings/', requestData);
+                console.log("Meeting created successfully:", response.data);
+            }
+
             setSuccess(true);
 
-            // Navigate to the new meeting after a brief delay
+            // Navigate to the meeting details after a brief delay
             setTimeout(() => {
-                navigate(`/meetings/${response.data.id}`);
+                navigate(`/meetings/${isEditMode ? meetingId : response.data.id}`);
             }, 1500);
         } catch (err) {
-            console.error('Error creating meeting:', err);
+            console.error(`Error ${isEditMode ? 'updating' : 'creating'} meeting:`, err);
 
             // More detailed error logging
             if (err.response) {
@@ -816,7 +889,7 @@ const MeetingCreateForm = () => {
             <Grid container spacing={3}>
                 <Grid item xs={12}>
                     <Alert severity="info" sx={{ mb: 3 }}>
-                        Please review the meeting details below before creating the meeting. All attendees will be notified based on your notification settings.
+                        Please review the meeting details below before {isEditMode ? 'updating' : 'creating'} the meeting. All attendees will be notified based on your notification settings.
                     </Alert>
                 </Grid>
 
@@ -981,6 +1054,27 @@ const MeetingCreateForm = () => {
         );
     };
 
+    if (initialLoading) {
+        return (
+            <Container maxWidth="md">
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: '60vh'
+                    }}
+                >
+                    <CircularProgress size={60} thickness={4} />
+                    <Typography variant="h6" sx={{ mt: 2 }}>
+                        Loading meeting details...
+                    </Typography>
+                </Box>
+            </Container>
+        );
+    }
+
     return (
         <Container maxWidth="xl">
             <motion.div
@@ -1011,10 +1105,12 @@ const MeetingCreateForm = () => {
                     <HeaderContainer elevation={0}>
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
                             <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                Create New Meeting
+                                {isEditMode ? 'Edit Meeting' : 'Create New Meeting'}
                             </Typography>
                             <Typography variant="body1">
-                                Schedule a new meeting and notify all relevant members
+                                {isEditMode
+                                    ? 'Update meeting details and notify all relevant members'
+                                    : 'Schedule a new meeting and notify all relevant members'}
                             </Typography>
                         </Box>
 
@@ -1056,7 +1152,7 @@ const MeetingCreateForm = () => {
                                 <CircularProgress size={20} thickness={5} />
                             }
                         >
-                            Meeting created successfully! Redirecting to meeting details...
+                            Meeting {isEditMode ? 'updated' : 'created'} successfully! Redirecting to meeting details...
                         </Alert>
                     </motion.div>
                 )}
@@ -1103,7 +1199,7 @@ const MeetingCreateForm = () => {
                                     disabled={loading || success}
                                     endIcon={activeStep === steps.length - 1 ? <Check /> : null}
                                 >
-                                    {activeStep === steps.length - 1 ? 'Create Meeting' : 'Next'}
+                                    {activeStep === steps.length - 1 ? (isEditMode ? 'Update Meeting' : 'Create Meeting') : 'Next'}
                                 </Button>
                             </Box>
                         </form>
@@ -1121,12 +1217,12 @@ const MeetingCreateForm = () => {
                 }}
             >
                 <DialogTitle id="confirm-meeting-dialog-title">
-                    Create Meeting
+                    {isEditMode ? 'Update Meeting' : 'Create Meeting'}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to create this meeting?
-                        {formData.is_recurring && ' This will set up a recurring meeting series.'}
+                        Are you sure you want to {isEditMode ? 'update' : 'create'} this meeting?
+                        {formData.is_recurring && !isEditMode && ' This will set up a recurring meeting series.'}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
@@ -1144,7 +1240,7 @@ const MeetingCreateForm = () => {
                         disabled={loading}
                         startIcon={loading ? <CircularProgress size={20} /> : <Save />}
                     >
-                        {loading ? 'Creating...' : 'Create Meeting'}
+                        {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Meeting' : 'Create Meeting')}
                     </Button>
                 </DialogActions>
             </Dialog>

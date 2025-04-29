@@ -112,7 +112,7 @@ const Finance = () => {
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching financial data:', err);
-                setError('Failed to load financial data. Please try again later.');
+                setError('Échec du chargement des données financières. Veuillez réessayer plus tard.');
                 setLoading(false);
             }
         };
@@ -139,7 +139,7 @@ const Finance = () => {
         } else {
             setNotification({
                 show: true,
-                message: 'You do not have permission to view this tab.',
+                message: 'Vous n\'avez pas la permission de voir cet onglet.',
                 severity: 'error'
             });
 
@@ -156,7 +156,7 @@ const Finance = () => {
         if (!can(ACTIONS.CREATE, RESOURCES.FINANCE)) {
             setNotification({
                 show: true,
-                message: 'You do not have permission to add transactions.',
+                message: 'Vous n\'avez pas la permission d\'ajouter des transactions.',
                 severity: 'error'
             });
 
@@ -176,7 +176,7 @@ const Finance = () => {
         if (!can(ACTIONS.CREATE, RESOURCES.FINANCE)) {
             setNotification({
                 show: true,
-                message: 'You do not have permission to add donors.',
+                message: 'Vous n\'avez pas la permission d\'ajouter des donateurs.',
                 severity: 'error'
             });
 
@@ -195,7 +195,7 @@ const Finance = () => {
         setRefreshTrigger(prev => prev + 1);
         setNotification({
             show: true,
-            message: 'Transaction saved successfully!',
+            message: 'Transaction enregistrée avec succès !',
             severity: 'success'
         });
 
@@ -211,7 +211,7 @@ const Finance = () => {
         setRefreshTrigger(prev => prev + 1);
         setNotification({
             show: true,
-            message: 'Donor added successfully!',
+            message: 'Donateur ajouté avec succès !',
             severity: 'success'
         });
 
@@ -229,7 +229,7 @@ const Finance = () => {
     // Calculate visible tabs based on permissions
     // Moved outside of render to avoid rerenders and recalculations
     const visibleTabs = [
-        { label: 'Dashboard', icon: <BarChart fontSize="small" /> }, // Dashboard is always visible
+        { label: 'Tableau de Bord', icon: <BarChart fontSize="small" /> }, // Dashboard is always visible
     ];
 
     // Add other tabs only if user has proper permissions
@@ -237,8 +237,8 @@ const Finance = () => {
         visibleTabs.push(
             { label: 'Transactions', icon: <ReceiptLong fontSize="small" /> },
             { label: 'Budgets', icon: <AccountBalance fontSize="small" /> },
-            { label: 'Donors', icon: <People fontSize="small" /> },
-            { label: 'Reports', icon: <AssignmentTurnedIn fontSize="small" /> }
+            { label: 'Donateurs', icon: <People fontSize="small" /> },
+            { label: 'Rapports', icon: <AssignmentTurnedIn fontSize="small" /> }
         );
     }
 
@@ -248,10 +248,10 @@ const Finance = () => {
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={8}>
                     <Typography variant="h4" component="h1" fontWeight="bold">
-                        Financial Management
+                        Gestion Financière
                     </Typography>
                     <Typography variant="subtitle1" color="text.secondary">
-                        Track donations, expenses, and generate reports
+                        Suivez les dons, les dépenses et générez des rapports
                     </Typography>
                 </Grid>
                 <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -262,7 +262,7 @@ const Finance = () => {
                         startIcon={<Refresh />}
                         sx={{ mr: 1 }}
                     >
-                        Refresh
+                        Actualiser
                     </Button>
 
                     {/* Only show these buttons if user has create permission */}
@@ -275,7 +275,7 @@ const Finance = () => {
                                 startIcon={<Add />}
                                 sx={{ mr: 1 }}
                             >
-                                Add Income
+                                Ajouter un Revenu
                             </Button>
                             <Button
                                 variant="contained"
@@ -283,7 +283,7 @@ const Finance = () => {
                                 onClick={() => handleAddTransaction('expense')}
                                 startIcon={<Add />}
                             >
-                                Add Expense
+                                Ajouter une Dépense
                             </Button>
                         </>
                     )}
@@ -379,7 +379,7 @@ const Finance = () => {
                                                 onClick={handleAddDonor}
                                                 startIcon={<Add />}
                                             >
-                                                Add Donor
+                                                Ajouter un Donateur
                                             </Button>
                                         )}
                                     </Box>

@@ -51,12 +51,12 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import AxiosInstance from '../Axios';
 
-// Helper function to format dates
+// Fonction utilitaire pour formater les dates
 const formatDate = (dateString) => {
     return dayjs(dateString).format('DD/MM/YYYY');
 };
 
-// Report generation dialog component with improved validation and error handling
+// Composant de dialogue de génération de rapport avec validation améliorée et gestion d'erreurs
 const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
     const [formData, setFormData] = useState({
         report_type: 'monthly',
@@ -69,7 +69,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
     const [error, setError] = useState('');
     const [generatingReport, setGeneratingReport] = useState(false);
 
-    // Reset form when dialog opens
+    // Réinitialiser le formulaire lorsque le dialogue s'ouvre
     useEffect(() => {
         if (open) {
             setFormData({
@@ -84,35 +84,35 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
         }
     }, [open]);
 
-    // Generate title based on report type
+    // Générer le titre en fonction du type de rapport
     useEffect(() => {
-        // Only auto-generate title if user hasn't entered one or just changed report type
-        if (formData.report_type && (!formData.title || formData.title.startsWith('Monthly Report') ||
-            formData.title.startsWith('Quarterly Report') || formData.title.startsWith('Annual Report') ||
-            formData.title.startsWith('Custom Report'))) {
+        // Générer automatiquement le titre seulement si l'utilisateur n'en a pas saisi ou vient de changer le type de rapport
+        if (formData.report_type && (!formData.title || formData.title.startsWith('Rapport Mensuel') ||
+            formData.title.startsWith('Rapport Trimestriel') || formData.title.startsWith('Rapport Annuel') ||
+            formData.title.startsWith('Rapport Personnalisé'))) {
 
             let newTitle = '';
             const currentDate = dayjs();
 
             switch (formData.report_type) {
                 case 'monthly':
-                    newTitle = `Monthly Report - ${currentDate.subtract(1, 'month').format('MMMM YYYY')}`;
+                    newTitle = `Rapport Mensuel - ${currentDate.subtract(1, 'month').format('MMMM YYYY')}`;
                     break;
                 case 'quarterly':
                     const currentQuarter = Math.floor((currentDate.month()) / 3);
-                    newTitle = `Quarterly Report - Q${currentQuarter} ${currentDate.year()}`;
+                    newTitle = `Rapport Trimestriel - T${currentQuarter} ${currentDate.year()}`;
                     break;
                 case 'annual':
-                    newTitle = `Annual Report - ${currentDate.subtract(1, 'year').year()}`;
+                    newTitle = `Rapport Annuel - ${currentDate.subtract(1, 'year').year()}`;
                     break;
                 case 'custom':
-                    newTitle = 'Custom Report';
+                    newTitle = 'Rapport Personnalisé';
                     if (formData.start_date && formData.end_date) {
-                        newTitle = `Custom Report - ${formatDate(formData.start_date)} to ${formatDate(formData.end_date)}`;
+                        newTitle = `Rapport Personnalisé - ${formatDate(formData.start_date)} à ${formatDate(formData.end_date)}`;
                     }
                     break;
                 default:
-                    newTitle = 'Financial Report';
+                    newTitle = 'Rapport Financier';
             }
 
             setFormData(prev => ({ ...prev, title: newTitle }));
@@ -137,18 +137,18 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
 
     const validateForm = () => {
         if (!formData.title.trim()) {
-            setError('Report title is required');
+            setError('Le titre du rapport est requis');
             return false;
         }
 
         if (formData.report_type === 'custom') {
             if (!formData.start_date || !formData.end_date) {
-                setError('Start and end dates are required for custom reports');
+                setError('Les dates de début et de fin sont requises pour les rapports personnalisés');
                 return false;
             }
 
             if (dayjs(formData.start_date).isAfter(formData.end_date)) {
-                setError('Start date cannot be after end date');
+                setError('La date de début ne peut pas être postérieure à la date de fin');
                 return false;
             }
         }
@@ -170,28 +170,28 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                 notes: formData.notes
             };
 
-            // Only add dates for custom reports
+            // Ajouter des dates uniquement pour les rapports personnalisés
             if (formData.report_type === 'custom') {
                 payload.start_date = dayjs(formData.start_date).format('YYYY-MM-DD');
                 payload.end_date = dayjs(formData.end_date).format('YYYY-MM-DD');
             }
 
-            console.log("Sending report generation request:", payload);
+            console.log("Envoi de la demande de génération de rapport:", payload);
 
             const response = await AxiosInstance.post('/finances/financial-reports/generate_report/', payload);
-            console.log("Report generation response:", response.data);
+            console.log("Réponse de génération de rapport:", response.data);
 
             onSuccess();
             onClose();
         } catch (err) {
-            console.error('Error generating report:', err);
-            let errorMessage = 'Failed to generate report';
+            console.error('Erreur lors de la génération du rapport:', err);
+            let errorMessage = 'Échec de la génération du rapport';
 
             if (err.response) {
                 if (err.response.data && err.response.data.error) {
                     errorMessage = err.response.data.error;
                 } else if (err.response.status === 500) {
-                    errorMessage = 'Server error while generating report. Please try again later.';
+                    errorMessage = 'Erreur serveur lors de la génération du rapport. Veuillez réessayer plus tard.';
                 }
             }
 
@@ -214,7 +214,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                 <Box display="flex" alignItems="center">
                     <Description sx={{ mr: 1 }} />
                     <Typography variant="h6">
-                        Generate Financial Report
+                        Générer un Rapport Financier
                     </Typography>
                 </Box>
             </DialogTitle>
@@ -230,7 +230,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <CircularProgress size={20} sx={{ mr: 1 }} />
                             <Typography>
-                                Generating report... This may take a moment.
+                                Génération du rapport en cours... Cela peut prendre un moment.
                             </Typography>
                         </Box>
                     </Alert>
@@ -239,18 +239,18 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                         <FormControl fullWidth margin="normal">
-                            <InputLabel>Report Type</InputLabel>
+                            <InputLabel>Type de Rapport</InputLabel>
                             <Select
                                 name="report_type"
                                 value={formData.report_type}
                                 onChange={handleChange}
-                                label="Report Type"
+                                label="Type de Rapport"
                                 disabled={loading}
                             >
-                                <MenuItem value="monthly">Monthly Report</MenuItem>
-                                <MenuItem value="quarterly">Quarterly Report</MenuItem>
-                                <MenuItem value="annual">Annual Report</MenuItem>
-                                <MenuItem value="custom">Custom Period</MenuItem>
+                                <MenuItem value="monthly">Rapport Mensuel</MenuItem>
+                                <MenuItem value="quarterly">Rapport Trimestriel</MenuItem>
+                                <MenuItem value="annual">Rapport Annuel</MenuItem>
+                                <MenuItem value="custom">Période Personnalisée</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid>
@@ -258,7 +258,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                     <Grid item xs={12} sm={6}>
                         <TextField
                             name="title"
-                            label="Report Title"
+                            label="Titre du Rapport"
                             fullWidth
                             margin="normal"
                             value={formData.title}
@@ -273,7 +273,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                             <Grid item xs={12} sm={6}>
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DatePicker
-                                        label="Start Date"
+                                        label="Date de Début"
                                         value={formData.start_date}
                                         onChange={(date) => handleDateChange('start_date', date)}
                                         slotProps={{
@@ -291,7 +291,7 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                             <Grid item xs={12} sm={6}>
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DatePicker
-                                        label="End Date"
+                                        label="Date de Fin"
                                         value={formData.end_date}
                                         onChange={(date) => handleDateChange('end_date', date)}
                                         slotProps={{
@@ -326,23 +326,23 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                 <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
                     <Typography variant="subtitle2" gutterBottom>
                         <Info fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Report Information
+                        Informations sur le Rapport
                     </Typography>
                     <Typography variant="body2">
                         {formData.report_type === 'monthly' &&
-                            "Monthly reports include financial data for the previous complete month."}
+                            "Les rapports mensuels incluent les données financières du mois complet précédent."}
                         {formData.report_type === 'quarterly' &&
-                            "Quarterly reports include financial data for the previous complete quarter."}
+                            "Les rapports trimestriels incluent les données financières du trimestre complet précédent."}
                         {formData.report_type === 'annual' &&
-                            "Annual reports include financial data for the previous complete fiscal year."}
+                            "Les rapports annuels incluent les données financières de l'exercice fiscal complet précédent."}
                         {formData.report_type === 'custom' &&
-                            "Custom reports allow you to specify your own date range for the financial data."}
+                            "Les rapports personnalisés vous permettent de spécifier votre propre période pour les données financières."}
                     </Typography>
                 </Box>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} disabled={loading}>
-                    Cancel
+                    Annuler
                 </Button>
                 <Button
                     onClick={handleSubmit}
@@ -351,14 +351,14 @@ const GenerateReportDialog = ({ open, onClose, onSuccess }) => {
                     disabled={loading}
                     startIcon={loading ? <CircularProgress size={20} /> : null}
                 >
-                    {loading ? 'Generating...' : 'Generate Report'}
+                    {loading ? 'Génération...' : 'Générer le Rapport'}
                 </Button>
             </DialogActions>
         </Dialog>
     );
 };
 
-// Report status chip component
+// Composant d'étiquette de statut de rapport
 const ReportStatusChip = ({ status }) => {
     if (status === 'finalized') {
         return (
@@ -366,7 +366,7 @@ const ReportStatusChip = ({ status }) => {
                 size="small"
                 color="success"
                 icon={<AssignmentTurnedIn fontSize="small" />}
-                label="Finalized"
+                label="Finalisé"
                 sx={{ fontWeight: 500 }}
             />
         );
@@ -376,24 +376,24 @@ const ReportStatusChip = ({ status }) => {
             size="small"
             color="warning"
             icon={<AssignmentLate fontSize="small" />}
-            label="Draft"
+            label="Brouillon"
             sx={{ fontWeight: 500 }}
         />
     );
 };
 
-// Report type chip component
+// Composant d'étiquette de type de rapport
 const ReportTypeChip = ({ type }) => {
     const getTypeConfig = (type) => {
         switch (type) {
             case 'monthly':
-                return { label: 'Monthly', color: 'primary.light', textColor: 'primary.dark' };
+                return { label: 'Mensuel', color: 'primary.light', textColor: 'primary.dark' };
             case 'quarterly':
-                return { label: 'Quarterly', color: 'success.light', textColor: 'success.dark' };
+                return { label: 'Trimestriel', color: 'success.light', textColor: 'success.dark' };
             case 'annual':
-                return { label: 'Annual', color: 'secondary.light', textColor: 'secondary.dark' };
+                return { label: 'Annuel', color: 'secondary.light', textColor: 'secondary.dark' };
             case 'custom':
-                return { label: 'Custom', color: 'info.light', textColor: 'info.dark' };
+                return { label: 'Personnalisé', color: 'info.light', textColor: 'info.dark' };
             default:
                 return { label: type, color: 'grey.300', textColor: 'text.primary' };
         }
@@ -415,7 +415,7 @@ const ReportTypeChip = ({ type }) => {
     );
 };
 
-// Main financial reports component
+// Composant principal des rapports financiers
 const FinancialReports = ({ onRefresh }) => {
     const theme = useTheme();
     const [reports, setReports] = useState([]);
@@ -428,7 +428,7 @@ const FinancialReports = ({ onRefresh }) => {
     const [selectedReport, setSelectedReport] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
 
-    // Fetch reports from API
+    // Récupérer les rapports depuis l'API
     const fetchReports = async () => {
         setLoading(true);
         setError(null);
@@ -436,19 +436,19 @@ const FinancialReports = ({ onRefresh }) => {
             const response = await AxiosInstance.get('/finances/financial-reports/');
             setReports(response.data);
         } catch (err) {
-            console.error('Error fetching reports:', err);
-            setError('Failed to load financial reports. Please try again.');
+            console.error('Erreur lors de la récupération des rapports:', err);
+            setError('Échec du chargement des rapports financiers. Veuillez réessayer.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Load reports on component mount
+    // Charger les rapports au montage du composant
     useEffect(() => {
         fetchReports();
     }, []);
 
-    // Pagination handlers
+    // Gestionnaires de pagination
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
@@ -458,13 +458,13 @@ const FinancialReports = ({ onRefresh }) => {
         setPage(0);
     };
 
-    // Handle report deletion
+    // Gérer la suppression d'un rapport
     const handleDeleteReport = (report) => {
         setSelectedReport(report);
         setDeleteDialogOpen(true);
     };
 
-    // Confirm report deletion
+    // Confirmer la suppression d'un rapport
     const confirmDeleteReport = async () => {
         if (!selectedReport) return;
 
@@ -478,23 +478,22 @@ const FinancialReports = ({ onRefresh }) => {
                 onRefresh();
             }
         } catch (err) {
-            console.error('Error deleting report:', err);
-            setError('Failed to delete report');
+            console.error('Erreur lors de la suppression du rapport:', err);
+            setError('Échec de la suppression du rapport');
         } finally {
             setActionLoading(false);
         }
     };
 
-    // Handle report download
-// Replace this function in FinancialReports.jsx
+    // Gérer le téléchargement d'un rapport
     const handleDownloadReport = (report) => {
         if (report.id) {
-            // Get file from API download endpoint instead of direct URL
+            // Obtenir le fichier depuis le point de terminaison de téléchargement de l'API au lieu de l'URL directe
             AxiosInstance.get(`/finances/financial-reports/${report.id}/download/`, {
-                responseType: 'blob'  // Important for file downloads
+                responseType: 'blob'  // Important pour les téléchargements de fichiers
             })
                 .then(response => {
-                    // Get filename from Content-Disposition header if available
+                    // Obtenir le nom du fichier à partir de l'en-tête Content-Disposition si disponible
                     let filename;
                     const contentDisposition = response.headers['content-disposition'];
                     if (contentDisposition) {
@@ -504,33 +503,33 @@ const FinancialReports = ({ onRefresh }) => {
                         }
                     }
 
-                    // Default filename if not found in header
+                    // Nom de fichier par défaut si non trouvé dans l'en-tête
                     if (!filename) {
-                        filename = `report_${report.id}.xlsx`;
+                        filename = `rapport_${report.id}.xlsx`;
                     }
 
-                    // Create a URL for the blob
+                    // Créer une URL pour le blob
                     const url = window.URL.createObjectURL(new Blob([response.data]));
 
-                    // Create a temporary link element and trigger download
+                    // Créer un élément de lien temporaire et déclencher le téléchargement
                     const link = document.createElement('a');
                     link.href = url;
                     link.setAttribute('download', filename);
                     document.body.appendChild(link);
                     link.click();
 
-                    // Clean up
+                    // Nettoyer
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(link);
                 })
                 .catch(error => {
-                    console.error('Error downloading report:', error);
-                    // You can add a notification here to show the user there was an error
+                    console.error('Erreur lors du téléchargement du rapport:', error);
+                    // Vous pouvez ajouter une notification ici pour informer l'utilisateur de l'erreur
                 });
         }
     };
 
-    // Handle report generation success
+    // Gérer le succès de la génération d'un rapport
     const handleReportGenerationSuccess = () => {
         fetchReports();
         if (onRefresh) {
@@ -538,38 +537,37 @@ const FinancialReports = ({ onRefresh }) => {
         }
     };
 
-    // Handle finalizing a report
-// Replace this function in FinancialReports.jsx
+    // Gérer la finalisation d'un rapport
     const handleFinalizeReport = async (report) => {
         try {
-            // Try to use PATCH first (this will work with the ModelViewSet change)
+            // Essayer d'utiliser PATCH d'abord (cela fonctionnera avec le changement ModelViewSet)
             try {
                 await AxiosInstance.patch(`/finances/financial-reports/${report.id}/`, {
                     status: 'finalized'
                 });
                 fetchReports();
             } catch (err) {
-                // If PATCH fails, try the dedicated finalize endpoint
+                // Si PATCH échoue, essayer le point de terminaison de finalisation dédié
                 if (err.response && err.response.status === 405) {
                     await AxiosInstance.post(`/finances/financial-reports/${report.id}/finalize/`);
                     fetchReports();
                 } else {
-                    // If it's not a Method Not Allowed error, rethrow
+                    // Si ce n'est pas une erreur Method Not Allowed, relancer
                     throw err;
                 }
             }
         } catch (err) {
-            console.error('Error finalizing report:', err);
-            setError('Failed to finalize report');
+            console.error('Erreur lors de la finalisation du rapport:', err);
+            setError('Échec de la finalisation du rapport');
         }
     };
 
     return (
         <Box>
-            {/* Header with action buttons */}
+            {/* En-tête avec boutons d'action */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h5" component="h2" fontWeight="bold">
-                    Financial Reports
+                    Rapports Financiers
                 </Typography>
                 <Box>
                     <Button
@@ -579,7 +577,7 @@ const FinancialReports = ({ onRefresh }) => {
                         sx={{ mr: 1 }}
                         disabled={loading}
                     >
-                        Refresh
+                        Actualiser
                     </Button>
                     <Button
                         variant="contained"
@@ -587,43 +585,43 @@ const FinancialReports = ({ onRefresh }) => {
                         onClick={() => setGenerateDialogOpen(true)}
                         disabled={loading}
                     >
-                        Generate Report
+                        Générer un Rapport
                     </Button>
                 </Box>
             </Box>
 
-            {/* Error message */}
+            {/* Message d'erreur */}
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
                     {error}
                 </Alert>
             )}
 
-            {/* Loading indicator */}
+            {/* Indicateur de chargement */}
             {loading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                     <CircularProgress />
                 </Box>
             )}
 
-            {/* Reports table */}
+            {/* Tableau des rapports */}
             {!loading && (
                 <>
                     {reports.length === 0 ? (
                         <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
                             <Assignment color="info" sx={{ fontSize: 48, mb: 2, opacity: 0.7 }} />
                             <Typography variant="h6" gutterBottom>
-                                No Financial Reports
+                                Aucun Rapport Financier
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                There are no financial reports generated yet. Generate your first report to get started.
+                                Aucun rapport financier n'a encore été généré. Générez votre premier rapport pour commencer.
                             </Typography>
                             <Button
                                 variant="contained"
                                 startIcon={<Add />}
                                 onClick={() => setGenerateDialogOpen(true)}
                             >
-                                Generate First Report
+                                Générer le Premier Rapport
                             </Button>
                         </Paper>
                     ) : (
@@ -632,11 +630,11 @@ const FinancialReports = ({ onRefresh }) => {
                                 <Table stickyHeader size="small">
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold' }}>Titre</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold' }}>Period</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold' }}>Created</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold' }}>Période</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold' }}>Statut</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold' }}>Créé</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
@@ -669,7 +667,7 @@ const FinancialReports = ({ onRefresh }) => {
                                                     <TableCell>
                                                         <Box sx={{ display: 'flex' }}>
                                                             {report.report_file && (
-                                                                <Tooltip title="Download Report">
+                                                                <Tooltip title="Télécharger le Rapport">
                                                                     <IconButton
                                                                         size="small"
                                                                         color="primary"
@@ -681,7 +679,7 @@ const FinancialReports = ({ onRefresh }) => {
                                                             )}
 
                                                             {report.status === 'draft' && (
-                                                                <Tooltip title="Finalize Report">
+                                                                <Tooltip title="Finaliser le Rapport">
                                                                     <IconButton
                                                                         size="small"
                                                                         color="success"
@@ -692,7 +690,7 @@ const FinancialReports = ({ onRefresh }) => {
                                                                 </Tooltip>
                                                             )}
 
-                                                            <Tooltip title="Delete Report">
+                                                            <Tooltip title="Supprimer le Rapport">
                                                                 <IconButton
                                                                     size="small"
                                                                     color="error"
@@ -718,25 +716,27 @@ const FinancialReports = ({ onRefresh }) => {
                                 onPageChange={handleChangePage}
                                 onRowsPerPageChange={handleChangeRowsPerPage}
                                 sx={{ borderTop: 'none' }}
+                                labelRowsPerPage="Lignes par page :"
+                                labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
                             />
                         </>
                     )}
                 </>
             )}
 
-            {/* Generate report dialog */}
+            {/* Dialogue de génération de rapport */}
             <GenerateReportDialog
                 open={generateDialogOpen}
                 onClose={() => setGenerateDialogOpen(false)}
                 onSuccess={handleReportGenerationSuccess}
             />
 
-            {/* Delete confirmation dialog */}
+            {/* Dialogue de confirmation de suppression */}
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogTitle>Confirmer la Suppression</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Are you sure you want to delete this report? This action cannot be undone.
+                        Êtes-vous sûr de vouloir supprimer ce rapport ? Cette action ne peut pas être annulée.
                     </Typography>
                     {selectedReport && (
                         <Box sx={{ mt: 2, p: 2, bgcolor: theme.palette.grey[100], borderRadius: 1 }}>
@@ -744,14 +744,14 @@ const FinancialReports = ({ onRefresh }) => {
                                 {selectedReport.title}
                             </Typography>
                             <Typography variant="body2">
-                                {formatDate(selectedReport.start_date)} to {formatDate(selectedReport.end_date)}
+                                {formatDate(selectedReport.start_date)} au {formatDate(selectedReport.end_date)}
                             </Typography>
                         </Box>
                     )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDeleteDialogOpen(false)} disabled={actionLoading}>
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={confirmDeleteReport}
@@ -759,7 +759,7 @@ const FinancialReports = ({ onRefresh }) => {
                         variant="contained"
                         disabled={actionLoading}
                     >
-                        {actionLoading ? <CircularProgress size={24} /> : 'Delete'}
+                        {actionLoading ? <CircularProgress size={24} /> : 'Supprimer'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -63,7 +63,7 @@ import { motion } from 'framer-motion';
 // Enhanced AttendeesTab Component
 import {Checkbox, InputAdornment} from '@mui/material';
 import {Search} from '@mui/icons-material';
-
+import { usePermissions } from '../../contexts/PermissionsContext';
 const HeaderContainer = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
@@ -295,6 +295,12 @@ const MeetingDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const theme = useTheme();
+    // Add the permissions hook
+    const { can, RESOURCES, ACTIONS } = usePermissions();
+
+    // Check if user has edit permissions
+    const canEditMeetings = can(ACTIONS.EDIT, RESOURCES.MEETINGS);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [meeting, setMeeting] = useState(null);
@@ -600,7 +606,7 @@ const MeetingDetail = () => {
                             </Box>
 
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                {meeting.status === 'scheduled' && (
+                                {meeting.status === 'scheduled' && canEditMeetings && (
                                     <>
                                         <Button
                                             variant="contained"
@@ -629,7 +635,7 @@ const MeetingDetail = () => {
                                     </>
                                 )}
 
-                                {meeting.status === 'completed' && reports.length === 0 && (
+                                {meeting.status === 'completed' && reports.length === 0 && canEditMeetings && (
                                     <Button
                                         variant="contained"
                                         onClick={() => setOpenGenerateDialog(true)}
@@ -643,7 +649,7 @@ const MeetingDetail = () => {
                                     </Button>
                                 )}
 
-                                {meeting.status === 'in_progress' && (
+                                {meeting.status === 'in_progress' && canEditMeetings && (
                                     <Button
                                         variant="contained"
                                         onClick={() => setOpenMinutesDialog(true)}

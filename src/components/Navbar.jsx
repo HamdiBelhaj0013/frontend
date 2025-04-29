@@ -24,7 +24,6 @@ import {
     SwipeableDrawer,
     Fade,
     CircularProgress,
-
 } from '@mui/material';
 import { styled, alpha, useTheme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +31,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 // Import the ColorModeContext hook
 import { useColorMode } from '../contexts/ThemeContext';
+import NotificationMenu from './NotificationMenu';
 
 // Icons
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'
@@ -50,10 +50,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import logo from '../assets/logowhite.png';
 import Axios from './Axios';
 import {usePermissions} from "../contexts/PermissionsContext.jsx";
+import {useNotifications} from "../contexts/NotificationContext.jsx";
+
 // Enhanced styled components for better appearance and smoothness
 const GlassAppBar = styled(AppBar)(({ theme }) => ({
     background: 'linear-gradient(135deg, rgba(0, 137, 123, 0.97), rgba(0, 105, 92, 0.95))',
@@ -277,32 +278,6 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
     },
 }));
 
-const NotificationItem = styled(ListItem)(({ theme, read }) => ({
-    padding: '12px 16px',
-    transition: 'all 0.2s ease',
-    position: 'relative',
-    backgroundColor: read ? 'transparent' : alpha(theme.palette.primary.main, 0.05),
-    borderLeft: read ? 'none' : `3px solid ${theme.palette.primary.main}`,
-    '&:hover': {
-        backgroundColor: theme.palette.mode === 'dark'
-            ? 'rgba(255, 255, 255, 0.05)'
-            : 'rgba(0, 0, 0, 0.02)',
-    },
-    '&:not(:last-child)': {
-        borderBottom: '1px solid ' + alpha(theme.palette.divider, 0.1),
-    },
-}));
-
-const navItems = [
-    { name: 'Dashboard', path: '/home', icon: <DashboardIcon />, resource: null, action: null },
-    { name: 'Projects', path: '/projects', icon: <BusinessIcon />, resource: 'projects', action: 'view' },
-    { name: 'Members', path: '/members', icon: <GroupIcon />, resource: 'members', action: 'view' },
-    { name: 'Pending Users', path: '/pending-users', icon: <HourglassEmptyIcon />, resource: 'members', action: 'validate_user' },
-    { name: 'Finance', path: '/finance', icon: <AccountBalanceIcon />, resource: 'finance', action: 'view' },
-    { name: 'Meetings', path: '/meetings', icon: <MeetingRoomIcon />, resource: 'meetings', action: 'view' },
-    { name: 'AI Assistance', path: '/chatbot', icon: <SmartToyIcon />, resource: 'chatbot', action: 'view' },
-];
-
 export default function NavBar(props) {
     const { content } = props;
     const drawerWidth = 280;
@@ -312,6 +287,7 @@ export default function NavBar(props) {
     const location = useLocation();
     const navigate = useNavigate();
     const { can, isLoading } = usePermissions();
+    const { unreadCount } = useNotifications();
 
     // Use the color mode context
     const colorMode = useColorMode();
@@ -321,23 +297,13 @@ export default function NavBar(props) {
 
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
-    const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
     const [userName, setUserName] = useState('');
     const [userRole, setUserRole] = useState('Member');
     const [userInitial, setUserInitial] = useState('');
     const [associationName, setAssociationName] = useState('');
     const [scrolled, setScrolled] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
-
     const isUserMenuOpen = Boolean(userMenuAnchorEl);
-    const isNotificationsMenuOpen = Boolean(notificationsAnchorEl);
-
-    // Notifications mock data
-    const notifications = [
-        { id: 1, message: 'New project proposal submitted', time: '10 min ago', read: false },
-        { id: 2, message: 'Budget report is ready for review', time: '1 hour ago', read: false },
-        { id: 3, message: 'Team meeting scheduled for tomorrow', time: '3 hours ago', read: true },
-    ];
 
     // Handle scroll event for navbar appearance change
     useEffect(() => {
@@ -433,14 +399,6 @@ export default function NavBar(props) {
         setUserMenuAnchorEl(null);
     };
 
-    const handleNotificationsOpen = (event) => {
-        setNotificationsAnchorEl(event.currentTarget);
-    };
-
-    const handleNotificationsClose = () => {
-        setNotificationsAnchorEl(null);
-    };
-
     const handleLogout = () => {
         handleUserMenuClose();
 
@@ -450,6 +408,18 @@ export default function NavBar(props) {
         navigate('/');
     };
 
+    // Define navItems with Notifications item
+    const navItems = [
+        { name: 'Tableau de Bord', path: '/home', icon: <DashboardIcon />, resource: null, action: null },
+        { name: 'Projets', path: '/projects', icon: <BusinessIcon />, resource: 'projects', action: 'view' },
+        { name: 'Membres', path: '/members', icon: <GroupIcon />, resource: 'members', action: 'view' },
+        { name: 'Membres en attente', path: '/pending-users', icon: <HourglassEmptyIcon />, resource: 'members', action: 'validate_user' },
+        { name: 'Finance', path: '/finance', icon: <AccountBalanceIcon />, resource: 'finance', action: 'view' },
+        { name: 'Réunions', path: '/meetings', icon: <MeetingRoomIcon />, resource: 'meetings', action: 'view' },
+        { name: 'Notifications', path: '/notifications', icon: <NotificationsIcon />, resource: 'notifications', action: 'view', hasNotification: unreadCount > 0 },
+        { name: 'Assitant AI', path: '/chatbot', icon: <SmartToyIcon />, resource: 'chatbot', action: 'view' },
+    ];
+
     // Filter navigation items based on user permissions
     const filteredNavItems = navItems.filter(item => {
         // If no resource/action is specified, show to everyone
@@ -458,8 +428,6 @@ export default function NavBar(props) {
         // Otherwise check permissions
         return can(item.action, item.resource);
     });
-
-    // Rest of the component remains the same, but use filteredNavItems instead of pages
 
     const drawer = (
         <GlassDrawer>
@@ -649,7 +617,7 @@ export default function NavBar(props) {
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">
-                        {darkMode ? 'Dark Mode' : 'Light Mode'}
+                        {darkMode ? 'Mode sombre' : 'Mode lumineux'}
                     </Typography>
                     <IconButton
                         onClick={toggleDarkMode}
@@ -694,7 +662,7 @@ export default function NavBar(props) {
                         }
                     }}
                 >
-                    Logout
+                    Déconnexion
                 </Button>
             </Box>
         </GlassDrawer>
@@ -827,7 +795,7 @@ export default function NavBar(props) {
                         flex: 1,
                         gap: 1
                     }}>
-                        {filteredNavItems.map((page) => ( // Changed from pages to filteredNavItems
+                        {filteredNavItems.map((page) => (
                             <Tooltip
                                 title={page.name}
                                 key={page.name}
@@ -926,106 +894,25 @@ export default function NavBar(props) {
                             </Tooltip>
                         </Box>
 
-                        {/* Notification icon */}
-                        <Tooltip
-                            title="Notifications"
-                            placement="bottom"
-                            TransitionComponent={Fade}
-                            arrow
-                        >
-                            <ActionIconButton
-                                color="inherit"
-                                sx={{ mx: 0.5 }}
-                                onClick={handleNotificationsOpen}
-                            >
-                                <NotificationBadge badgeContent={notifications.filter(n => !n.read).length} color="error">
-                                    <NotificationsNoneIcon />
-                                </NotificationBadge>
-                            </ActionIconButton>
-                        </Tooltip>
-
-                        {/* Notifications menu */}
-                        <StyledMenu
-                            anchorEl={notificationsAnchorEl}
-                            open={isNotificationsMenuOpen}
-                            onClose={handleNotificationsClose}
-                            PaperProps={{
-                                sx: {
-                                    width: 320,
-                                    maxWidth: '100%',
-                                    overflow: 'hidden',
-                                }
-                            }}
-                            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                        >
-                            <Box sx={{
-                                p: 2,
-                                borderBottom: '1px solid ' + (darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}>
-                                <Typography variant="subtitle1" fontWeight={600}>Notifications</Typography>
-                                <Typography
-                                    variant="caption"
-                                    sx={{
-                                        color: theme.palette.primary.main,
-                                        cursor: 'pointer',
-                                        '&:hover': { textDecoration: 'underline' }
-                                    }}
-                                >
-                                    Mark all as read
-                                </Typography>
-                            </Box>
-                            <Box sx={{ maxHeight: 320, overflowY: 'auto' }}>
-                                <List sx={{ p: 0 }}>
-                                    {notifications.map((notification) => (
-                                        <NotificationItem
-                                            key={notification.id}
-                                            read={notification.read}
-                                            button
-                                            onClick={handleNotificationsClose}
-                                        >
-                                            <ListItemText
-                                                primary={notification.message}
-                                                secondary={notification.time}
-                                                primaryTypographyProps={{
-                                                    fontWeight: notification.read ? 400 : 600,
-                                                    variant: 'body2',
-                                                }}
-                                                secondaryTypographyProps={{
-                                                    variant: 'caption',
-                                                    color: 'text.secondary'
-                                                }}
-                                            />
-                                        </NotificationItem>
-                                    ))}
-                                </List>
-                            </Box>
-                            <Box sx={{
-                                p: 1.5,
-                                textAlign: 'center',
-                                borderTop: '1px solid ' + (darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)')
-                            }}>
-                                <Button
-                                    sx={{
-                                        textTransform: 'none',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: theme.palette.primary.main,
-                                        borderRadius: '8px',
-                                        padding: '6px 16px',
-                                        transition: 'all 0.2s ease',
-                                        '&:hover': {
-                                            backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                                        }
-                                    }}
-                                >
-                                    View all notifications
-                                </Button>
-                            </Box>
-                        </StyledMenu>
+                        {/* Notification menu */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+                            <NotificationMenu
+                                buttonStyle={{
+                                    color: 'rgba(255, 255, 255, 0.85)',
+                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    borderRadius: '12px',
+                                    padding: '8px',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                                        transform: 'translateY(-2px)',
+                                        color: 'rgba(255, 255, 255, 1)',
+                                    },
+                                    '&:active': {
+                                        transform: 'translateY(0)',
+                                    }
+                                }}
+                            />
+                        </Box>
 
                         {/* User profile */}
                         <Box sx={{ ml: { xs: 0.5, sm: 1.5 } }}>
@@ -1123,7 +1010,7 @@ export default function NavBar(props) {
                                     <ListItemIcon>
                                         <LogoutIcon fontSize="small" color="error" />
                                     </ListItemIcon>
-                                    <Typography>Logout</Typography>
+                                    <Typography>Déconnexion</Typography>
                                 </MenuItemStyled>
                             </StyledMenu>
                         </Box>

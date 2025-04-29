@@ -170,18 +170,19 @@ const EditProject = () => {
 
     // Form validation schema
     const schema = yup.object({
-        name: yup.string().required('Name is required'),
+        name: yup.string().required('Le nom est requis'),
         budget: yup.number()
-            .typeError('Budget must be a number')
-            .positive('Budget must be a positive number')
-            .required('Budget is required'),
-        start_date: yup.date().required('Start date is required'),
+            .typeError('Le budget doit être un nombre')
+            .positive('Le budget doit être un nombre positif')
+            .required('Le budget est requis'),
+        start_date: yup.date().required('La date de début est requise'),
         end_date: yup.date()
-            .required('End date is required')
-            .min(yup.ref('start_date'),'The end date should be after the start date'),
-        status: yup.string().required('Status is required'),
-        description: yup.string().required('Description is required'),
+            .required('La date de fin est requise')
+            .min(yup.ref('start_date'), 'La date de fin doit être postérieure à la date de début'),
+        status: yup.string().required('Le statut est requis'),
+        description: yup.string().required('La description est requise'),
     });
+
 
     const { handleSubmit, control, setValue, formState: { errors, isValid, isDirty } } = useForm({
         resolver: yupResolver(schema),
@@ -214,7 +215,7 @@ const EditProject = () => {
                 setProjectData(data);
             } catch (err) {
                 console.error('Error fetching project:', err);
-                setError('Failed to load project data. Please try again.');
+                setError('Échec du chargement des données du projet. Veuillez réessayer.');
             } finally {
                 setLoading(false);
             }
@@ -248,13 +249,13 @@ const EditProject = () => {
                 navigate('/projects', {
                     state: {
                         success: true,
-                        message: `Project "${data.name}" was updated successfully`
+                        message: `Projet "${data.name}" a été mis à jour avec succès`
                     }
                 });
             }, 1500);
         } catch (err) {
             console.error('Error updating project:', err);
-            setError(err.response?.data?.message || 'Failed to update project. Please try again.');
+            setError(err.response?.data?.message || 'Échec de la mise à jour du projet. Veuillez réessayer.');
         } finally {
             setSaving(false);
         }
@@ -262,11 +263,11 @@ const EditProject = () => {
 
     // Status options
     const statusOptions = [
-        { value: "Not Started", label: "Not Started" },
-        { value: "In Progress", label: "In Progress" },
-        { value: "Completed", label: "Completed" },
-        { value: "On Hold", label: "On Hold" },
-        { value: "Cancelled", label: "Cancelled" },
+        { value: "Non commencé", label: "Non commencé" },
+        { value: "En cours", label: "En cours" },
+        { value: "Terminé", label: "Terminé" },
+        { value: "En pause", label: "En pause" },
+        { value: "Annulé", label: "Annulé" },
     ];
 
     // Animation variants
@@ -311,7 +312,7 @@ const EditProject = () => {
                             }
                         }}
                     >
-                        Back to Projects
+                        Retour aux Projets
                     </Button>
 
                     {/* Header */}
@@ -320,10 +321,10 @@ const EditProject = () => {
                             <BusinessIcon sx={{ mr: 2, fontSize: 28 }} />
                             <Box sx={{ zIndex: 1 }}>
                                 <Typography variant="h5" component="h1" fontWeight="bold">
-                                    Edit Project
+                                    Modifier le projet
                                 </Typography>
                                 <Typography variant="subtitle2">
-                                    {projectData?.name ? `Editing: ${projectData.name}` : 'Update project details'}
+                                    {projectData?.name ? `Modification du Projet: ${projectData.name}` : 'Mettre à jour les détails du projet'}
                                 </Typography>
                             </Box>
                             {/* Decorative circles */}
@@ -364,7 +365,7 @@ const EditProject = () => {
                             sx={{ mb: 3, borderRadius: '8px' }}
                             action={
                                 <Button color="inherit" size="small" onClick={() => navigate('/projects')}>
-                                    Go Back
+                                    Retour
                                 </Button>
                             }
                         >
@@ -382,8 +383,8 @@ const EditProject = () => {
                                         indicatorColor="primary"
                                         textColor="primary"
                                     >
-                                        <StyledTab label="Project Details" icon={<BusinessIcon />} iconPosition="start" />
-                                        <StyledTab label="Dates & Budget" icon={<AttachMoneyIcon />} iconPosition="start" />
+                                        <StyledTab label="Détails du projet" icon={<BusinessIcon />} iconPosition="start" />
+                                        <StyledTab label="Dates et Budget" icon={<AttachMoneyIcon />} iconPosition="start" />
                                     </Tabs>
                                 </Box>
 
@@ -398,12 +399,12 @@ const EditProject = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <BusinessIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Project Name</Typography>
+                                                                <Typography variant="subtitle2">Nom du projet</Typography>
                                                             </Box>
                                                             <MyTextField
                                                                 name="name"
                                                                 control={control}
-                                                                placeholder="Enter project name"
+                                                                placeholder="Entrez le nom du projet"
                                                                 error={!!errors.name}
                                                                 helperText={errors.name?.message}
                                                             />
@@ -414,7 +415,7 @@ const EditProject = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <TaskAltIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Status</Typography>
+                                                                <Typography variant="subtitle2">Statut</Typography>
                                                             </Box>
                                                             <MySelectField
                                                                 name="status"
@@ -435,7 +436,7 @@ const EditProject = () => {
                                                             <MyMultilineField
                                                                 name="description"
                                                                 control={control}
-                                                                placeholder="Enter project description"
+                                                                placeholder="Entrez la description du projet"
                                                                 rows={4}
                                                                 error={!!errors.description}
                                                                 helperText={errors.description?.message}
@@ -454,7 +455,7 @@ const EditProject = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <CalendarTodayIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">Start Date</Typography>
+                                                                <Typography variant="subtitle2">Date de début</Typography>
                                                             </Box>
                                                             <MyDatePickerField
                                                                 name="start_date"
@@ -469,7 +470,7 @@ const EditProject = () => {
                                                         <FormBox>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                                 <EventIcon color="primary" sx={{ mr: 1 }} />
-                                                                <Typography variant="subtitle2">End Date</Typography>
+                                                                <Typography variant="subtitle2">Date de fin</Typography>
                                                             </Box>
                                                             <MyDatePickerField
                                                                 name="end_date"
@@ -489,7 +490,7 @@ const EditProject = () => {
                                                             <MyTextField
                                                                 name="budget"
                                                                 control={control}
-                                                                placeholder="Enter budget amount"
+                                                                placeholder="Entrez le montant du budget"
                                                                 error={!!errors.budget}
                                                                 helperText={errors.budget?.message}
                                                             />
@@ -504,7 +505,7 @@ const EditProject = () => {
                                     <Box sx={{ mb: 3 }}>
                                         <InfoChip
                                             icon={<InfoOutlinedIcon />}
-                                            label="All changes will be applied immediately upon saving"
+                                            label="Toutes les modifications seront appliquées immédiatement après l'enregistrement"
                                         />
                                     </Box>
 
@@ -519,7 +520,7 @@ const EditProject = () => {
                                             startIcon={<DeleteIcon />}
                                             onClick={() => navigate(`/projects/delete/${id}`)}
                                         >
-                                            Delete Project
+                                            Supprimer le projet
                                         </DeleteButton>
 
                                         <Box sx={{ display: 'flex', gap: 2, ml: 'auto' }}>
@@ -528,7 +529,7 @@ const EditProject = () => {
                                                 onClick={() => navigate('/projects')}
                                                 sx={{ borderRadius: '8px' }}
                                             >
-                                                Cancel
+                                                Annuler
                                             </Button>
 
                                             <SaveButton
@@ -537,7 +538,7 @@ const EditProject = () => {
                                                 disabled={saving || !isValid || !isDirty}
                                                 startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                                             >
-                                                {saving ? 'Saving...' : success ? 'Saved!' : 'Save Changes'}
+                                                {saving ? 'Enregistrement...' : success ? 'Enregistré!' : 'Enregistrer les modifications'}
                                             </SaveButton>
                                         </Box>
                                     </Box>
@@ -584,7 +585,7 @@ const EditProject = () => {
                     severity="success"
                     sx={{ width: '100%', borderRadius: '8px' }}
                 >
-                    Project updated successfully! Redirecting to projects list...
+                    Projet mis à jour avec succès! Redirection vers la liste des projets...
                 </Alert>
             </Snackbar>
         </Container>
