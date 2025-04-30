@@ -33,17 +33,18 @@ import {
     Alarm as ReminderIcon,
     Warning as WarningIcon,
     Error as ErrorIcon,
-    TimerOutlined as DueIcon
+    TimerOutlined as DueIcon,
+    WifiOff as DisconnectedIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../contexts/NotificationContext.jsx';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
-// Initialize dayjs plugins
+// Initialiser les plugins dayjs
 dayjs.extend(relativeTime);
 
-// Styled components
+// Composants stylisés
 const NotificationBadge = styled(Badge)(({ theme }) => ({
     '& .MuiBadge-badge': {
         backgroundColor: theme.palette.error.main,
@@ -127,7 +128,7 @@ const NotificationPriorityIndicator = styled('span')(({ theme, priority }) => {
     };
 });
 
-// Map notification types to icons
+// Mapper les types de notification aux icônes
 const getNotificationIcon = (type, theme) => {
     const { NOTIFICATION_TYPES } = useNotifications();
 
@@ -173,16 +174,31 @@ const NotificationMenu = ({ buttonStyle }) => {
         notifications,
         unreadCount,
         loading,
+        wsConnected,
         markAsRead,
         markAllAsRead,
-        handleNotificationClick
+        handleNotificationClick,
+        refresh
     } = useNotifications();
 
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Gérer les notifications en toute sécurité pour éviter les erreurs
+    const safeNotifications = Array.isArray(notifications) ? notifications : [];
+
+    // Gérer l'actualisation forcée avec un bref état de chargement
+    const handleForceRefresh = async () => {
+        setRefreshing(true);
+        await refresh();
+        setTimeout(() => setRefreshing(false), 700); // Afficher le chargement pendant au moins 700ms
+    };
 
     const handleOpenMenu = (event) => {
         setAnchorEl(event.currentTarget);
+        // Forcer l'actualisation lors de l'ouverture du menu pour garantir les dernières notifications
+        handleForceRefresh();
     };
 
     const handleCloseMenu = () => {
@@ -203,9 +219,14 @@ const NotificationMenu = ({ buttonStyle }) => {
         handleCloseMenu();
     };
 
+    // Calculer la couleur de l'état de connexion
+    const connectionColor = wsConnected
+        ? theme.palette.success.main
+        : theme.palette.error.main;
+
     return (
         <>
-            <Tooltip title="Notifications">
+            <Tooltip title={wsConnected ? "Notifications (Temps réel)" : "Notifications (Hors ligne)"}>
                 <IconButton
                     onClick={handleOpenMenu}
                     color="inherit"
@@ -232,17 +253,32 @@ const NotificationMenu = ({ buttonStyle }) => {
                     py: 1.5,
                     borderBottom: `1px solid ${theme.palette.divider}`
                 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Notifications
-                        {unreadCount > 0 && (
-                            <Chip
-                                size="small"
-                                label={unreadCount}
-                                color="error"
-                                sx={{ ml: 1, height: 20, fontSize: '0.75rem' }}
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            Notifications
+                            {unreadCount > 0 && (
+                                <Chip
+                                    size="small"
+                                    label={unreadCount}
+                                    color="error"
+                                    sx={{ ml: 1, height: 20, fontSize: '0.75rem' }}
+                                />
+                            )}
+                        </Typography>
+                        <Tooltip title={wsConnected ? "Connecté (Temps réel)" : "Déconnecté (Mode hors ligne)"}>
+                            <Box
+                                sx={{
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: '50%',
+                                    bgcolor: connectionColor,
+                                    ml: 1,
+                                    display: 'inline-block',
+                                    boxShadow: `0 0 5px ${connectionColor}`
+                                }}
                             />
-                        )}
-                    </Typography>
+                        </Tooltip>
+                    </Box>
 
                     {unreadCount > 0 && (
                         <Button
@@ -255,33 +291,33 @@ const NotificationMenu = ({ buttonStyle }) => {
                                 fontSize: '0.8rem',
                             }}
                         >
-                            Mark all as read
+                            Tout marquer comme lu
                         </Button>
                     )}
                 </Box>
 
-                {loading ? (
+                {refreshing || loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                         <CircularProgress size={40} thickness={4} />
                     </Box>
-                ) : notifications.length === 0 ? (
+                ) : safeNotifications.length === 0 ? (
                     <EmptyNotification>
                         <NotificationsIcon />
                         <Typography variant="body1" align="center">
-                            No notifications yet
+                            Aucune notification
                         </Typography>
                         <Typography variant="body2" align="center" color="textSecondary">
-                            We'll notify you when something arrives
+                            Nous vous informerons lorsque quelque chose arrivera
                         </Typography>
                     </EmptyNotification>
                 ) : (
                     <List sx={{ maxHeight: 320, overflow: 'auto', p: 0 }}>
-                        {notifications.slice(0, 5).map((notification) => (
+                        {safeNotifications.slice(0, 5).map((notification) => (
                             <NotificationItem
                                 key={notification.id}
                                 read={notification.read}
-                                button
                                 onClick={() => handleNotificationSelect(notification)}
+                                sx={{ cursor: 'pointer' }}
                             >
                                 <Box sx={{ mr: 1.5 }}>
                                     <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), width: 40, height: 40 }}>
@@ -299,11 +335,18 @@ const NotificationMenu = ({ buttonStyle }) => {
                                     }
                                     secondary={
                                         <>
-                                            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 0.5 }}>
+                                            <Typography variant="body2" sx={{
+                                                color: theme.palette.text.secondary,
+                                                mb: 0.5,
+                                                display: '-webkit-box',
+                                                overflow: 'hidden',
+                                                WebkitBoxOrient: 'vertical',
+                                                WebkitLineClamp: 2,
+                                            }}>
                                                 {notification.message}
                                             </Typography>
                                             <Typography variant="caption" sx={{ color: theme.palette.text.disabled }}>
-                                                {dayjs(notification.created_at).fromNow()}
+                                                {notification.created_at ? dayjs(notification.created_at).fromNow() : 'À l\'instant'}
                                             </Typography>
                                         </>
                                     }
@@ -333,7 +376,7 @@ const NotificationMenu = ({ buttonStyle }) => {
                             fontWeight: 500
                         }}
                     >
-                        View all notifications
+                        Voir toutes les notifications
                     </Button>
                 </Box>
             </StyledMenu>

@@ -14,8 +14,9 @@ import MeetingResponse from './components/meetings/MeetingResponse.jsx';
 // Donor management components
 import DonorEditForm from './components/finance/DonorEditForm';
 
-// Notifications
-
+// Notifications Components
+import NotificationDashboard from './components/NotificationDashboard';
+import EnhancedNotificationDashboard from './components/NotificationDashboard';
 
 const PendingUsers = lazy(() => import("./components/PendingUsers"));
 const Home = lazy(() => import("./components/Home"));
@@ -211,7 +212,6 @@ function App() {
                                                         </PermissionGuard>
                                                     </AuthGuard>
                                                 } />
-                                                {/* Add the missing edit route here */}
                                                 <Route path="/meetings/edit/:id" element={
                                                     <AuthGuard>
                                                         <PermissionGuard resource="meetings" action="edit">
@@ -224,6 +224,13 @@ function App() {
                                                         <PermissionGuard resource="meetings" action="view">
                                                             <MeetingDetail />
                                                         </PermissionGuard>
+                                                    </AuthGuard>
+                                                } />
+
+                                                {/* Enhanced Notifications Dashboard - main route for notifications */}
+                                                <Route path="/notifications" element={
+                                                    <AuthGuard>
+                                                        <EnhancedNotificationDashboard />
                                                     </AuthGuard>
                                                 } />
                                             </Routes>

@@ -9,7 +9,8 @@ export const RESOURCES = {
     TASKS: 'tasks',
     MEETINGS: 'meetings',
     REPORTS: 'reports',
-    CHATBOT: 'chatbot'
+    CHATBOT: 'chatbot',
+    NOTIFICATIONS: 'notifications'  // Add this line
 };
 
 export const ACTIONS = {
@@ -28,7 +29,8 @@ const RESOURCE_MAPPING = {
     [RESOURCES.TASKS]: RESOURCES.TASKS,
     [RESOURCES.MEETINGS]: RESOURCES.MEETINGS,
     [RESOURCES.REPORTS]: RESOURCES.REPORTS,
-    'pendingUsers': RESOURCES.MEMBERS, // Maps to members with VALIDATE_USER permission
+    [RESOURCES.NOTIFICATIONS]: RESOURCES.NOTIFICATIONS,  // Add this line
+    'pendingUsers': RESOURCES.MEMBERS,
     [RESOURCES.CHATBOT]: RESOURCES.CHATBOT
 };
 

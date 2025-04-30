@@ -1,198 +1,286 @@
-// notificationService.js - Update the API endpoint paths to match your backend
-
+// notificationService.js - Enhanced polling mechanism
 import Axios from './components/Axios.jsx';
 
-class NotificationService {
-    constructor() {
-        this.listeners = [];
-        this.notificationsCache = [];
-        this.pollingInterval = null;
-        this.pollingTime = 30000; // 30 seconds
-    }
+// Notification Service - Provides methods to interact with the notification API
+const notificationService = {
+    // Configuration
+    apiBasePath: '/notifications/notifications/',
+    pollingInterval: null,
+    subscribers: [],
+    options: {
+        pollingIntervalTime: 30000, // Default polling interval: 30 seconds
+        disableAutoPolling: false,
+    },
+    lastFetchTime: null,
 
-    // Initialize the notification service
-    initialize(userId) {
-        this.userId = userId;
-        this.startPolling();
-        return this;
-    }
+    /**
+     * Initialize the notification service
+     * @param {Function} onNotification - Callback for new notifications
+     * @param {Object} options - Configuration options
+     */
+    initialize(onNotification, options = {}) {
+        console.log('Initializing notification service with options:', options);
 
-    // Start polling for new notifications
+        if (onNotification) {
+            this.subscribe(onNotification);
+        }
+
+        // Merge options
+        this.options = { ...this.options, ...options };
+
+        // If auto-polling is enabled, start polling
+        if (!this.options.disableAutoPolling) {
+            this.startPolling();
+        }
+
+        // Request notification permission if supported
+        this.requestNotificationPermission();
+    },
+
+    /**
+     * Request permission to show desktop notifications
+     */
+    requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    },
+
+    /**
+     * Subscribe to notifications
+     * @param {Function} callback - Callback function
+     * @returns {Function} Unsubscribe function
+     */
+    subscribe(callback) {
+        this.subscribers.push(callback);
+        console.log(`Subscribed to notifications (${this.subscribers.length} subscribers)`);
+
+        // Return unsubscribe function
+        return () => {
+            this.subscribers = this.subscribers.filter(cb => cb !== callback);
+            console.log(`Unsubscribed from notifications (${this.subscribers.length} subscribers remaining)`);
+        };
+    },
+
+    /**
+     * Notify all subscribers
+     * @param {Array} notifications - Array of notification objects
+     */
+    notifySubscribers(notifications) {
+        if (notifications && this.subscribers.length > 0) {
+            this.subscribers.forEach(callback => {
+                try {
+                    callback(notifications);
+                } catch (error) {
+                    console.error('Error in notification subscriber:', error);
+                }
+            });
+        }
+    },
+
+    /**
+     * Start polling for notifications
+     */
     startPolling() {
-        if (this.pollingInterval) return;
+        console.log('Starting notification polling');
+        // Clear any existing polling
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+        }
 
-        // Immediate first check
+        // Immediately fetch notifications
         this.fetchNotifications();
 
-        // Set up regular polling
+        // Set up interval for polling
         this.pollingInterval = setInterval(() => {
             this.fetchNotifications();
-        }, this.pollingTime);
-    }
+        }, this.options.pollingIntervalTime);
+    },
 
-    // Stop polling
+    /**
+     * Stop polling for notifications
+     */
     stopPolling() {
+        console.log('Stopping notification polling');
         if (this.pollingInterval) {
             clearInterval(this.pollingInterval);
             this.pollingInterval = null;
         }
-    }
+    },
 
-    // Fetch notifications from the backend
+    /**
+     * Cleanup the service
+     */
+    cleanup() {
+        console.log('Cleaning up notification service');
+        this.stopPolling();
+        this.subscribers = [];
+    },
+
+    /**
+     * Check if user is authenticated
+     * @returns {boolean} True if authenticated
+     */
+    isAuthenticated() {
+        const token = localStorage.getItem('Token') || localStorage.getItem('token');
+        return !!token;
+    },
+
+    /**
+     * Fetch notifications from the API
+     * @returns {Promise<Array>} Array of notifications
+     */
     async fetchNotifications() {
         try {
-            // Update this endpoint to match your Django URL configuration
-            const response = await Axios.get('/api/notifications/');
-
-            // Check if we have new notifications
-            const newNotifications = this.filterNewNotifications(response.data);
-
-            // Update cache
-            this.notificationsCache = response.data;
-
-            // Notify listeners if we have new notifications
-            if (newNotifications.length > 0) {
-                this.notifyListeners(newNotifications);
+            // Check authentication
+            if (!this.isAuthenticated()) {
+                console.log('No authentication token found, skipping notification fetch');
+                return [];
             }
 
-            return response.data;
+            // Add trailing slash to match Django URL pattern if needed
+            const url = this.apiBasePath.endsWith('/') ? this.apiBasePath : `${this.apiBasePath}/`;
+
+            // Get the token and format it correctly
+            const token = localStorage.getItem('Token') || localStorage.getItem('token');
+
+            // Check token format and ensure it starts with "Bearer " or "Token " as required by the backend
+            let formattedToken = token;
+            if (token && !token.startsWith('Bearer ') && !token.startsWith('Token ')) {
+                formattedToken = `Token ${token}`;
+            }
+
+            // Set the auth header for this request
+            const headers = {
+                'Authorization': formattedToken
+            };
+
+            // Track fetch time for performance monitoring
+            const startTime = performance.now();
+            this.lastFetchTime = new Date();
+
+            const response = await Axios.get(url, { headers });
+
+            // Calculate fetch duration
+            const fetchDuration = performance.now() - startTime;
+            console.log(`Notifications fetched in ${fetchDuration.toFixed(2)}ms`);
+
+            const notifications = response.data;
+            this.notifySubscribers(notifications);
+            return notifications;
         } catch (error) {
-            console.error('Failed to fetch notifications:', error);
+            console.error('Error fetching notifications:', error);
+            // Enhanced error logging
+            if (error.response) {
+                console.error('Response status:', error.response.status);
+                console.error('Response data:', error.response.data);
+                console.error('Response headers:', error.response.headers);
+            }
             return [];
         }
-    }
+    },
 
-    // Filter new notifications that we haven't seen before
-    filterNewNotifications(notifications) {
-        if (!this.notificationsCache.length) return notifications;
-
-        const existingIds = new Set(this.notificationsCache.map(n => n.id));
-        return notifications.filter(notification => !existingIds.has(notification.id));
-    }
-
-    // Get all notifications
+    /**
+     * Get all notifications
+     * @returns {Promise<Array>} Array of notifications
+     */
     async getNotifications() {
-        if (this.notificationsCache.length) {
-            return this.notificationsCache;
-        }
+        return this.fetchNotifications();
+    },
 
-        return await this.fetchNotifications();
-    }
-
-    // Get count of unread notifications
+    /**
+     * Get unread notification count
+     * @returns {Promise<number>} Unread count
+     */
     async getUnreadCount() {
         try {
-            // Update this endpoint to match your Django URL configuration
-            const response = await Axios.get('/api/notifications/unread_count/');
+            if (!this.isAuthenticated()) {
+                return 0;
+            }
+
+            const url = `${this.apiBasePath}unread_count/`.replace('//', '/');
+
+            // Get the token and format it correctly
+            const token = localStorage.getItem('Token') || localStorage.getItem('token');
+            let formattedToken = token;
+            if (token && !token.startsWith('Bearer ') && !token.startsWith('Token ')) {
+                formattedToken = `Token ${token}`;
+            }
+
+            const headers = {
+                'Authorization': formattedToken
+            };
+
+            const response = await Axios.get(url, { headers });
             return response.data.count;
         } catch (error) {
-            console.error('Failed to get unread count:', error);
-
-            // Fallback to counting from cache
-            const notifications = await this.getNotifications();
-            return notifications.filter(n => !n.read).length;
+            console.error('Error getting unread count:', error);
+            return 0;
         }
-    }
+    },
 
-    // Mark a notification as read
-    async markAsRead(notificationId) {
+    /**
+     * Mark a notification as read
+     * @param {number} id - Notification ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async markAsRead(id) {
         try {
-            // Update this endpoint to match your Django URL configuration
-            await Axios.post(`/api/notifications/${notificationId}/mark_as_read/`);
+            if (!this.isAuthenticated()) {
+                return false;
+            }
 
-            // Update cache
-            this.notificationsCache = this.notificationsCache.map(notification => {
-                if (notification.id === notificationId) {
-                    return { ...notification, read: true };
-                }
-                return notification;
-            });
+            const url = `${this.apiBasePath}${id}/mark_as_read/`.replace('//', '/');
 
-            return true;
+            // Get the token and format it correctly
+            const token = localStorage.getItem('Token') || localStorage.getItem('token');
+            let formattedToken = token;
+            if (token && !token.startsWith('Bearer ') && !token.startsWith('Token ')) {
+                formattedToken = `Token ${token}`;
+            }
+
+            const headers = {
+                'Authorization': formattedToken
+            };
+
+            const response = await Axios.post(url, {}, { headers });
+            return response.status === 200;
         } catch (error) {
-            console.error('Failed to mark notification as read:', error);
+            console.error(`Error marking notification ${id} as read:`, error);
             return false;
         }
-    }
+    },
 
-    // Mark all notifications as read
+    /**
+     * Mark all notifications as read
+     * @returns {Promise<boolean>} Success status
+     */
     async markAllAsRead() {
         try {
-            // Update this endpoint to match your Django URL configuration
-            await Axios.post('/api/notifications/mark_all_as_read/');
+            if (!this.isAuthenticated()) {
+                return false;
+            }
 
-            // Update cache
-            this.notificationsCache = this.notificationsCache.map(notification => {
-                return { ...notification, read: true };
-            });
+            const url = `${this.apiBasePath}mark_all_as_read/`.replace('//', '/');
 
-            return true;
+            // Get the token and format it correctly
+            const token = localStorage.getItem('Token') || localStorage.getItem('token');
+            let formattedToken = token;
+            if (token && !token.startsWith('Bearer ') && !token.startsWith('Token ')) {
+                formattedToken = `Token ${token}`;
+            }
+
+            const headers = {
+                'Authorization': formattedToken
+            };
+
+            const response = await Axios.post(url, {}, { headers });
+            return response.status === 200;
         } catch (error) {
-            console.error('Failed to mark all notifications as read:', error);
+            console.error('Error marking all notifications as read:', error);
             return false;
         }
-    }
+    },
+};
 
-    // Subscribe to notifications
-    subscribe(callback) {
-        this.listeners.push(callback);
-        return () => {
-            this.listeners = this.listeners.filter(listener => listener !== callback);
-        };
-    }
-
-    // Notify all listeners
-    notifyListeners(newNotifications) {
-        this.listeners.forEach(listener => {
-            try {
-                listener(newNotifications);
-            } catch (error) {
-                console.error('Error in notification listener:', error);
-            }
-        });
-    }
-
-    // Create a desktop notification
-    showDesktopNotification(notification) {
-        if (!("Notification" in window)) return;
-
-        if (Notification.permission === "granted") {
-            this.createDesktopNotification(notification);
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    this.createDesktopNotification(notification);
-                }
-            });
-        }
-    }
-
-    // Create and display the actual notification
-    createDesktopNotification(notification) {
-        const title = notification.title || 'New Notification';
-        const options = {
-            body: notification.message,
-            icon: '/logo192.png', // Your app logo
-            requireInteraction: notification.priority === 'high'
-        };
-
-        const desktopNotification = new Notification(title, options);
-
-        desktopNotification.onclick = () => {
-            window.focus();
-            if (notification.url) {
-                window.location.href = notification.url;
-            }
-        };
-    }
-
-    // Cleanup
-    cleanup() {
-        this.stopPolling();
-        this.listeners = [];
-    }
-}
-
-// Create singleton instance
-const notificationService = new NotificationService();
 export default notificationService;
