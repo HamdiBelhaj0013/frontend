@@ -517,9 +517,9 @@ const Projects = () => {
                         border: `1px dashed ${theme.palette.divider}`
                     }}
                 >
-                    <Typography variant="h6" gutterBottom>No projects found</Typography>
+                    <Typography variant="h6" gutterBottom>Aucun projet trouvé</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Get started by creating your first project
+                        Commencez par créer votre premier projet
                     </Typography>
 
                     {/* Only show Create button if user has create permission */}

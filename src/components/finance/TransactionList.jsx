@@ -107,10 +107,10 @@ const DialogueVerificationTransaction = ({ open, onClose, transaction, onVerify 
     }, [open, transaction]);
 
     const handleVerifier = async (verifiee) => {
-        // Ne pas exiger de sélection de budget pour les transactions de revenu
         if (verifiee && transaction.transaction_type === 'expense' &&
+            transaction.is_project_wide &&
             !transaction.budget_allocation && !budgetSelectionne) {
-            setErreur('Veuillez sélectionner une allocation budgétaire pour cette dépense');
+            setErreur('Veuillez sélectionner une allocation budgétaire pour cette dépense à l\'échelle du projet');
             return;
         }
 
@@ -136,7 +136,6 @@ const DialogueVerificationTransaction = ({ open, onClose, transaction, onVerify 
             setChargement(false);
         }
     };
-
     return (
         <Dialog open={open} onClose={() => chargement ? null : onClose()} maxWidth="sm" fullWidth>
             <DialogTitle>Vérifier la Transaction</DialogTitle>
@@ -177,11 +176,17 @@ const DialogueVerificationTransaction = ({ open, onClose, transaction, onVerify 
                     !transaction.budget_allocation && allocations.length > 0 && (
                         <Box sx={{ mt: 2 }}>
                             <FormControl fullWidth>
-                                <InputLabel>Sélectionner une allocation budgétaire</InputLabel>
+                                <InputLabel>
+                                    {transaction.is_project_wide
+                                        ? "Sélectionner une allocation budgétaire (Requis)"
+                                        : "Sélectionner une allocation budgétaire (Optionnel)"}
+                                </InputLabel>
                                 <Select
                                     value={budgetSelectionne || ''}
                                     onChange={(e) => setBudgetSelectionne(e.target.value)}
-                                    label="Sélectionner une allocation budgétaire"
+                                    label={transaction.is_project_wide
+                                        ? "Sélectionner une allocation budgétaire (Requis)"
+                                        : "Sélectionner une allocation budgétaire (Optionnel)"}
                                 >
                                     {allocations.map((budget) => (
                                         <MenuItem key={budget.id} value={budget.id}>
@@ -192,7 +197,9 @@ const DialogueVerificationTransaction = ({ open, onClose, transaction, onVerify 
                                     ))}
                                 </Select>
                                 <FormHelperText>
-                                    Sélectionnez le budget duquel cette dépense doit être déduite
+                                    {transaction.is_project_wide
+                                        ? "Pour les dépenses à l'échelle du projet, une allocation budgétaire est requise"
+                                        : "Sélectionnez le budget duquel cette dépense peut être déduite (optionnel)"}
                                 </FormHelperText>
                             </FormControl>
                         </Box>
@@ -370,11 +377,7 @@ const ListeTransactions = ({ transactions, onRefresh, onAddTransaction }) => {
         handleFermerMenu();
     };
 
-    const handleModifierTransaction = (transaction) => {
-        // Pour implémentation future - Modifier la transaction
-        console.log('Modifier la transaction:', transaction);
-        handleFermerMenu();
-    };
+
 
     const handleDialogueSuppression = (transaction) => {
         setTransactionSelectionnee(transaction);
@@ -742,9 +745,7 @@ const ListeTransactions = ({ transactions, onRefresh, onAddTransaction }) => {
                 >
                     <Check fontSize="small" sx={{ mr: 1 }} /> Vérifier la transaction
                 </MenuItem>
-                <MenuItem onClick={() => handleModifierTransaction(transactionMenuSelectionnee)}>
-                    <Edit fontSize="small" sx={{ mr: 1 }} /> Modifier
-                </MenuItem>
+
                 <MenuItem onClick={() => handleDialogueSuppression(transactionMenuSelectionnee)}>
                     <Delete fontSize="small" sx={{ mr: 1 }} /> Supprimer
                 </MenuItem>

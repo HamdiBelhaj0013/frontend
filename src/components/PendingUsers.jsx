@@ -41,6 +41,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import BadgeIcon from '@mui/icons-material/Badge';
+import CakeIcon from '@mui/icons-material/Cake';
 
 // Styled components
 const HeaderContainer = styled(Box)(({ theme }) => ({
@@ -118,6 +120,7 @@ const PendingUsers = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
     const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '', user: null });
+    const [debugMode, setDebugMode] = useState(false); // For debugging purposes
 
     const theme = useTheme();
     const navigate = useNavigate();
@@ -126,9 +129,31 @@ const PendingUsers = () => {
     const fetchPendingUsers = async () => {
         setRefreshing(true);
         try {
-            // Updated endpoint from /api/user/ to /user/
+            // Get pending users from the API
             const response = await AxiosInstance.get('/users/users/?validation_status=pending');
-            setPendingUsers(response.data);
+            console.log('Pending users API response:', response.data);
+
+            // Process the users to ensure we have consistent data
+            const processedUsers = response.data.map(user => {
+                // Log each user data for debugging
+                if (debugMode) {
+                    console.log(`User ${user.id} (${user.email}) data:`, {
+                        cin: user.cin,
+                        birth_date: user.birth_date,
+                        full_data: user
+                    });
+                }
+
+                return {
+                    ...user,
+                    // Ensure CIN has a default value if missing
+                    cin: user.cin || 'Non fourni',
+                    // Ensure birth_date has a default value if missing
+                    birth_date: user.birth_date || null
+                };
+            });
+
+            setPendingUsers(processedUsers);
         } catch (error) {
             console.error('Error fetching pending users:', error);
             setNotification({
@@ -161,10 +186,12 @@ const PendingUsers = () => {
     // Handle validation or rejection
     const handleAction = async (userId, action) => {
         try {
-            // This is the correct endpoint for validating/rejecting users
-            const response = await AxiosInstance.post(`/users/users/${userId}/validate_user/`, {
-                action: action
-            });
+            // Simple action request
+            const requestData = { action };
+
+            console.log(`Sending ${action} request for user ${userId}:`, requestData);
+            const response = await AxiosInstance.post(`/users/users/${userId}/validate_user/`, requestData);
+            console.log(`${action} response:`, response.data);
 
             setNotification({
                 open: true,
@@ -189,6 +216,7 @@ const PendingUsers = () => {
 
     // Open confirmation dialog
     const openConfirmDialog = (user, actionType) => {
+        console.log(`Opening ${actionType} dialog for user:`, user);
         setConfirmDialog({
             open: true,
             type: actionType,
@@ -196,9 +224,26 @@ const PendingUsers = () => {
         });
     };
 
+    // Format date for display
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Non fournie';
+        try {
+            return new Date(dateString).toLocaleDateString('fr-FR');
+        } catch (e) {
+            console.error('Error formatting date:', e);
+            return dateString;
+        }
+    };
+
     // Handle notification close
     const handleCloseNotification = () => {
         setNotification({ ...notification, open: false });
+    };
+
+    // Toggle debug mode (hidden feature)
+    const toggleDebugMode = () => {
+        setDebugMode(!debugMode);
+        console.log('Debug mode:', !debugMode);
     };
 
     // Animation variants
@@ -218,7 +263,7 @@ const PendingUsers = () => {
         visible: {
             y: 0,
             opacity: 1,
-            transition: { duration: 0.3 }
+            transition: { duration:.3 }
         }
     };
 
@@ -233,7 +278,7 @@ const PendingUsers = () => {
                 <HeaderContainer>
                     <HourglassEmptyIcon sx={{ mr: 2, fontSize: 28 }} />
                     <Box sx={{ zIndex: 1 }}>
-                        <Typography variant="h5" component="h1" fontWeight="bold">
+                        <Typography variant="h5" component="h1" fontWeight="bold" onDoubleClick={toggleDebugMode}>
                             Validation des Utilisateurs en Attente
                         </Typography>
                         <Typography variant="subtitle2">
@@ -267,6 +312,33 @@ const PendingUsers = () => {
                     />
                 </HeaderContainer>
             </motion.div>
+
+            {/* Debug Panel - only shown when debug mode is active */}
+            {debugMode && (
+                <Paper sx={{ p: 2, mb: 2, bgcolor: '#FFFBE6', border: '1px dashed #FFB74D' }}>
+                    <Typography variant="subtitle2" gutterBottom>Debug Mode</Typography>
+                    <Typography variant="body2">
+                        API Response: {pendingUsers.length} users loaded
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => console.log('Current users:', pendingUsers)}
+                            sx={{ mr: 1 }}
+                        >
+                            Log Users
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={fetchPendingUsers}
+                        >
+                            Reload Data
+                        </Button>
+                    </Box>
+                </Paper>
+            )}
 
             {/* Refresh Button */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
@@ -383,6 +455,22 @@ const PendingUsers = () => {
                                             </Typography>
                                         </Box>
 
+                                        {/* CIN display */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, justifyContent: 'center' }}>
+                                            <BadgeIcon fontSize="small" color="action" sx={{ mr: 1 }} />
+                                            <Typography variant="body2" color={user.cin === 'Non fourni' ? 'text.disabled' : 'text.secondary'}>
+                                                CIN: {user.cin}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Birth date display */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'center' }}>
+                                            <CakeIcon fontSize="small" color="action" sx={{ mr: 1 }} />
+                                            <Typography variant="body2" color={!user.birth_date ? 'text.disabled' : 'text.secondary'}>
+                                                Naissance: {formatDate(user.birth_date)}
+                                            </Typography>
+                                        </Box>
+
                                         <Box sx={{ mt: 2, p: 2, bgcolor: alpha(theme.palette.warning.light, 0.1), borderRadius: '8px' }}>
                                             <Typography variant="caption" color="text.secondary">
                                                 Cet utilisateur attend l'approbation pour accéder au système.
@@ -460,6 +548,53 @@ const PendingUsers = () => {
                             : `Êtes-vous sûr de vouloir rejeter ${confirmDialog.user?.full_name || confirmDialog.user?.email}? Ils ne pourront pas accéder au système jusqu'à leur approbation.`
                         }
                     </DialogContentText>
+
+                    {/* Display user information summary if we're validating */}
+                    {confirmDialog.type === 'validate' && (
+                        <Box sx={{ mt: 3, p: 2, bgcolor: alpha(theme.palette.background.default, 0.6), borderRadius: '8px' }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                                Informations de l'utilisateur:
+                            </Typography>
+
+                            <Grid container spacing={2} sx={{ mt: 1 }}>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Nom complet
+                                    </Typography>
+                                    <Typography variant="body2">
+                                        {confirmDialog.user?.full_name || 'Non fourni'}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Email
+                                    </Typography>
+                                    <Typography variant="body2">
+                                        {confirmDialog.user?.email}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        CIN
+                                    </Typography>
+                                    <Typography variant="body2">
+                                        {confirmDialog.user?.cin}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Date de naissance
+                                    </Typography>
+                                    <Typography variant="body2">
+                                        {formatDate(confirmDialog.user?.birth_date)}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 3 }}>
                     <Button

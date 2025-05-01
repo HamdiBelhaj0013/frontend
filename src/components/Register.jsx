@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, InputAdornment, IconButton, CircularProgress, Snackbar, Alert, Stepper, Step, StepLabel, Autocomplete, Divider, Paper, Tooltip } from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock, AlternateEmail, Person, ArrowForward, ArrowBack, Dashboard, Assignment, Assessment, AutoAwesome, Info, HelpOutline } from '@mui/icons-material';
+import {
+    Visibility, VisibilityOff, Email, Lock, AlternateEmail, Person, ArrowForward,
+    ArrowBack, Dashboard, Assignment, Assessment, AutoAwesome, Info, HelpOutline,
+    CreditCard, Cake
+} from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { motion } from 'framer-motion';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
 import AxiosInstance from './Axios';
 import FormField from './forms/FormField';
 import '../assets/Styles/Register.css';
@@ -47,10 +54,10 @@ const Register = () => {
         }
     ];
 
-    // Steps for the registration process
-    const steps = ['Détails du compte', 'Association'];
+    // Steps for the registration process - Added Personal Information as a new step
+    const steps = ['Détails du compte', 'Informations personnelles', 'Association'];
 
-    // Form validation schema
+    // Form validation schema - Added CIN and birth_date validation
     const schema = yup.object({
         fullName: yup.string()
             .required('Le nom complet est requis')
@@ -68,17 +75,36 @@ const Register = () => {
         password2: yup.string()
             .required('La confirmation du mot de passe est requise')
             .oneOf([yup.ref('password'), null], 'Les mots de passe doivent correspondre'),
+        cin: yup.string()
+            .required('Le CIN est requis')
+            .matches(/^\d{8}$/, 'Le CIN doit contenir exactement 8 chiffres'),
+        birth_date: yup.date()
+            .required('La date de naissance est requise')
+            .max(new Date(), 'La date de naissance ne peut pas être dans le futur')
+            .test('is-adult', 'Vous devez avoir au moins 18 ans', function(value) {
+                if (!value) return true; // Skip validation if no value
+                const today = new Date();
+                const birthDate = new Date(value);
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                return age >= 18;
+            }),
         association: yup.number().nullable().required('L\'association est requise'),
     });
 
-    // Initialize form with react-hook-form
-    const { control, handleSubmit, trigger, formState: { errors } } = useForm({
+    // Initialize form with react-hook-form - Added CIN and birth_date
+    const { control, handleSubmit, trigger, formState: { errors }, watch } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             fullName: '',
             email: '',
             password: '',
             password2: '',
+            cin: '',
+            birth_date: null,
             association: null
         }
     });
@@ -121,17 +147,24 @@ const Register = () => {
             if (isValid) {
                 setActiveStep(1);
             }
+        } else if (activeStep === 1) {
+            const fieldsToValidate = ['cin', 'birth_date'];
+            const isValid = await trigger(fieldsToValidate);
+
+            if (isValid) {
+                setActiveStep(2);
+            }
         }
     };
 
     const moveToPreviousStep = () => {
-        setActiveStep(0);
+        setActiveStep(prev => prev - 1);
     };
 
-    // Form submission handler
+    // Form submission handler - Updated to include CIN and birth_date
     const onSubmit = async (data) => {
         // For the final step, we need to validate the association
-        if (activeStep === 1) {
+        if (activeStep === 2) {
             const isAssociationValid = await trigger('association');
             if (!isAssociationValid) return;
         }
@@ -140,10 +173,15 @@ const Register = () => {
         setRegisterError("");
 
         try {
+            // Format date to ISO string (YYYY-MM-DD)
+            const formattedBirthDate = data.birth_date ? dayjs(data.birth_date).format('YYYY-MM-DD') : null;
+
             const response = await AxiosInstance.post('/users/register/', {
                 email: data.email.trim().toLowerCase(),
                 password: data.password,
                 full_name: data.fullName.trim(),
+                cin: data.cin,
+                birth_date: formattedBirthDate,
                 association_id: data.association,
             });
 
@@ -167,9 +205,12 @@ const Register = () => {
             setLoading(false);
             console.error("Registration error:", error);
 
-            const errorMessage = error.response?.data.message || "Une erreur inattendue s'est produite";
+            const errorMessage = error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Une erreur inattendue s'est produite";
             setRegisterError(errorMessage);
 
+            // Even with error, show this notification (if that's your intended behavior)
             setNotification({
                 open: true,
                 message: 'Inscription réussie! Votre compte est en attente de validation par un administrateur.',
@@ -437,7 +478,9 @@ const Register = () => {
                         <Typography style={{ color: '#000', fontSize: '0.8rem' }}>
                             {activeStep === 0
                                 ? "Remplissez vos informations personnelles"
-                                : "Choisissez votre association"}
+                                : activeStep === 1
+                                    ? "Ajoutez vos informations d'identité"
+                                    : "Choisissez votre association"}
                         </Typography>
                     </Box>
 
@@ -624,8 +667,95 @@ const Register = () => {
                         </motion.div>
                     )}
 
-                    {/* Step 2: Association - Using Autocomplete for better UX */}
+                    {/* Step 2: Personal Information - NEW STEP */}
                     {activeStep === 1 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.9 }}
+                            style={{ width: '100%', margin: '0 auto' }}
+                        >
+                            {/* CIN Field */}
+                            <Box className="input-group" style={{ marginBottom: '16px' }}>
+                                <FormField
+                                    label="Numéro CIN"
+                                    name="cin"
+                                    control={control}
+                                    fullWidth
+                                    placeholder="Entrez votre numéro CIN (8 chiffres)"
+                                    error={!!errors.cin}
+                                    helperText={errors.cin?.message}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <CreditCard style={{ color: '#0d47a1' }} />
+                                            </InputAdornment>
+                                        ),
+                                        style: { fontSize: '0.9rem' }
+                                    }}
+                                    sx={{ '& .MuiInputLabel-root': { fontSize: '0.9rem' } }}
+                                />
+                            </Box>
+
+                            {/* Birth Date Field */}
+                            <Box className="input-group" style={{ marginBottom: '16px' }}>
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <Controller
+                                        name="birth_date"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <DatePicker
+                                                label="Date de naissance"
+                                                value={field.value}
+                                                onChange={(newValue) => field.onChange(newValue)}
+                                                format="DD/MM/YYYY"
+                                                maxDate={dayjs()}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        variant: "outlined",
+                                                        placeholder: "JJ/MM/AAAA",
+                                                        error: !!errors.birth_date,
+                                                        helperText: errors.birth_date?.message,
+                                                        InputProps: {
+                                                            startAdornment: (
+                                                                <InputAdornment position="start">
+                                                                    <Cake style={{ color: '#0d47a1' }} />
+                                                                </InputAdornment>
+                                                            ),
+                                                            style: { fontSize: '0.9rem' }
+                                                        },
+                                                        sx: { '& .MuiInputLabel-root': { fontSize: '0.9rem' } }
+                                                    }
+                                                }}
+                                            />
+                                        )}
+                                    />
+                                </LocalizationProvider>
+                            </Box>
+
+                            {/* Information about CIN */}
+                            <Box
+                                sx={{
+                                    mt: 2,
+                                    p: 1.5,
+                                    borderRadius: '8px',
+                                    backgroundColor: 'rgba(13, 71, 161, 0.05)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1
+                                }}
+                            >
+                                <Info sx={{ color: '#0d47a1', fontSize: '1rem' }} />
+                                <Typography variant="body2" sx={{ color: '#000', fontSize: '0.8rem' }}>
+                                    Le CIN est obligatoire pour les membres de l'association et doit comporter exactement 8 chiffres.
+                                </Typography>
+                            </Box>
+                        </motion.div>
+                    )}
+
+                    {/* Step 3: Association Selection */}
+                    {activeStep === 2 && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -775,7 +905,7 @@ const Register = () => {
                             </button>
                         )}
 
-                        {activeStep === 0 ? (
+                        {activeStep < 2 ? (
                             <button
                                 type="button"
                                 onClick={moveToNextStep}
@@ -822,30 +952,30 @@ const Register = () => {
                                     </>
                                 ) : "S'inscrire"}
                             </button>
-
                         )}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.5, delay: 1.7 }}
-                            sx={{ mt: 2 }}
-                        >
-                            <Box
-                                sx={{
-                                    mt: 2,
-                                    p: 2,
-                                    borderRadius: '8px',
-                                    bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                    border: '1px solid rgba(25, 118, 210, 0.2)'
-                                }}
-                            >
-                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', color: 'info.main' }}>
-                                    <Info sx={{ mr: 1, fontSize: '1rem' }} />
-                                    Après inscription, votre compte devra être validé par un administrateur avant de pouvoir vous connecter.
-                                </Typography>
-                            </Box>
-                        </motion.div>
                     </Box>
+
+                    {/* Validation notice */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 1.7 }}
+                    >
+                        <Box
+                            sx={{
+                                mt: 2,
+                                p: 2,
+                                borderRadius: '8px',
+                                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                border: '1px solid rgba(25, 118, 210, 0.2)'
+                            }}
+                        >
+                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', color: 'info.main', fontSize: '0.8rem' }}>
+                                <Info sx={{ mr: 1, fontSize: '1rem' }} />
+                                Après inscription, votre compte devra être validé par un administrateur avant de pouvoir vous connecter.
+                            </Typography>
+                        </Box>
+                    </motion.div>
 
                     <Divider sx={{ my: 2 }} />
 
@@ -929,4 +1059,4 @@ const Register = () => {
     );
 };
 
-export default Register
+export default Register;

@@ -8,7 +8,7 @@ import {
     Alert
 } from '@mui/material';
 import { usePermissions } from '/src/contexts/PermissionsContext.jsx';
-import MeetingCreateForm from './MeetingCreateForm'; // Reuse the existing form for editing
+import MeetingCreateForm from './MeetingCreateForm'; // Réutiliser le formulaire existant pour la modification
 
 const ProtectedMeetingEdit = () => {
     const { id } = useParams();
@@ -18,18 +18,18 @@ const ProtectedMeetingEdit = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Check if user has permission to edit meetings
+        // Vérifier si l'utilisateur a la permission de modifier les réunions
         const hasPermission = can(ACTIONS.EDIT, RESOURCES.MEETINGS);
 
         if (!hasPermission) {
-            setError("You don't have permission to edit meetings");
+            setError("Vous n'avez pas la permission de modifier les réunions");
             setLoading(false);
         } else {
             setLoading(false);
         }
     }, [can, ACTIONS, RESOURCES]);
 
-    // If still loading, show loading indicator
+    // Si toujours en chargement, afficher l'indicateur de chargement
     if (loading) {
         return (
             <Container maxWidth="md">
@@ -44,14 +44,14 @@ const ProtectedMeetingEdit = () => {
                 >
                     <CircularProgress size={60} thickness={4} />
                     <Typography variant="h6" sx={{ mt: 2 }}>
-                        Checking permissions...
+                        Vérification des permissions...
                     </Typography>
                 </Box>
             </Container>
         );
     }
 
-    // If user doesn't have permission, show error
+    // Si l'utilisateur n'a pas la permission, afficher une erreur
     if (error) {
         return (
             <Container maxWidth="md">
@@ -69,11 +69,11 @@ const ProtectedMeetingEdit = () => {
                         {error}
                     </Alert>
                     <Typography variant="body1" paragraph>
-                        You don't have permission to edit this meeting. Please contact an administrator if you believe this is an error.
+                        Vous n'avez pas la permission de modifier cette réunion. Veuillez contacter un administrateur si vous pensez qu'il s'agit d'une erreur.
                     </Typography>
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="body2" color="text.secondary">
-                            Redirecting to the meetings page in 5 seconds...
+                            Redirection vers la page des réunions dans 5 secondes...
                         </Typography>
                     </Box>
                 </Box>
@@ -81,10 +81,10 @@ const ProtectedMeetingEdit = () => {
         );
     }
 
-    // Log the ID being passed to MeetingCreateForm (for debugging)
-    console.log('Meeting ID being passed to MeetingCreateForm:', id);
+    // Journal de l'ID transmis à MeetingCreateForm (pour le débogage)
+    console.log('ID de réunion transmis à MeetingCreateForm:', id);
 
-    // If user has permission, render the form
+    // Si l'utilisateur a la permission, afficher le formulaire
     return (
         <MeetingCreateForm
             isEditMode={true}

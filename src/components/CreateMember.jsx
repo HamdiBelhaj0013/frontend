@@ -31,6 +31,7 @@ import MyTextField from "./forms/MyTextField.jsx";
 import MySelectField from "./forms/MySelectField.jsx";
 
 // Icons
+import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import HomeIcon from '@mui/icons-material/Home';
@@ -173,6 +174,9 @@ const CreateMember = () => {
 
     const schema = yup.object({
         name: yup.string().required('Name is required'),
+        cin: yup.string()
+            .matches(/^\d{8}$/, 'CIN must contain exactly 8 digits')
+            .required('CIN is required'),
         address: yup.string().required('Address is required'),
         email: yup.string().email('Invalid email').required('Email is required'),
         nationality: yup.string().required('Nationality is required'),
@@ -186,6 +190,7 @@ const CreateMember = () => {
         resolver: yupResolver(schema),
         defaultValues: {
             name: '',
+            cin: '',
             address: '',
             email: '',
             nationality: '',
@@ -622,6 +627,21 @@ const CreateMember = () => {
                                                             placeholder="Enter email address"
                                                             error={!!errors.email}
                                                             helperText={errors.email?.message}
+                                                        />
+                                                    </FormBox>
+                                                </Grid>
+                                                <Grid item xs={12} md={6}>
+                                                    <FormBox>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <PermIdentityIcon color="primary" sx={{ mr: 1 }} />
+                                                            <Typography variant="subtitle2">CIN</Typography>
+                                                        </Box>
+                                                        <MyTextField
+                                                            name="cin"
+                                                            control={control}
+                                                            placeholder="Enter CIN (8 digits)"
+                                                            error={!!errors.cin}
+                                                            helperText={errors.cin?.message}
                                                         />
                                                     </FormBox>
                                                 </Grid>

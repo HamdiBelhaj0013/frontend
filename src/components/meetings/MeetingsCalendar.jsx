@@ -23,6 +23,7 @@ import { styled, useTheme, alpha } from '@mui/material/styles';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import moment from 'moment';
+import 'moment/locale/fr'; // Importation de la locale française pour moment
 import {
     Event as EventIcon,
     EventAvailable,
@@ -45,7 +46,10 @@ import { motion } from 'framer-motion';
 import { PermissionRequired } from '../../contexts/ConditionalUI.jsx';
 import { usePermissions } from '../../contexts/PermissionsContext.jsx';
 
-// Setup the localizer
+// Configuration de la locale française pour moment.js
+moment.locale('fr');
+
+// Setup the localizer with French locale
 const localizer = momentLocalizer(moment);
 
 // Styled components
@@ -149,32 +153,32 @@ const StatusChip = ({ status }) => {
         case 'scheduled':
             color = theme.palette.success.main;
             icon = <EventAvailable fontSize="small" />;
-            label = 'Scheduled';
+            label = 'Planifiée';
             break;
         case 'cancelled':
             color = theme.palette.error.main;
             icon = <EventBusy fontSize="small" />;
-            label = 'Cancelled';
+            label = 'Annulée';
             break;
         case 'completed':
             color = theme.palette.text.secondary;
             icon = <EventIcon fontSize="small" />;
-            label = 'Completed';
+            label = 'Terminée';
             break;
         case 'postponed':
             color = theme.palette.warning.main;
             icon = <EventIcon fontSize="small" />;
-            label = 'Postponed';
+            label = 'Reportée';
             break;
         case 'in_progress':
             color = theme.palette.info.main;
             icon = <EventIcon fontSize="small" />;
-            label = 'In Progress';
+            label = 'En Cours';
             break;
         default:
             color = theme.palette.primary.main;
             icon = <EventIcon fontSize="small" />;
-            label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown';
+            label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Inconnu';
     }
 
     return (
@@ -216,12 +220,30 @@ const MeetingsCalendar = () => {
 
     // For demo purposes - normally this would come from your API
     const meetingTypes = {
-        regular: { label: 'Regular Meeting', color: theme.palette.primary.main },
-        board: { label: 'Board Meeting', color: theme.palette.success.main },
-        extraordinary: { label: 'Extraordinary Meeting', color: theme.palette.error.main },
-        general_assembly: { label: 'General Assembly', color: theme.palette.warning.main },
-        committee: { label: 'Committee Meeting', color: theme.palette.info.main },
-        other: { label: 'Other', color: theme.palette.grey[600] }
+        regular: { label: 'Réunion Ordinaire', color: theme.palette.primary.main },
+        board: { label: 'Réunion du Conseil', color: theme.palette.success.main },
+        extraordinary: { label: 'Réunion Extraordinaire', color: theme.palette.error.main },
+        general_assembly: { label: 'Assemblée Générale', color: theme.palette.warning.main },
+        committee: { label: 'Réunion de Comité', color: theme.palette.info.main },
+        other: { label: 'Autre', color: theme.palette.grey[600] }
+    };
+
+    // Traductions pour le calendrier
+    const messages = {
+        allDay: 'Journée entière',
+        previous: 'Précédent',
+        next: 'Suivant',
+        today: 'Aujourd\'hui',
+        month: 'Mois',
+        week: 'Semaine',
+        day: 'Jour',
+        agenda: 'Agenda',
+        date: 'Date',
+        time: 'Heure',
+        event: 'Événement',
+        noEventsInRange: 'Aucune réunion dans cette période',
+        showMore: total => `+ ${total} de plus`,
+        work_week: 'Semaine de travail',
     };
 
     // Fetch meetings from the API
@@ -248,8 +270,8 @@ const MeetingsCalendar = () => {
                 setMeetings(formattedMeetings);
                 setLoading(false);
             } catch (err) {
-                console.error('Error fetching meetings:', err);
-                setError('Failed to load meetings. Please try again.');
+                console.error('Erreur lors de la récupération des réunions:', err);
+                setError('Échec du chargement des réunions. Veuillez réessayer.');
                 setLoading(false);
             }
         };
@@ -268,7 +290,7 @@ const MeetingsCalendar = () => {
         if (!canCreateMeetings) {
             setNotification({
                 show: true,
-                message: 'You do not have permission to create meetings.',
+                message: 'Vous n\'avez pas la permission de créer des réunions.',
                 severity: 'error'
             });
 
@@ -311,12 +333,12 @@ const MeetingsCalendar = () => {
 
     // Format date for display
     const formatDate = (date) => {
-        return moment(date).format('dddd, MMMM D, YYYY');
+        return moment(date).format('dddd D MMMM YYYY');
     };
 
     // Format time for display
     const formatTime = (date) => {
-        return moment(date).format('h:mm A');
+        return moment(date).format('HH:mm');
     };
 
     // Motion animation variants
@@ -361,10 +383,10 @@ const MeetingsCalendar = () => {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
                             <Box>
                                 <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                    Meeting Calendar
+                                    Calendrier des Réunions
                                 </Typography>
                                 <Typography variant="body1">
-                                    Schedule, manage and track all your association meetings in one place
+                                    Planifiez, gérez et suivez toutes vos réunions d'association en un seul endroit
                                 </Typography>
 
                                 <Box sx={{ display: 'flex', mt: 2, gap: 2 }}>
@@ -380,7 +402,7 @@ const MeetingsCalendar = () => {
                                                 '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
                                             }}
                                         >
-                                            New Meeting
+                                            Nouvelle Réunion
                                         </Button>
                                     )}
 
@@ -395,7 +417,7 @@ const MeetingsCalendar = () => {
                                             '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
                                         }}
                                     >
-                                        Refresh
+                                        Actualiser
                                     </Button>
                                 </Box>
                             </Box>
@@ -463,9 +485,9 @@ const MeetingsCalendar = () => {
                                                 <Add />
                                             </Avatar>
                                             <Box>
-                                                <Typography variant="h6" fontWeight="medium">Create Meeting</Typography>
+                                                <Typography variant="h6" fontWeight="medium">Créer une Réunion</Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Schedule a new meeting
+                                                    Planifier une nouvelle réunion
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -487,9 +509,9 @@ const MeetingsCalendar = () => {
                                             <EventAvailable />
                                         </Avatar>
                                         <Box>
-                                            <Typography variant="h6" fontWeight="medium">Upcoming Meetings</Typography>
+                                            <Typography variant="h6" fontWeight="medium">Réunions à Venir</Typography>
                                             <Typography variant="body2" color="text.secondary">
-                                                View all scheduled meetings
+                                                Voir toutes les réunions planifiées
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -510,9 +532,9 @@ const MeetingsCalendar = () => {
                                             <Description />
                                         </Avatar>
                                         <Box>
-                                            <Typography variant="h6" fontWeight="medium">Pending Reports</Typography>
+                                            <Typography variant="h6" fontWeight="medium">Rapports en Attente</Typography>
                                             <Typography variant="body2" color="text.secondary">
-                                                Meetings that need reports
+                                                Réunions nécessitant des rapports
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -547,7 +569,7 @@ const MeetingsCalendar = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                                 <CircularProgress size={60} thickness={4} />
                                 <Typography variant="h6" sx={{ ml: 2 }}>
-                                    Loading meetings...
+                                    Chargement des réunions...
                                 </Typography>
                             </Box>
                         ) : (
@@ -564,6 +586,15 @@ const MeetingsCalendar = () => {
                                 defaultDate={new Date()}
                                 components={{
                                     toolbar: CalendarToolbar
+                                }}
+                                messages={messages}
+                                culture="fr"
+                                formats={{
+                                    monthHeaderFormat: 'MMMM YYYY',
+                                    weekdayFormat: 'dddd',
+                                    dayHeaderFormat: 'dddd D MMMM',
+                                    dayRangeHeaderFormat: ({ start, end }) =>
+                                        `${moment(start).format('D MMMM YYYY')} - ${moment(end).format('D MMMM YYYY')}`
                                 }}
                             />
                         )}
@@ -600,7 +631,7 @@ const MeetingsCalendar = () => {
                                     <StatusChip status={selectedMeeting.status} />
                                     <Chip
                                         size="small"
-                                        label={meetingTypes[selectedMeeting.meeting_type]?.label || 'Other'}
+                                        label={meetingTypes[selectedMeeting.meeting_type]?.label || 'Autre'}
                                         sx={{
                                             bgcolor: alpha(meetingTypes[selectedMeeting.meeting_type]?.color || theme.palette.grey[600], 0.1),
                                             color: meetingTypes[selectedMeeting.meeting_type]?.color || theme.palette.grey[600],
@@ -625,7 +656,7 @@ const MeetingsCalendar = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.5 }}>
                                         <AccessTime sx={{ color: theme.palette.primary.main, mr: 1.5, mt: 0.5 }} />
                                         <Box>
-                                            <Typography variant="subtitle2" fontWeight="bold">Time</Typography>
+                                            <Typography variant="subtitle2" fontWeight="bold">Heure</Typography>
                                             <Typography variant="body2">
                                                 {formatTime(selectedMeeting.start_date)} - {formatTime(selectedMeeting.end_date)}
                                             </Typography>
@@ -640,12 +671,12 @@ const MeetingsCalendar = () => {
                                         )}
                                         <Box>
                                             <Typography variant="subtitle2" fontWeight="bold">
-                                                {selectedMeeting.is_virtual ? 'Virtual Meeting' : 'Location'}
+                                                {selectedMeeting.is_virtual ? 'Réunion Virtuelle' : 'Lieu'}
                                             </Typography>
                                             <Typography variant="body2">
                                                 {selectedMeeting.is_virtual ?
-                                                    (selectedMeeting.meeting_link || 'Link will be provided') :
-                                                    (selectedMeeting.location || 'Location not specified')}
+                                                    (selectedMeeting.meeting_link || 'Le lien sera fourni') :
+                                                    (selectedMeeting.location || 'Lieu non spécifié')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -653,9 +684,9 @@ const MeetingsCalendar = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                                         <Groups sx={{ color: theme.palette.primary.main, mr: 1.5, mt: 0.5 }} />
                                         <Box>
-                                            <Typography variant="subtitle2" fontWeight="bold">Attendees</Typography>
+                                            <Typography variant="subtitle2" fontWeight="bold">Participants</Typography>
                                             <Typography variant="body2">
-                                                {selectedMeeting.attendees_count || 0} expected
+                                                {selectedMeeting.attendees_count || 0} attendus
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -680,7 +711,7 @@ const MeetingsCalendar = () => {
                                         onClick={() => setShowModal(false)}
                                         sx={{ mr: 1 }}
                                     >
-                                        Close
+                                        Fermer
                                     </Button>
 
                                     {/* View Details button - label changes based on permissions */}
@@ -689,7 +720,7 @@ const MeetingsCalendar = () => {
                                         onClick={() => handleViewDetails(selectedMeeting.id)}
                                         endIcon={<ArrowForward />}
                                     >
-                                        {canEditMeetings ? 'View & Edit Details' : 'View Details'}
+                                        {canEditMeetings ? 'Voir & Modifier les Détails' : 'Voir les Détails'}
                                     </Button>
                                 </Box>
                             </>
@@ -744,7 +775,7 @@ const CalendarToolbar = (toolbar) => {
                         fontWeight: 500
                     }}
                 >
-                    Today
+                    Aujourd'hui
                 </Button>
 
                 <Button
@@ -757,7 +788,7 @@ const CalendarToolbar = (toolbar) => {
                         color: theme.palette.text.secondary
                     }}
                 >
-                    Back
+                    Précédent
                 </Button>
 
                 <Button
@@ -770,7 +801,7 @@ const CalendarToolbar = (toolbar) => {
                         color: theme.palette.text.secondary
                     }}
                 >
-                    Next
+                    Suivant
                 </Button>
             </Box>
 
@@ -787,7 +818,7 @@ const CalendarToolbar = (toolbar) => {
                         })
                     }}
                 >
-                    Month
+                    Mois
                 </Button>
 
                 <Button
@@ -802,7 +833,7 @@ const CalendarToolbar = (toolbar) => {
                         })
                     }}
                 >
-                    Week
+                    Semaine
                 </Button>
 
                 <Button
@@ -817,7 +848,7 @@ const CalendarToolbar = (toolbar) => {
                         })
                     }}
                 >
-                    Day
+                    Jour
                 </Button>
 
                 <Button

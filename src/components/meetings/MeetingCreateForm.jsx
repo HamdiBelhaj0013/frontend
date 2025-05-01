@@ -30,6 +30,8 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
+    RadioGroup,
+    Radio,
 } from '@mui/material';
 import { styled, useTheme, alpha } from '@mui/material/styles';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -62,7 +64,7 @@ import AxiosInstance from '../Axios.jsx';
 import { motion } from 'framer-motion';
 import { usePermissions } from '../../contexts/PermissionsContext';
 
-// Styled components
+// Styled components remain the same
 const HeaderContainer = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
@@ -109,21 +111,27 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
 }));
 
 const MEETING_TYPES = [
-    { value: 'regular', label: 'Regular Monthly Meeting' },
-    { value: 'board', label: 'Board Meeting' },
-    { value: 'extraordinary', label: 'Extraordinary Meeting' },
-    { value: 'general_assembly', label: 'General Assembly' },
-    { value: 'committee', label: 'Committee Meeting' },
-    { value: 'other', label: 'Other' },
+    { value: 'regular', label: 'Réunion Mensuelle Ordinaire' },
+    { value: 'board', label: 'Réunion du Conseil' },
+    { value: 'extraordinary', label: 'Réunion Extraordinaire' },
+    { value: 'general_assembly', label: 'Assemblée Générale' },
+    { value: 'committee', label: 'Réunion de Comité' },
+    { value: 'other', label: 'Autre' },
+];
+
+const MEETING_FORMATS = [
+    { value: 'in_person', label: 'Présentiel Uniquement' },
+    { value: 'virtual', label: 'Virtuel Uniquement' },
+    { value: 'hybrid', label: 'Hybride (Présentiel & Virtuel)' },
 ];
 
 const NOTIFICATION_METHODS = [
-    { value: 'email', label: 'Email Only' },
-    { value: 'platform', label: 'Platform Only' },
-    { value: 'both', label: 'Both Email and Platform' },
+    { value: 'email', label: 'Email Uniquement' },
+    { value: 'platform', label: 'Plateforme Uniquement' },
+    { value: 'both', label: 'Email et Plateforme' },
 ];
 
-const steps = ['Basic Information', 'Schedule & Location', 'Additional Options', 'Review & Create'];
+const steps = ['Informations de Base', 'Horaire & Lieu', 'Options Supplémentaires', 'Révision & Création'];
 
 const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
     const theme = useTheme();
@@ -145,8 +153,8 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         meeting_type: 'regular',
         start_date: moment().add(1, 'day').set({ hour: 10, minute: 0, second: 0 }),
         end_date: moment().add(1, 'day').set({ hour: 12, minute: 0, second: 0 }),
+        meeting_format: 'in_person', // New field for meeting format
         location: '',
-        is_virtual: false,
         meeting_link: '',
         agenda: '',
         is_recurring: false,
@@ -161,19 +169,17 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
     });
 
     // Default agenda template
-    const defaultAgenda = `1. Welcome and Introduction
-2. Approval of Previous Meeting Minutes
-3. Financial Update
-4. Project Updates
-5. New Business
-6. Open Discussion
-7. Action Items Review
-8. Next Meeting Date`;
+    const defaultAgenda = `1. Accueil et Introduction
+2. Approbation du Procès-Verbal de la Réunion Précédente
+3. Mise à Jour Financière
+4. Mises à Jour des Projets
+5. Nouveaux Sujets
+6. Discussion Ouverte
+7. Révision des Points d'Action
+8. Date de la Prochaine Réunion`;
 
     // Field validation errors
     const [errors, setErrors] = useState({});
-
-
 
     useEffect(() => {
         if (isEditMode && meetingId) {
@@ -182,13 +188,19 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                     setInitialLoading(true);
                     setError(null);
 
-                    console.log(`Fetching meeting data for ID: ${meetingId}`);
+                    console.log(`Récupération des données de la réunion pour ID: ${meetingId}`);
 
                     // Fetch meeting data
                     const response = await AxiosInstance.get(`/meetings/meetings/${meetingId}/`);
                     const meetingData = response.data;
 
-                    console.log("Meeting data retrieved:", meetingData);
+                    console.log("Données de réunion récupérées:", meetingData);
+
+                    // Determine meeting format from existing data
+                    let meetingFormat = 'in_person';
+                    if (meetingData.is_virtual) {
+                        meetingFormat = meetingData.location ? 'hybrid' : 'virtual';
+                    }
 
                     // Convert to form data format
                     setFormData({
@@ -197,8 +209,8 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                         meeting_type: meetingData.meeting_type || 'regular',
                         start_date: moment(meetingData.start_date),
                         end_date: moment(meetingData.end_date),
+                        meeting_format: meetingFormat,
                         location: meetingData.location || '',
-                        is_virtual: meetingData.is_virtual || false,
                         meeting_link: meetingData.meeting_link || '',
                         agenda: meetingData.agenda || '',
                         is_recurring: meetingData.is_recurring || false,
@@ -214,18 +226,18 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
 
                     setInitialLoading(false);
                 } catch (err) {
-                    console.error('Error fetching meeting data:', err);
+                    console.error('Erreur lors de la récupération des données de réunion:', err);
 
                     // Log more detailed error info
                     if (err.response) {
-                        console.error("Response error:", err.response.status, err.response.data);
+                        console.error("Erreur de réponse:", err.response.status, err.response.data);
                     } else if (err.request) {
-                        console.error("Request error:", err.request);
+                        console.error("Erreur de requête:", err.request);
                     } else {
-                        console.error("Error message:", err.message);
+                        console.error("Message d'erreur:", err.message);
                     }
 
-                    setError('Failed to load meeting data. Please try again.');
+                    setError('Échec du chargement des données de réunion. Veuillez réessayer.');
                     setInitialLoading(false);
                 }
             };
@@ -248,15 +260,6 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
     const handleSwitchChange = (e) => {
         const { name, checked } = e.target;
         setFormData({ ...formData, [name]: checked });
-
-        // Initialize meeting link when virtual meeting is selected
-        if (name === 'is_virtual' && checked && !formData.meeting_link) {
-            setFormData({
-                ...formData,
-                [name]: checked,
-                meeting_link: 'https://meet.google.com/'
-            });
-        }
 
         // Initialize agenda if empty
         if (name === 'is_recurring' && checked && !formData.agenda) {
@@ -308,11 +311,11 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         // Step 1 validation
         if (activeStep === 0) {
             if (!formData.title.trim()) {
-                newErrors.title = 'Meeting title is required';
+                newErrors.title = 'Le titre de la réunion est requis';
                 isValid = false;
             }
             if (!formData.meeting_type) {
-                newErrors.meeting_type = 'Meeting type is required';
+                newErrors.meeting_type = 'Le type de réunion est requis';
                 isValid = false;
             }
         }
@@ -320,24 +323,31 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         // Step 2 validation
         else if (activeStep === 1) {
             if (!formData.start_date) {
-                newErrors.start_date = 'Start date is required';
+                newErrors.start_date = 'La date de début est requise';
                 isValid = false;
             }
             if (!formData.end_date) {
-                newErrors.end_date = 'End date is required';
+                newErrors.end_date = 'La date de fin est requise';
                 isValid = false;
             }
             if (formData.end_date && formData.start_date && moment(formData.end_date).isBefore(moment(formData.start_date))) {
-                newErrors.end_date = 'End date must be after start date';
+                newErrors.end_date = 'La date de fin doit être postérieure à la date de début';
                 isValid = false;
             }
-            if (!formData.is_virtual && !formData.location.trim()) {
-                newErrors.location = 'Location is required for in-person meetings';
-                isValid = false;
+
+            // Validate based on meeting format
+            if (formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') {
+                if (!formData.location.trim()) {
+                    newErrors.location = 'Le lieu est requis pour les réunions en présentiel ou hybrides';
+                    isValid = false;
+                }
             }
-            if (formData.is_virtual && !formData.meeting_link.trim()) {
-                newErrors.meeting_link = 'Meeting link is required for virtual meetings';
-                isValid = false;
+
+            if (formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid') {
+                if (!formData.meeting_link.trim()) {
+                    newErrors.meeting_link = 'Le lien de réunion est requis pour les réunions virtuelles ou hybrides';
+                    isValid = false;
+                }
             }
         }
 
@@ -346,15 +356,15 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
             if (formData.is_recurring) {
                 const recurrence = formData.recurrence_pattern;
                 if (!recurrence.frequency) {
-                    newErrors.frequency = 'Frequency is required';
+                    newErrors.frequency = 'La fréquence est requise';
                     isValid = false;
                 }
                 if (!recurrence.interval || recurrence.interval < 1) {
-                    newErrors.interval = 'Interval must be at least 1';
+                    newErrors.interval = 'L\'intervalle doit être d\'au moins 1';
                     isValid = false;
                 }
                 if (recurrence.frequency === 'monthly' && (!recurrence.day_of_month || recurrence.day_of_month < 1 || recurrence.day_of_month > 28)) {
-                    newErrors.day_of_month = 'Day of month must be between 1 and 28';
+                    newErrors.day_of_month = 'Le jour du mois doit être entre 1 et 28';
                     isValid = false;
                 }
             }
@@ -394,48 +404,49 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 try {
                     const user = JSON.parse(userStr);
                     associationId = user?.association?.id;
-                    console.log("Retrieved association ID from localStorage:", associationId);
+                    console.log("ID d'association récupéré depuis localStorage:", associationId);
                 } catch (e) {
-                    console.error("Error parsing user data from localStorage:", e);
+                    console.error("Erreur d'analyse des données utilisateur depuis localStorage:", e);
                 }
             }
 
             // If association ID is still not available, fetch user profile
             if (!associationId) {
                 try {
-                    console.log("Association ID not found in localStorage, fetching user profile...");
+                    console.log("ID d'association non trouvé dans localStorage, récupération du profil utilisateur...");
                     const userProfileResponse = await AxiosInstance.get('/users/profile/');
                     associationId = userProfileResponse.data.association?.id;
-                    console.log("Retrieved association ID from profile API:", associationId);
+                    console.log("ID d'association récupéré depuis l'API de profil:", associationId);
                 } catch (profileErr) {
-                    console.error("Error fetching user profile:", profileErr);
-                    throw new Error("Unable to determine your association. Please log in again.");
+                    console.error("Erreur lors de la récupération du profil utilisateur:", profileErr);
+                    throw new Error("Impossible de déterminer votre association. Veuillez vous reconnecter.");
                 }
             }
 
             if (!associationId) {
-                throw new Error("Your account is not associated with any organization. Please contact an administrator.");
+                throw new Error("Votre compte n'est associé à aucune organisation. Veuillez contacter un administrateur.");
             }
 
-            // Prepare form data for API
+            // Prepare form data for API - convert meeting_format to is_virtual for API compatibility
             const requestData = {
                 ...formData,
                 start_date: formData.start_date.toISOString(),
                 end_date: formData.end_date.toISOString(),
-                association: associationId
+                association: associationId,
+                is_virtual: formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid'
             };
 
-            console.log("Sending request data:", requestData);
+            console.log("Envoi des données de requête:", requestData);
 
             let response;
             if (isEditMode) {
                 // Update existing meeting
                 response = await AxiosInstance.put(`/meetings/meetings/${meetingId}/`, requestData);
-                console.log("Meeting updated successfully:", response.data);
+                console.log("Réunion mise à jour avec succès:", response.data);
             } else {
                 // Create new meeting
                 response = await AxiosInstance.post('/meetings/meetings/', requestData);
-                console.log("Meeting created successfully:", response.data);
+                console.log("Réunion créée avec succès:", response.data);
             }
 
             setSuccess(true);
@@ -445,19 +456,19 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 navigate(`/meetings/${isEditMode ? meetingId : response.data.id}`);
             }, 1500);
         } catch (err) {
-            console.error(`Error ${isEditMode ? 'updating' : 'creating'} meeting:`, err);
+            console.error(`Erreur lors de ${isEditMode ? 'la mise à jour' : 'la création'} de la réunion:`, err);
 
             // More detailed error logging
             if (err.response) {
-                console.error("Server responded with error:", {
+                console.error("Le serveur a répondu avec une erreur:", {
                     status: err.response.status,
                     headers: err.response.headers,
                     data: err.response.data
                 });
             } else if (err.request) {
-                console.error("No response received:", err.request);
+                console.error("Aucune réponse reçue:", err.request);
             } else {
-                console.error("Request setup error:", err.message);
+                console.error("Erreur de configuration de la requête:", err.message);
             }
 
             let errorMessage;
@@ -472,7 +483,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
             } else if (err.message) {
                 errorMessage = err.message;
             } else {
-                errorMessage = "Unknown error occurred. Please check console for details.";
+                errorMessage = "Une erreur inconnue s'est produite. Veuillez consulter la console pour plus de détails.";
             }
 
             setError(errorMessage);
@@ -492,23 +503,28 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         switch (helpTopic) {
             case 'recurrence':
                 return {
-                    title: 'Meeting Recurrence',
-                    content: 'Setting up a recurring meeting will automatically create future meetings based on the pattern you define. You can choose the frequency (monthly, weekly, etc.), interval, and how many instances to create. This is useful for regular scheduled meetings like board meetings or team check-ins.'
+                    title: 'Récurrence de Réunion',
+                    content: 'La configuration d\'une réunion récurrente créera automatiquement des réunions futures selon le modèle que vous définissez. Vous pouvez choisir la fréquence (mensuelle, hebdomadaire, etc.), l\'intervalle et le nombre d\'instances à créer. Ceci est utile pour les réunions régulières programmées comme les réunions du conseil ou les points d\'équipe.'
                 };
             case 'virtual':
                 return {
-                    title: 'Virtual Meetings',
-                    content: 'Virtual meetings require a meeting link where attendees can join remotely. You can use services like Zoom, Google Meet, or Microsoft Teams, and paste the meeting URL here. Make sure to test your link before sharing it with attendees.'
+                    title: 'Réunions Virtuelles',
+                    content: 'Les réunions virtuelles nécessitent un lien de réunion où les participants peuvent se joindre à distance. Vous pouvez utiliser des services comme Zoom, Google Meet ou Microsoft Teams, et coller l\'URL de la réunion ici. Assurez-vous de tester votre lien avant de le partager avec les participants.'
+                };
+            case 'hybrid':
+                return {
+                    title: 'Réunions Hybrides',
+                    content: 'Les réunions hybrides combinent des éléments en présentiel et virtuels. Les participants en présentiel se réunissent à un emplacement physique, tandis que les participants à distance rejoignent via le lien de réunion. Ce format offre de la flexibilité pour les membres de l\'équipe qui ne peuvent pas assister en personne. Assurez-vous que votre lieu physique et votre lien de réunion sont clairement spécifiés pour accommoder tous les participants.'
                 };
             case 'notifications':
                 return {
-                    title: 'Notification Methods',
-                    content: 'Choose how attendees will be notified about this meeting. Email notifications will be sent to their registered email address. Platform notifications will appear in their dashboard when they log in. For important meetings, we recommend using both methods.'
+                    title: 'Méthodes de Notification',
+                    content: 'Choisissez comment les participants seront notifiés de cette réunion. Les notifications par e-mail seront envoyées à leur adresse e-mail enregistrée. Les notifications de plateforme apparaîtront dans leur tableau de bord lorsqu\'ils se connecteront. Pour les réunions importantes, nous recommandons d\'utiliser les deux méthodes.'
                 };
             default:
                 return {
-                    title: 'Help',
-                    content: 'This form allows you to create a new meeting for your association. Fill in the required information across all steps, then review and submit your meeting details.'
+                    title: 'Aide',
+                    content: 'Ce formulaire vous permet de créer une nouvelle réunion pour votre association. Remplissez les informations requises à toutes les étapes, puis révisez et soumettez les détails de votre réunion.'
                 };
         }
     };
@@ -555,25 +571,25 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 <Grid item xs={12}>
                     <TextField
                         name="title"
-                        label="Meeting Title"
+                        label="Titre de la Réunion"
                         value={formData.title}
                         onChange={handleInputChange}
                         fullWidth
                         required
                         error={!!errors.title}
                         helperText={errors.title}
-                        placeholder="e.g., Monthly Board Meeting - April 2025"
+                        placeholder="ex., Réunion Mensuelle du Conseil - Avril 2025"
                     />
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
                     <FormControl fullWidth required error={!!errors.meeting_type}>
-                        <InputLabel>Meeting Type</InputLabel>
+                        <InputLabel>Type de Réunion</InputLabel>
                         <Select
                             name="meeting_type"
                             value={formData.meeting_type}
                             onChange={handleInputChange}
-                            label="Meeting Type"
+                            label="Type de Réunion"
                         >
                             {MEETING_TYPES.map((type) => (
                                 <MenuItem key={type.value} value={type.value}>
@@ -594,27 +610,27 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                         fullWidth
                         multiline
                         rows={4}
-                        placeholder="Brief description of the meeting purpose and goals"
+                        placeholder="Brève description de l'objectif et des buts de la réunion"
                     />
                 </Grid>
 
                 <Grid item xs={12}>
                     <TextField
                         name="agenda"
-                        label="Agenda"
+                        label="Ordre du Jour"
                         value={formData.agenda}
                         onChange={handleInputChange}
                         fullWidth
                         multiline
                         rows={6}
-                        placeholder="Enter meeting agenda items"
+                        placeholder="Saisissez les points de l'ordre du jour"
                         helperText={
                             <Button
                                 size="small"
                                 onClick={() => setFormData({...formData, agenda: defaultAgenda})}
                                 sx={{ mt: 1 }}
                             >
-                                Use Default Template
+                                Utiliser le Modèle par Défaut
                             </Button>
                         }
                     />
@@ -630,7 +646,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 <Grid item xs={12} sm={6}>
                     <LocalizationProvider dateAdapter={AdapterMoment}>
                         <DateTimePicker
-                            label="Start Date & Time"
+                            label="Date & Heure de Début"
                             value={formData.start_date}
                             onChange={(newValue) => handleDateChange('start_date', newValue)}
                             slotProps={{
@@ -648,7 +664,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 <Grid item xs={12} sm={6}>
                     <LocalizationProvider dateAdapter={AdapterMoment}>
                         <DateTimePicker
-                            label="End Date & Time"
+                            label="Date & Heure de Fin"
                             value={formData.end_date}
                             onChange={(newValue) => handleDateChange('end_date', newValue)}
                             slotProps={{
@@ -663,62 +679,78 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                     </LocalizationProvider>
                 </Grid>
 
+                {/* Meeting Format Selection */}
                 <Grid item xs={12}>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={formData.is_virtual}
-                                onChange={handleSwitchChange}
-                                name="is_virtual"
-                                color="primary"
-                            />
-                        }
-                        label={
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Typography>Virtual Meeting</Typography>
-                                <Tooltip title="Help with virtual meetings">
-                                    <IconButton size="small" onClick={() => showHelp('virtual')}>
-                                        <HelpOutline fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                            </Box>
-                        }
-                    />
+                    <FormControl component="fieldset" sx={{ width: '100%' }}>
+                        <Typography variant="subtitle1" fontWeight="medium" sx={{ mb: 1 }}>
+                            Format de Réunion
+                            <Tooltip title="Aide sur les formats de réunion">
+                                <IconButton size="small" onClick={() => showHelp('hybrid')} sx={{ ml: 1 }}>
+                                    <HelpOutline fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Typography>
+
+                        <RadioGroup
+                            row
+                            name="meeting_format"
+                            value={formData.meeting_format}
+                            onChange={handleInputChange}
+                        >
+                            {MEETING_FORMATS.map((format) => (
+                                <FormControlLabel
+                                    key={format.value}
+                                    value={format.value}
+                                    control={<Radio />}
+                                    label={format.label}
+                                />
+                            ))}
+                        </RadioGroup>
+                    </FormControl>
                 </Grid>
 
-                {formData.is_virtual ? (
-                    <Grid item xs={12}>
-                        <TextField
-                            name="meeting_link"
-                            label="Meeting Link"
-                            value={formData.meeting_link}
-                            onChange={handleInputChange}
-                            fullWidth
-                            required
-                            error={!!errors.meeting_link}
-                            helperText={errors.meeting_link}
-                            placeholder="e.g., https://zoom.us/j/123456789"
-                            InputProps={{
-                                startAdornment: <Language sx={{ color: 'action.active', mr: 1 }} />,
-                            }}
-                        />
-                    </Grid>
-                ) : (
+                {/* Conditionally show location field for in-person or hybrid meetings */}
+                {(formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') && (
                     <Grid item xs={12}>
                         <TextField
                             name="location"
-                            label="Meeting Location"
+                            label="Lieu de la Réunion"
                             value={formData.location}
                             onChange={handleInputChange}
                             fullWidth
                             required
                             error={!!errors.location}
                             helperText={errors.location}
-                            placeholder="e.g., Conference Room A, Main Office"
+                            placeholder="ex., Salle de Conférence A, Bureau Principal"
                             InputProps={{
                                 startAdornment: <LocationOn sx={{ color: 'action.active', mr: 1 }} />,
                             }}
                         />
+                    </Grid>
+                )}
+
+                {/* Conditionally show meeting link field for virtual or hybrid meetings */}
+                {(formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid') && (
+                    <Grid item xs={12}>
+                        <TextField
+                            name="meeting_link"
+                            label="Lien de Réunion"
+                            value={formData.meeting_link}
+                            onChange={handleInputChange}
+                            fullWidth
+                            required
+                            error={!!errors.meeting_link}
+                            helperText={errors.meeting_link}
+                            placeholder="ex., https://zoom.us/j/123456789"
+                            InputProps={{
+                                startAdornment: <Language sx={{ color: 'action.active', mr: 1 }} />,
+                            }}
+                        />
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                            {formData.meeting_format === 'hybrid'
+                                ? "Les participants à distance utiliseront ce lien tandis que les autres assisteront en personne."
+                                : "Tous les participants rejoindront la réunion via ce lien."}
+                        </Typography>
                     </Grid>
                 )}
             </Grid>
@@ -735,10 +767,10 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="h6" fontWeight="bold">
-                                    Recurring Meeting
+                                    Réunion Récurrente
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Tooltip title="Help with recurrence settings">
+                                    <Tooltip title="Aide sur les paramètres de récurrence">
                                         <IconButton size="small" onClick={() => showHelp('recurrence')}>
                                             <HelpOutline fontSize="small" />
                                         </IconButton>
@@ -762,16 +794,16 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                     <Grid container spacing={2}>
                                         <Grid item xs={12} sm={6}>
                                             <FormControl fullWidth required error={!!errors.frequency}>
-                                                <InputLabel>Frequency</InputLabel>
+                                                <InputLabel>Fréquence</InputLabel>
                                                 <Select
                                                     name="frequency"
                                                     value={formData.recurrence_pattern.frequency}
                                                     onChange={handleRecurrenceChange}
-                                                    label="Frequency"
+                                                    label="Fréquence"
                                                 >
-                                                    <MenuItem value="daily">Daily</MenuItem>
-                                                    <MenuItem value="weekly">Weekly</MenuItem>
-                                                    <MenuItem value="monthly">Monthly</MenuItem>
+                                                    <MenuItem value="daily">Quotidienne</MenuItem>
+                                                    <MenuItem value="weekly">Hebdomadaire</MenuItem>
+                                                    <MenuItem value="monthly">Mensuelle</MenuItem>
                                                 </Select>
                                                 {errors.frequency && <FormHelperText>{errors.frequency}</FormHelperText>}
                                             </FormControl>
@@ -780,7 +812,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                         <Grid item xs={12} sm={6}>
                                             <TextField
                                                 name="interval"
-                                                label="Interval"
+                                                label="Intervalle"
                                                 type="number"
                                                 value={formData.recurrence_pattern.interval}
                                                 onChange={handleRecurrenceChange}
@@ -788,7 +820,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                                 required
                                                 inputProps={{ min: 1, max: 12 }}
                                                 error={!!errors.interval}
-                                                helperText={errors.interval || `Repeat every ${formData.recurrence_pattern.interval} ${formData.recurrence_pattern.frequency.slice(0, -2) + (formData.recurrence_pattern.interval > 1 ? 's' : '')}`}
+                                                helperText={errors.interval || `Répéter tous les ${formData.recurrence_pattern.interval} ${formData.recurrence_pattern.frequency === 'daily' ? 'jours' : formData.recurrence_pattern.frequency === 'weekly' ? 'semaines' : 'mois'}`}
                                             />
                                         </Grid>
 
@@ -796,7 +828,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                             <Grid item xs={12} sm={6}>
                                                 <TextField
                                                     name="day_of_month"
-                                                    label="Day of Month"
+                                                    label="Jour du Mois"
                                                     type="number"
                                                     value={formData.recurrence_pattern.day_of_month}
                                                     onChange={handleRecurrenceChange}
@@ -804,7 +836,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                                     required
                                                     inputProps={{ min: 1, max: 28 }}
                                                     error={!!errors.day_of_month}
-                                                    helperText={errors.day_of_month || "Choose between 1-28 to ensure valid dates for all months"}
+                                                    helperText={errors.day_of_month || "Choisissez entre 1-28 pour garantir des dates valides pour tous les mois"}
                                                 />
                                             </Grid>
                                         )}
@@ -812,14 +844,14 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                         <Grid item xs={12} sm={6}>
                                             <TextField
                                                 name="end_after"
-                                                label="End After"
+                                                label="Terminer Après"
                                                 type="number"
                                                 value={formData.recurrence_pattern.end_after}
                                                 onChange={handleRecurrenceChange}
                                                 fullWidth
                                                 required
                                                 inputProps={{ min: 1, max: 24 }}
-                                                helperText={`Creates ${formData.recurrence_pattern.end_after} instances of this meeting`}
+                                                helperText={`Crée ${formData.recurrence_pattern.end_after} occurrences de cette réunion`}
                                             />
                                         </Grid>
                                     </Grid>
@@ -835,9 +867,9 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="h6" fontWeight="bold">
-                                    Notification Settings
+                                    Paramètres de Notification
                                 </Typography>
-                                <Tooltip title="Help with notifications">
+                                <Tooltip title="Aide sur les notifications">
                                     <IconButton size="small" onClick={() => showHelp('notifications')}>
                                         <HelpOutline fontSize="small" />
                                     </IconButton>
@@ -847,12 +879,12 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth>
-                                        <InputLabel>Notification Method</InputLabel>
+                                        <InputLabel>Méthode de Notification</InputLabel>
                                         <Select
                                             name="notification_method"
                                             value={formData.notification_method}
                                             onChange={handleInputChange}
-                                            label="Notification Method"
+                                            label="Méthode de Notification"
                                         >
                                             {NOTIFICATION_METHODS.map((method) => (
                                                 <MenuItem key={method.value} value={method.value}>
@@ -866,13 +898,13 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                 <Grid item xs={12} sm={6}>
                                     <TextField
                                         name="reminder_days_before"
-                                        label="Reminder Days Before"
+                                        label="Jours de Rappel Avant"
                                         type="number"
                                         value={formData.reminder_days_before}
                                         onChange={handleInputChange}
                                         fullWidth
                                         inputProps={{ min: 1, max: 14 }}
-                                        helperText={`Send reminder ${formData.reminder_days_before} days before the meeting`}
+                                        helperText={`Envoyer un rappel ${formData.reminder_days_before} jours avant la réunion`}
                                     />
                                 </Grid>
                             </Grid>
@@ -885,11 +917,17 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
 
     // Step 4: Review
     const renderReviewStep = () => {
+        // Get the meeting format display label
+        const getMeetingFormatLabel = () => {
+            const format = MEETING_FORMATS.find(f => f.value === formData.meeting_format);
+            return format ? format.label : formData.meeting_format;
+        };
+
         return (
             <Grid container spacing={3}>
                 <Grid item xs={12}>
                     <Alert severity="info" sx={{ mb: 3 }}>
-                        Please review the meeting details below before {isEditMode ? 'updating' : 'creating'} the meeting. All attendees will be notified based on your notification settings.
+                        Veuillez vérifier les détails de la réunion ci-dessous avant de {isEditMode ? 'mettre à jour' : 'créer'} la réunion. Tous les participants seront notifiés selon vos paramètres de notification.
                     </Alert>
                 </Grid>
 
@@ -898,13 +936,13 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                     <StyledCard>
                         <CardContent>
                             <SectionTitle variant="h6">
-                                Basic Information
+                                Informations de Base
                             </SectionTitle>
                             <Divider sx={{ mb: 2 }} />
 
                             <Box sx={{ mb: 1 }}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Title
+                                    Titre
                                 </Typography>
                                 <Typography variant="body1" fontWeight="medium">
                                     {formData.title}
@@ -939,7 +977,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                     <StyledCard>
                         <CardContent>
                             <SectionTitle variant="h6">
-                                Schedule & Location
+                                Horaire & Lieu
                             </SectionTitle>
                             <Divider sx={{ mb: 2 }} />
 
@@ -959,7 +997,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                 <AccessTime sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
                                 <Box>
                                     <Typography variant="subtitle2" color="text.secondary">
-                                        Time
+                                        Heure
                                     </Typography>
                                     <Typography variant="body1">
                                         {formData.start_date.format('h:mm A')} - {formData.end_date.format('h:mm A')}
@@ -968,20 +1006,43 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                             </Box>
 
                             <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
-                                {formData.is_virtual ? (
-                                    <VideoCall sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
-                                ) : (
-                                    <LocationOn sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
-                                )}
                                 <Box>
                                     <Typography variant="subtitle2" color="text.secondary">
-                                        {formData.is_virtual ? 'Virtual Meeting' : 'Location'}
+                                        Format de Réunion
                                     </Typography>
-                                    <Typography variant="body1">
-                                        {formData.is_virtual ? formData.meeting_link : formData.location}
+                                    <Typography variant="body1" sx={{ mb: 1 }}>
+                                        {getMeetingFormatLabel()}
                                     </Typography>
                                 </Box>
                             </Box>
+
+                            {(formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') && (
+                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
+                                    <LocationOn sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">
+                                            Lieu
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            {formData.location}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {(formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid') && (
+                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
+                                    <VideoCall sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">
+                                            Lien de Réunion
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            {formData.meeting_link}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            )}
                         </CardContent>
                     </StyledCard>
                 </Grid>
@@ -991,7 +1052,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                     <StyledCard>
                         <CardContent>
                             <SectionTitle variant="h6">
-                                Additional Options
+                                Options Supplémentaires
                             </SectionTitle>
                             <Divider sx={{ mb: 2 }} />
 
@@ -999,7 +1060,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                 <Grid item xs={12} sm={6}>
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="subtitle2" color="text.secondary">
-                                            Recurring Meeting
+                                            Réunion Récurrente
                                         </Typography>
                                         <Typography variant="body1">
                                             {formData.is_recurring ? (
@@ -1007,13 +1068,13 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                                     <Chip
                                                         size="small"
                                                         color="primary"
-                                                        label="Enabled"
+                                                        label="Activée"
                                                         sx={{ mr: 1 }}
                                                     />
-                                                    {`Repeats ${formData.recurrence_pattern.frequency} (every ${formData.recurrence_pattern.interval} ${formData.recurrence_pattern.frequency === 'monthly' ? 'month' : formData.recurrence_pattern.frequency.slice(0, -2)}${formData.recurrence_pattern.interval > 1 ? 's' : ''})`}
+                                                    {`Répète ${formData.recurrence_pattern.frequency === 'daily' ? 'quotidiennement' : formData.recurrence_pattern.frequency === 'weekly' ? 'hebdomadairement' : 'mensuellement'} (chaque ${formData.recurrence_pattern.interval} ${formData.recurrence_pattern.frequency === 'daily' ? 'jour' : formData.recurrence_pattern.frequency === 'weekly' ? 'semaine' : 'mois'}${formData.recurrence_pattern.interval > 1 ? 's' : ''})`}
                                                 </>
                                             ) : (
-                                                <Chip size="small" label="Not recurring" />
+                                                <Chip size="small" label="Non récurrente" />
                                             )}
                                         </Typography>
                                     </Box>
@@ -1022,11 +1083,11 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                 <Grid item xs={12} sm={6}>
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="subtitle2" color="text.secondary">
-                                            Notification Settings
+                                            Paramètres de Notification
                                         </Typography>
                                         <Typography variant="body1">
                                             {NOTIFICATION_METHODS.find(m => m.value === formData.notification_method)?.label || formData.notification_method}
-                                            {`, ${formData.reminder_days_before} ${formData.reminder_days_before === 1 ? 'day' : 'days'} before meeting`}
+                                            {`, ${formData.reminder_days_before} ${formData.reminder_days_before === 1 ? 'jour' : 'jours'} avant la réunion`}
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -1037,7 +1098,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                 <>
                                     <Box sx={{ mt: 3, mb: 2 }}>
                                         <Typography variant="subtitle2" color="text.secondary">
-                                            Agenda
+                                            Ordre du Jour
                                         </Typography>
                                         <Paper sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), mt: 1, borderRadius: 2 }}>
                                             <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
@@ -1068,7 +1129,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 >
                     <CircularProgress size={60} thickness={4} />
                     <Typography variant="h6" sx={{ mt: 2 }}>
-                        Loading meeting details...
+                        Chargement des détails de la réunion...
                     </Typography>
                 </Box>
             </Container>
@@ -1096,7 +1157,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                             }
                         }}
                     >
-                        Back to Meetings
+                        Retour aux Réunions
                     </Button>
                 </motion.div>
 
@@ -1105,12 +1166,12 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                     <HeaderContainer elevation={0}>
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
                             <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                {isEditMode ? 'Edit Meeting' : 'Create New Meeting'}
+                                {isEditMode ? 'Modifier la Réunion' : 'Créer une Nouvelle Réunion'}
                             </Typography>
                             <Typography variant="body1">
                                 {isEditMode
-                                    ? 'Update meeting details and notify all relevant members'
-                                    : 'Schedule a new meeting and notify all relevant members'}
+                                    ? 'Mettre à jour les détails de la réunion et notifier tous les membres concernés'
+                                    : 'Planifier une nouvelle réunion et notifier tous les membres concernés'}
                             </Typography>
                         </Box>
 
@@ -1152,7 +1213,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                 <CircularProgress size={20} thickness={5} />
                             }
                         >
-                            Meeting {isEditMode ? 'updated' : 'created'} successfully! Redirecting to meeting details...
+                            Réunion {isEditMode ? 'mise à jour' : 'créée'} avec succès ! Redirection vers les détails de la réunion...
                         </Alert>
                     </motion.div>
                 )}
@@ -1191,7 +1252,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                     onClick={handleBack}
                                     variant="outlined"
                                 >
-                                    Back
+                                    Retour
                                 </Button>
                                 <Button
                                     variant="contained"
@@ -1199,7 +1260,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                     disabled={loading || success}
                                     endIcon={activeStep === steps.length - 1 ? <Check /> : null}
                                 >
-                                    {activeStep === steps.length - 1 ? (isEditMode ? 'Update Meeting' : 'Create Meeting') : 'Next'}
+                                    {activeStep === steps.length - 1 ? (isEditMode ? 'Mettre à Jour la Réunion' : 'Créer la Réunion') : 'Suivant'}
                                 </Button>
                             </Box>
                         </form>
@@ -1217,12 +1278,12 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 }}
             >
                 <DialogTitle id="confirm-meeting-dialog-title">
-                    {isEditMode ? 'Update Meeting' : 'Create Meeting'}
+                    {isEditMode ? 'Mettre à Jour la Réunion' : 'Créer la Réunion'}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to {isEditMode ? 'update' : 'create'} this meeting?
-                        {formData.is_recurring && !isEditMode && ' This will set up a recurring meeting series.'}
+                        Êtes-vous sûr de vouloir {isEditMode ? 'mettre à jour' : 'créer'} cette réunion ?
+                        {formData.is_recurring && !isEditMode && ' Cela configurera une série de réunions récurrentes.'}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
@@ -1231,7 +1292,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                         color="inherit"
                         disabled={loading}
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={handleSubmit}
@@ -1240,7 +1301,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                         disabled={loading}
                         startIcon={loading ? <CircularProgress size={20} /> : <Save />}
                     >
-                        {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Meeting' : 'Create Meeting')}
+                        {loading ? (isEditMode ? 'Mise à jour...' : 'Création...') : (isEditMode ? 'Mettre à Jour' : 'Créer')}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -1264,7 +1325,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setHelpDialogOpen(false)} color="primary">
-                        Close
+                        Fermer
                     </Button>
                 </DialogActions>
             </Dialog>

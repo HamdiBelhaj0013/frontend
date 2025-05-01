@@ -5,20 +5,20 @@ import MeetingDetail from './MeetingDetail';
 import MeetingCreateForm from './MeetingCreateForm';
 import MeetingResponse from './MeetingResponse';
 import ProtectedMeetingEdit from './ProtectedMeetingEdit';
-import { PermissionGuard } from '../contexts/ConditionalUI';
-import { RESOURCES, ACTIONS } from '../contexts/PermissionsContext';
+import { PermissionGuard } from '/src/contexts/ConditionalUI.jsx';
+import { RESOURCES, ACTIONS } from '/src/contexts/PermissionsContext.jsx';
 
 /**
- * This component defines the routes for the meetings module
- * with proper permission guards
+ * Ce composant définit les routes pour le module de réunions
+ * avec des gardes de permission appropriés
  */
 const MeetingRoutes = () => {
     return (
         <Routes>
-            {/* View calendar - All users can view */}
+            {/* Voir le calendrier - Tous les utilisateurs peuvent voir */}
             <Route path="/" element={<MeetingsCalendar />} />
 
-            {/* Create meeting - Only users with create permission */}
+            {/* Créer une réunion - Uniquement les utilisateurs avec permission de création */}
             <Route
                 path="/create"
                 element={
@@ -32,17 +32,17 @@ const MeetingRoutes = () => {
                 }
             />
 
-            {/* Edit meeting - Only users with edit permission */}
+            {/* Modifier une réunion - Uniquement les utilisateurs avec permission de modification */}
             <Route path="/edit/:id" element={<ProtectedMeetingEdit />} />
 
-            {/* Meeting response - Anyone with the link */}
+            {/* Réponse à une réunion - Quiconque avec le lien */}
             <Route path="/response/:attendeeId/:token" element={<MeetingResponse />} />
             <Route path="/response/:attendeeId/:token/:responseType" element={<MeetingResponse />} />
 
-            {/* View meeting details - All users can view (place this after other more specific routes) */}
+            {/* Voir les détails d'une réunion - Tous les utilisateurs peuvent voir (placer ceci après d'autres routes plus spécifiques) */}
             <Route path="/:id" element={<MeetingDetail />} />
 
-            {/* Catch-all redirect */}
+            {/* Redirection catch-all */}
             <Route path="*" element={<Navigate to="/meetings" replace />} />
         </Routes>
     );

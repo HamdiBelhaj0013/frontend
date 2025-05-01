@@ -34,6 +34,8 @@ import FinancialReports from './finance/FinancialReports';
 import DashboardWidgets from './finance/DashboardWidgets';
 import DonorForm from './finance/DonorForm.jsx';
 import DonorList from './finance/DonorList';
+import DateRangeFilter from './finance/DateRangeFilter';
+import dayjs from 'dayjs';
 
 // Tab panel component
 function TabPanel(props) {
@@ -68,11 +70,20 @@ const Finance = () => {
         total_expenses: 0,
         net_balance: 0,
         total_donations: 0,
+        total_membership_fees: 0,
         total_project_expenses: 0,
         income_by_category: {},
         expenses_by_category: {},
         project_budget_utilization: [],
         recent_transactions: []
+    });
+
+    // State for date filter
+    const [dateFilter, setDateFilter] = useState({
+        startDate: dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
+        endDate: dayjs().format('YYYY-MM-DD'),
+        filterType: 'month',
+        displayLabel: '30 derniers jours'
     });
 
     // State for transaction form modal
@@ -90,19 +101,32 @@ const Finance = () => {
         severity: 'success'
     });
 
+    // Handle date filter change
+    const handleDateFilterChange = (newFilter) => {
+        setDateFilter(newFilter);
+        // Trigger a refresh with the new date filter
+        setRefreshTrigger(prev => prev + 1);
+    };
+
     // Fetch financial statistics - FIXED to avoid infinite loops
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
 
-                // Use regular Axios instance, not secureApi which is causing the issues
-                const statsResponse = await AxiosInstance.get('/finances/dashboard/');
+                // Add date filter parameters to the API calls
+                const params = new URLSearchParams({
+                    start_date: dateFilter.startDate,
+                    end_date: dateFilter.endDate
+                });
+
+                // Use regular Axios instance with date parameters
+                const statsResponse = await AxiosInstance.get(`/finances/dashboard/?${params}`);
                 setStatistics(statsResponse.data);
 
                 // Only fetch transactions if user has permission to view them
                 if (can(ACTIONS.VIEW, RESOURCES.FINANCE) && userRole !== 'member') {
-                    const transactionsResponse = await AxiosInstance.get('/finances/transactions/');
+                    const transactionsResponse = await AxiosInstance.get(`/finances/transactions/?${params}`);
                     setTransactions(transactionsResponse.data);
 
                     const donorsResponse = await AxiosInstance.get('/finances/donors/');
@@ -118,9 +142,9 @@ const Finance = () => {
         };
 
         fetchData();
-        // Removed api from dependencies to prevent loops
+        // Include dateFilter in dependencies to refetch when it changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshTrigger, can, ACTIONS, RESOURCES, userRole]);
+    }, [refreshTrigger, can, ACTIONS, RESOURCES, userRole, dateFilter]);
 
     // Handle tab change
     const handleTabChange = (event, newValue) => {
@@ -254,13 +278,16 @@ const Finance = () => {
                         Suivez les dons, les dépenses et générez des rapports
                     </Typography>
                 </Grid>
-                <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                    {/* Date Range Filter */}
+                    <DateRangeFilter onFilterChange={handleDateFilterChange} />
+
                     <Button
                         variant="outlined"
                         color="primary"
                         onClick={handleRefresh}
                         startIcon={<Refresh />}
-                        sx={{ mr: 1 }}
+                        sx={{ ml: { xs: 0, sm: 1 } }}
                     >
                         Actualiser
                     </Button>
@@ -273,7 +300,7 @@ const Finance = () => {
                                 color="primary"
                                 onClick={() => handleAddTransaction('income')}
                                 startIcon={<Add />}
-                                sx={{ mr: 1 }}
+                                sx={{ ml: { xs: 0, sm: 1 } }}
                             >
                                 Ajouter un Revenu
                             </Button>
@@ -282,6 +309,7 @@ const Finance = () => {
                                 color="secondary"
                                 onClick={() => handleAddTransaction('expense')}
                                 startIcon={<Add />}
+                                sx={{ ml: { xs: 0, sm: 1 } }}
                             >
                                 Ajouter une Dépense
                             </Button>
@@ -346,6 +374,7 @@ const Finance = () => {
                             <DashboardWidgets
                                 statistics={statistics}
                                 recentTransactions={statistics.recent_transactions}
+                                dateFilter={dateFilter}
                             />
                         </TabPanel>
 
@@ -358,6 +387,7 @@ const Finance = () => {
                                         transactions={transactions}
                                         onRefresh={handleRefresh}
                                         onAddTransaction={handleAddTransaction}
+                                        dateFilter={dateFilter}
                                     />
                                 </TabPanel>
 
@@ -366,6 +396,7 @@ const Finance = () => {
                                     <BudgetDashboard
                                         projectBudgets={statistics.project_budget_utilization}
                                         onRefresh={handleRefresh}
+                                        dateFilter={dateFilter}
                                     />
                                 </TabPanel>
 
@@ -386,12 +417,16 @@ const Finance = () => {
                                     <DonorList
                                         donors={donors}
                                         onRefresh={handleRefresh}
+                                        dateFilter={dateFilter}
                                     />
                                 </TabPanel>
 
                                 {/* Reports Tab */}
                                 <TabPanel value={activeTab} index={4}>
-                                    <FinancialReports onRefresh={handleRefresh} />
+                                    <FinancialReports
+                                        onRefresh={handleRefresh}
+                                        dateFilter={dateFilter}
+                                    />
                                 </TabPanel>
                             </>
                         )}

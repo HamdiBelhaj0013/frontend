@@ -160,32 +160,32 @@ const StatusChip = ({ status }) => {
         case 'scheduled':
             color = theme.palette.success.main;
             icon = <EventAvailable fontSize="small" />;
-            label = 'Scheduled';
+            label = 'Planifiée';
             break;
         case 'cancelled':
             color = theme.palette.error.main;
             icon = <EventBusy fontSize="small" />;
-            label = 'Cancelled';
+            label = 'Annulée';
             break;
         case 'completed':
             color = theme.palette.text.secondary;
             icon = <Event fontSize="small" />;
-            label = 'Completed';
+            label = 'Terminée';
             break;
         case 'postponed':
             color = theme.palette.warning.main;
             icon = <Event fontSize="small" />;
-            label = 'Postponed';
+            label = 'Reportée';
             break;
         case 'in_progress':
             color = theme.palette.info.main;
             icon = <Event fontSize="small" />;
-            label = 'In Progress';
+            label = 'En Cours';
             break;
         default:
             color = theme.palette.primary.main;
             icon = <Event fontSize="small" />;
-            label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown';
+            label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Inconnu';
     }
 
     return (
@@ -214,27 +214,27 @@ const TypeChip = ({ type }) => {
     switch (type) {
         case 'regular':
             color = theme.palette.primary.main;
-            label = 'Regular Meeting';
+            label = 'Réunion Ordinaire';
             break;
         case 'board':
             color = theme.palette.success.main;
-            label = 'Board Meeting';
+            label = 'Réunion du Conseil';
             break;
         case 'extraordinary':
             color = theme.palette.error.main;
-            label = 'Extraordinary Meeting';
+            label = 'Réunion Extraordinaire';
             break;
         case 'general_assembly':
             color = theme.palette.warning.main;
-            label = 'General Assembly';
+            label = 'Assemblée Générale';
             break;
         case 'committee':
             color = theme.palette.info.main;
-            label = 'Committee Meeting';
+            label = 'Réunion de Comité';
             break;
         default:
             color = theme.palette.grey[600];
-            label = 'Other';
+            label = 'Autre';
     }
 
     return (
@@ -259,7 +259,7 @@ const AttendanceStatusChip = ({ status }) => {
     switch (status) {
         case 'present':
             color = theme.palette.success.main;
-            label = 'Present';
+            label = 'Présent';
             break;
         case 'absent':
             color = theme.palette.error.main;
@@ -267,15 +267,15 @@ const AttendanceStatusChip = ({ status }) => {
             break;
         case 'excused':
             color = theme.palette.warning.main;
-            label = 'Excused';
+            label = 'Excusé';
             break;
         case 'late':
             color = theme.palette.info.main;
-            label = 'Late';
+            label = 'En Retard';
             break;
         default:
             color = theme.palette.grey[600];
-            label = status ? status : 'Unknown';
+            label = status ? status : 'Inconnu';
     }
 
     return (
@@ -339,8 +339,8 @@ const MeetingDetail = () => {
 
                 setLoading(false);
             } catch (err) {
-                console.error('Error fetching meeting data:', err);
-                setError('Failed to load meeting details. Please try again.');
+                console.error('Erreur lors de la récupération des données de réunion:', err);
+                setError('Échec du chargement des détails de la réunion. Veuillez réessayer.');
                 setLoading(false);
             }
         };
@@ -357,12 +357,12 @@ const MeetingDetail = () => {
 
     // Format date for display
     const formatDate = (date) => {
-        return moment(date).format('dddd, MMMM D, YYYY');
+        return moment(date).format('dddd, D MMMM YYYY');
     };
 
     // Format time for display
     const formatTime = (date) => {
-        return moment(date).format('h:mm A');
+        return moment(date).format('HH:mm');
     };
 
     // Handle minutes submission
@@ -380,8 +380,8 @@ const MeetingDetail = () => {
             // Show generate report dialog
             setOpenGenerateDialog(true);
         } catch (err) {
-            console.error('Error submitting minutes:', err);
-            setError('Failed to submit meeting minutes. Please try again.');
+            console.error('Erreur lors de la soumission du procès-verbal:', err);
+            setError('Échec de la soumission du procès-verbal. Veuillez réessayer.');
         }
     };
 
@@ -397,8 +397,8 @@ const MeetingDetail = () => {
             setMeeting(updatedMeeting);
             setOpenCancelDialog(false);
         } catch (err) {
-            console.error('Error cancelling meeting:', err);
-            setError('Failed to cancel meeting. Please try again.');
+            console.error('Erreur lors de l\'annulation de la réunion:', err);
+            setError('Échec de l\'annulation de la réunion. Veuillez réessayer.');
         }
     };
 
@@ -411,8 +411,8 @@ const MeetingDetail = () => {
                 include_attendance: true,
                 include_agenda_items: true,
                 include_minutes: true,
-                report_title: `Meeting Report: ${meeting.title}`,
-                summary: 'This report summarizes the meeting discussions, decisions, and action items.'
+                report_title: `Rapport de Réunion: ${meeting.title}`,
+                summary: 'Ce rapport résume les discussions, décisions et points d\'action de la réunion.'
             });
 
             // Fetch updated reports
@@ -425,8 +425,8 @@ const MeetingDetail = () => {
             // Switch to reports tab
             setTabValue(3);
         } catch (err) {
-            console.error('Error generating report:', err);
-            setError('Failed to generate meeting report. Please try again.');
+            console.error('Erreur lors de la génération du rapport:', err);
+            setError('Échec de la génération du rapport de réunion. Veuillez réessayer.');
             setGeneratingReport(false);
         }
     };
@@ -456,7 +456,7 @@ const MeetingDetail = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
                     <CircularProgress size={60} thickness={4} />
                     <Typography variant="h6" sx={{ mt: 2 }}>
-                        Loading meeting details...
+                        Chargement des détails de la réunion...
                     </Typography>
                 </Box>
             </Container>
@@ -475,7 +475,7 @@ const MeetingDetail = () => {
                         startIcon={<ArrowBack />}
                         onClick={() => navigate('/meetings')}
                     >
-                        Back to Meetings
+                        Retour aux Réunions
                     </Button>
                 </Box>
             </Container>
@@ -486,7 +486,7 @@ const MeetingDetail = () => {
         return (
             <Container>
                 <Alert severity="warning" sx={{ mt: 2 }}>
-                    Meeting not found or may have been deleted.
+                    Réunion introuvable ou peut avoir été supprimée.
                 </Alert>
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
                     <Button
@@ -494,7 +494,7 @@ const MeetingDetail = () => {
                         startIcon={<ArrowBack />}
                         onClick={() => navigate('/meetings')}
                     >
-                        Back to Meetings
+                        Retour aux Réunions
                     </Button>
                 </Box>
             </Container>
@@ -522,7 +522,7 @@ const MeetingDetail = () => {
                             }
                         }}
                     >
-                        Back to Meetings
+                        Retour aux Réunions
                     </Button>
                 </motion.div>
 
@@ -560,7 +560,7 @@ const MeetingDetail = () => {
                                             <AccessTime sx={{ mr: 1 }} />
                                             <Box>
                                                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    Time
+                                                    Heure
                                                 </Typography>
                                                 <Typography variant="body1" fontWeight="medium">
                                                     {formatTime(meeting.start_date)} - {formatTime(meeting.end_date)}
@@ -569,35 +569,59 @@ const MeetingDetail = () => {
                                         </Box>
                                     </Grid>
 
+                                    {/* Location Information - Modified to handle hybrid meetings */}
                                     <Grid item xs={12} sm={6} md={3}>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {meeting.is_virtual ? (
-                                                <VideoCall sx={{ mr: 1 }} />
-                                            ) : (
-                                                <LocationOn sx={{ mr: 1 }} />
-                                            )}
+                                            <LocationOn sx={{ mr: 1 }} />
                                             <Box>
                                                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    {meeting.is_virtual ? 'Virtual Meeting' : 'Location'}
+                                                    Lieu
                                                 </Typography>
                                                 <Typography variant="body1" fontWeight="medium">
-                                                    {meeting.is_virtual ?
-                                                        (meeting.meeting_link || 'Link not provided') :
-                                                        (meeting.location || 'Location not specified')}
+                                                    {meeting.location || 'Lieu non spécifié'}
                                                 </Typography>
                                             </Box>
                                         </Box>
                                     </Grid>
+
+                                    {/* Only show if it's virtual or hybrid (has a meeting link) */}
+                                    {meeting.meeting_link && (
+                                        <Grid item xs={12} sm={6} md={3}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <VideoCall sx={{ mr: 1 }} />
+                                                <Box>
+                                                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                                        Accès Virtuel
+                                                    </Typography>
+                                                    <Typography
+                                                        variant="body1"
+                                                        fontWeight="medium"
+                                                        component="a"
+                                                        href={meeting.meeting_link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        sx={{
+                                                            color: 'primary.main',
+                                                            textDecoration: 'none',
+                                                            '&:hover': { textDecoration: 'underline' }
+                                                        }}
+                                                    >
+                                                        Rejoindre la Réunion
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </Grid>
+                                    )}
 
                                     <Grid item xs={12} sm={6} md={3}>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Groups sx={{ mr: 1 }} />
                                             <Box>
                                                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    Attendees
+                                                    Participants
                                                 </Typography>
                                                 <Typography variant="body1" fontWeight="medium">
-                                                    {attendees.length} invited
+                                                    {attendees.length} invités
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -617,7 +641,7 @@ const MeetingDetail = () => {
                                                 '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
                                             }}
                                         >
-                                            Edit Meeting
+                                            Modifier la Réunion
                                         </Button>
 
                                         <Button
@@ -630,7 +654,7 @@ const MeetingDetail = () => {
                                                 '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
                                             }}
                                         >
-                                            Cancel Meeting
+                                            Annuler la Réunion
                                         </Button>
                                     </>
                                 )}
@@ -645,7 +669,7 @@ const MeetingDetail = () => {
                                             '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
                                         }}
                                     >
-                                        Generate Report
+                                        Générer un Rapport
                                     </Button>
                                 )}
 
@@ -659,7 +683,7 @@ const MeetingDetail = () => {
                                             '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
                                         }}
                                     >
-                                        Complete & Add Minutes
+                                        Finaliser & Ajouter le Procès-Verbal
                                     </Button>
                                 )}
                             </Box>
@@ -704,14 +728,14 @@ const MeetingDetail = () => {
                             scrollButtons="auto"
                         >
                             <Tab
-                                label="Details"
+                                label="Détails"
                                 icon={<Description />}
                                 iconPosition="start"
                             />
                             <Tab
                                 label={
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        Attendees
+                                        Participants
                                         <Badge
                                             badgeContent={attendees.length}
                                             color="primary"
@@ -725,7 +749,7 @@ const MeetingDetail = () => {
                             <Tab
                                 label={
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        Agenda
+                                        Ordre du Jour
                                         <Badge
                                             badgeContent={agendaItems.length}
                                             color="primary"
@@ -739,7 +763,7 @@ const MeetingDetail = () => {
                             <Tab
                                 label={
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        Reports
+                                        Rapports
                                         <Badge
                                             badgeContent={reports.length}
                                             color="primary"
@@ -794,11 +818,11 @@ const MeetingDetail = () => {
                 }}
             >
                 <DialogTitle id="cancel-meeting-dialog-title">
-                    Cancel Meeting
+                    Annuler la Réunion
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to cancel this meeting? This action will notify all attendees and cannot be undone.
+                        Êtes-vous sûr de vouloir annuler cette réunion ? Cette action notifiera tous les participants et ne peut être annulée.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
@@ -806,7 +830,7 @@ const MeetingDetail = () => {
                         onClick={() => setOpenCancelDialog(false)}
                         color="primary"
                     >
-                        No, Keep Meeting
+                        Non, Maintenir la Réunion
                     </Button>
                     <Button
                         onClick={handleCancelMeeting}
@@ -814,7 +838,7 @@ const MeetingDetail = () => {
                         variant="contained"
                         startIcon={<Cancel />}
                     >
-                        Yes, Cancel Meeting
+                        Oui, Annuler la Réunion
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -831,18 +855,18 @@ const MeetingDetail = () => {
                 }}
             >
                 <DialogTitle id="minutes-dialog-title">
-                    Add Meeting Minutes
+                    Ajouter le Procès-Verbal
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>
-                        Add the minutes for this meeting. This will mark the meeting as completed.
+                        Ajoutez le procès-verbal de cette réunion. Cela marquera la réunion comme terminée.
                     </DialogContentText>
                     <TextField
                         autoFocus
                         multiline
                         rows={10}
                         fullWidth
-                        label="Meeting Minutes"
+                        label="Procès-Verbal de la Réunion"
                         variant="outlined"
                         value={minutes}
                         onChange={(e) => setMinutes(e.target.value)}
@@ -853,7 +877,7 @@ const MeetingDetail = () => {
                         onClick={() => setOpenMinutesDialog(false)}
                         color="inherit"
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={handleSubmitMinutes}
@@ -862,7 +886,7 @@ const MeetingDetail = () => {
                         disabled={!minutes.trim()}
                         startIcon={<CheckCircle />}
                     >
-                        Complete Meeting
+                        Terminer la Réunion
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -877,11 +901,11 @@ const MeetingDetail = () => {
                 }}
             >
                 <DialogTitle id="generate-report-dialog-title">
-                    Generate Meeting Report
+                    Générer un Rapport de Réunion
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Generate a PDF report for this meeting including attendance, agenda items, and minutes. This report will be stored and can be downloaded later.
+                        Générez un rapport PDF pour cette réunion comprenant les présences, l'ordre du jour et le procès-verbal. Ce rapport sera enregistré et pourra être téléchargé ultérieurement.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
@@ -890,7 +914,7 @@ const MeetingDetail = () => {
                         color="inherit"
                         disabled={generatingReport}
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={handleGenerateReport}
@@ -899,7 +923,7 @@ const MeetingDetail = () => {
                         disabled={generatingReport}
                         startIcon={generatingReport ? <CircularProgress size={20} /> : <PictureAsPdf />}
                     >
-                        {generatingReport ? 'Generating...' : 'Generate Report'}
+                        {generatingReport ? 'Génération...' : 'Générer le Rapport'}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -918,7 +942,7 @@ const DetailTab = ({ meeting }) => {
                         Description
                     </Typography>
                     <Typography variant="body1">
-                        {meeting.description || 'No description provided.'}
+                        {meeting.description || 'Aucune description fournie.'}
                     </Typography>
                 </Box>
             </Grid>
@@ -928,7 +952,7 @@ const DetailTab = ({ meeting }) => {
                 <StyledCard>
                     <CardContent>
                         <Typography variant="h6" fontWeight="bold" gutterBottom>
-                            Minutes
+                            Procès-Verbal
                         </Typography>
                         <Divider sx={{ mb: 2 }} />
                         <Box sx={{ whiteSpace: 'pre-line' }}>
@@ -936,7 +960,7 @@ const DetailTab = ({ meeting }) => {
                                 meeting.minutes
                             ) : (
                                 <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                    Minutes will be available after the meeting is completed.
+                                    Le procès-verbal sera disponible après la fin de la réunion.
                                 </Typography>
                             )}
                         </Box>
@@ -949,7 +973,7 @@ const DetailTab = ({ meeting }) => {
                 <StyledCard>
                     <CardContent>
                         <Typography variant="h6" fontWeight="bold" gutterBottom>
-                            Meeting Properties
+                            Propriétés de la Réunion
                         </Typography>
                         <Divider sx={{ mb: 2 }} />
 
@@ -957,50 +981,50 @@ const DetailTab = ({ meeting }) => {
                             {meeting.is_recurring && meeting.recurrence_pattern && (
                                 <Grid item xs={12} sm={6} md={4}>
                                     <Typography variant="subtitle2" color="text.secondary">
-                                        Recurrence
+                                        Récurrence
                                     </Typography>
                                     <Typography variant="body1">
                                         {meeting.recurrence_pattern.frequency === 'monthly' ?
-                                            `Monthly on day ${new Date(meeting.start_date).getDate()}` :
+                                            `Mensuelle le jour ${new Date(meeting.start_date).getDate()}` :
                                             meeting.recurrence_pattern.frequency === 'weekly' ?
-                                                `Weekly on ${new Date(meeting.start_date).toLocaleDateString('en-US', { weekday: 'long' })}` :
-                                                meeting.recurrence_pattern.frequency}
+                                                `Hebdomadaire le ${new Date(meeting.start_date).toLocaleDateString('fr-FR', { weekday: 'long' })}` :
+                                                meeting.recurrence_pattern.frequency === 'daily' ? 'Quotidienne' : ''}
                                     </Typography>
                                 </Grid>
                             )}
 
                             <Grid item xs={12} sm={6} md={4}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Notification Method
+                                    Méthode de Notification
                                 </Typography>
                                 <Typography variant="body1">
-                                    {meeting.notification_method === 'email' ? 'Email Only' :
-                                        meeting.notification_method === 'platform' ? 'Platform Only' :
-                                            'Email and Platform'}
+                                    {meeting.notification_method === 'email' ? 'Email Uniquement' :
+                                        meeting.notification_method === 'platform' ? 'Plateforme Uniquement' :
+                                            'Email et Plateforme'}
                                 </Typography>
                             </Grid>
 
                             <Grid item xs={12} sm={6} md={4}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Reminder
+                                    Rappel
                                 </Typography>
                                 <Typography variant="body1">
-                                    {meeting.reminder_days_before} {meeting.reminder_days_before === 1 ? 'day' : 'days'} before meeting
+                                    {meeting.reminder_days_before} {meeting.reminder_days_before === 1 ? 'jour' : 'jours'} avant la réunion
                                 </Typography>
                             </Grid>
 
                             <Grid item xs={12} sm={6} md={4}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Created By
+                                    Créé Par
                                 </Typography>
                                 <Typography variant="body1">
-                                    {meeting.created_by_details ? meeting.created_by_details.full_name || meeting.created_by_details.email : 'Unknown'}
+                                    {meeting.created_by_details ? meeting.created_by_details.full_name || meeting.created_by_details.email : 'Inconnu'}
                                 </Typography>
                             </Grid>
 
                             <Grid item xs={12} sm={6} md={4}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Created Date
+                                    Date de Création
                                 </Typography>
                                 <Typography variant="body1">
                                     {new Date(meeting.created_at).toLocaleDateString()}
@@ -1009,7 +1033,7 @@ const DetailTab = ({ meeting }) => {
 
                             <Grid item xs={12} sm={6} md={4}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Last Updated
+                                    Dernière Mise à Jour
                                 </Typography>
                                 <Typography variant="body1">
                                     {new Date(meeting.updated_at).toLocaleDateString()}
@@ -1052,8 +1076,8 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
             setAvailableMembers(filteredMembers);
             setLoadingMembers(false);
         } catch (err) {
-            console.error('Error fetching members:', err);
-            setError('Failed to load available members. Please try again.');
+            console.error('Erreur lors de la récupération des membres:', err);
+            setError('Échec du chargement des membres disponibles. Veuillez réessayer.');
             setLoadingMembers(false);
         }
     };
@@ -1086,8 +1110,8 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
             window.location.reload();
 
         } catch (err) {
-            console.error('Error adding attendees:', err);
-            setError('Failed to add attendees. Please try again.');
+            console.error('Erreur lors de l\'ajout de participants:', err);
+            setError('Échec de l\'ajout de participants. Veuillez réessayer.');
         } finally {
             setLoading(false);
             setOpenAddDialog(false);
@@ -1126,7 +1150,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
         <>
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" fontWeight="bold">
-                    Meeting Attendees
+                    Participants à la Réunion
                 </Typography>
 
                 {meetingStatus === 'scheduled' && (
@@ -1135,7 +1159,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                         startIcon={<PersonAdd />}
                         onClick={handleOpenAddDialog}
                     >
-                        Add Attendees
+                        Ajouter des Participants
                     </Button>
                 )}
             </Box>
@@ -1155,7 +1179,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                 fontWeight: 'bold'
                             }}
                         >
-                            Present: {presentAttendees.length}
+                            Présents: {presentAttendees.length}
                         </Paper>
                     </Grid>
                     <Grid item xs={12} sm={3}>
@@ -1171,7 +1195,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                 fontWeight: 'bold'
                             }}
                         >
-                            Absent: {absentAttendees.length}
+                            Absents: {absentAttendees.length}
                         </Paper>
                     </Grid>
                     <Grid item xs={12} sm={3}>
@@ -1187,7 +1211,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                 fontWeight: 'bold'
                             }}
                         >
-                            Excused: {excusedAttendees.length}
+                            Excusés: {excusedAttendees.length}
                         </Paper>
                     </Grid>
                     <Grid item xs={12} sm={3}>
@@ -1203,7 +1227,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                 fontWeight: 'bold'
                             }}
                         >
-                            Pending: {pendingAttendees.length}
+                            En Attente: {pendingAttendees.length}
                         </Paper>
                     </Grid>
                 </Grid>
@@ -1212,10 +1236,10 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
             {attendees.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 5 }}>
                     <Typography variant="h6" color="text.secondary" gutterBottom>
-                        No attendees added yet
+                        Aucun participant ajouté pour le moment
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                        Add members to track attendance for this meeting
+                        Ajoutez des membres pour suivre les présences à cette réunion
                     </Typography>
                     {meetingStatus === 'scheduled' && (
                         <Button
@@ -1223,7 +1247,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                             startIcon={<PersonAdd />}
                             onClick={handleOpenAddDialog}
                         >
-                            Add Attendees
+                            Ajouter des Participants
                         </Button>
                     )}
                 </Box>
@@ -1239,16 +1263,16 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                             <ListItemText
                                 primary={
                                     <Typography variant="subtitle1" fontWeight="medium">
-                                        {attendee.member_details?.name || 'Unknown Member'}
+                                        {attendee.member_details?.name || 'Membre Inconnu'}
                                     </Typography>
                                 }
                                 secondary={
                                     <>
                                         <Typography variant="body2" component="span" display="block">
-                                            {attendee.member_details?.email || 'No email provided'}
+                                            {attendee.member_details?.email || 'Aucun email fourni'}
                                         </Typography>
                                         <Typography variant="body2" component="span" display="block" color="text.secondary">
-                                            {attendee.member_details?.role || 'Member'}
+                                            {attendee.member_details?.role || 'Membre'}
                                             {attendee.special_role && ` • ${attendee.special_role}`}
                                         </Typography>
                                     </>
@@ -1258,7 +1282,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                 <AttendanceStatusChip status={attendee.status} />
                                 {meetingStatus === 'in_progress' && (
                                     <Box sx={{ display: 'inline-flex', ml: 1 }}>
-                                        <Tooltip title="Mark Present">
+                                        <Tooltip title="Marquer Présent">
                                             <IconButton
                                                 size="small"
                                                 color="success"
@@ -1269,14 +1293,14 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                                         });
                                                         window.location.reload();
                                                     } catch (err) {
-                                                        console.error('Error updating status:', err);
+                                                        console.error('Erreur lors de la mise à jour du statut:', err);
                                                     }
                                                 }}
                                             >
                                                 <Check />
                                             </IconButton>
                                         </Tooltip>
-                                        <Tooltip title="Mark Absent">
+                                        <Tooltip title="Marquer Absent">
                                             <IconButton
                                                 size="small"
                                                 color="error"
@@ -1287,7 +1311,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                                         });
                                                         window.location.reload();
                                                     } catch (err) {
-                                                        console.error('Error updating status:', err);
+                                                        console.error('Erreur lors de la mise à jour du statut:', err);
                                                     }
                                                 }}
                                             >
@@ -1314,11 +1338,11 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                 }}
             >
                 <DialogTitle id="add-attendees-dialog-title">
-                    Add Meeting Attendees
+                    Ajouter des Participants à la Réunion
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>
-                        Select members to add as attendees for this meeting.
+                        Sélectionnez les membres à ajouter comme participants à cette réunion.
                     </DialogContentText>
 
                     {error && (
@@ -1332,7 +1356,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                             <Grid item xs={12} md={8}>
                                 <TextField
                                     fullWidth
-                                    label="Search Members"
+                                    label="Rechercher des Membres"
                                     variant="outlined"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -1348,11 +1372,11 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                             <Grid item xs={12} md={4}>
                                 <TextField
                                     fullWidth
-                                    label="Special Role (Optional)"
+                                    label="Rôle Spécial (Optionnel)"
                                     variant="outlined"
                                     value={attendeeRole}
                                     onChange={(e) => setAttendeeRole(e.target.value)}
-                                    placeholder="e.g., Chair, Secretary"
+                                    placeholder="ex., Président, Secrétaire"
                                 />
                             </Grid>
                         </Grid>
@@ -1373,7 +1397,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                             {filteredMembers.length === 0 ? (
                                 <Box sx={{ p: 3, textAlign: 'center' }}>
                                     <Typography color="text.secondary">
-                                        {searchTerm ? 'No members match your search' : 'No available members found'}
+                                        {searchTerm ? 'Aucun membre ne correspond à votre recherche' : 'Aucun membre disponible trouvé'}
                                     </Typography>
                                 </Box>
                             ) : (
@@ -1402,13 +1426,13 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                                         <ListItemText
                                             primary={
                                                 <Typography variant="subtitle1" fontWeight="medium">
-                                                    {member.name || 'Unknown Member'}
+                                                    {member.name || 'Membre Inconnu'}
                                                 </Typography>
                                             }
                                             secondary={
                                                 <>
                                                     <Typography variant="body2" component="span" display="block">
-                                                        {member.email || 'No email provided'}
+                                                        {member.email || 'Aucun email fourni'}
                                                     </Typography>
                                                     {member.role && (
                                                         <Typography variant="body2" component="span" display="block" color="text.secondary">
@@ -1428,7 +1452,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                     <Box sx={{ flex: 1, pl: 2 }}>
                         {selectedAttendees.length > 0 && (
                             <Typography variant="body2" color="primary">
-                                {selectedAttendees.length} member{selectedAttendees.length !== 1 ? 's' : ''} selected
+                                {selectedAttendees.length} membre{selectedAttendees.length !== 1 ? 's' : ''} sélectionné{selectedAttendees.length !== 1 ? 's' : ''}
                             </Typography>
                         )}
                     </Box>
@@ -1437,7 +1461,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                         color="inherit"
                         disabled={loading}
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         onClick={handleAddAttendees}
@@ -1446,7 +1470,7 @@ const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
                         disabled={loading || selectedAttendees.length === 0}
                         startIcon={loading ? <CircularProgress size={20} /> : <PersonAdd />}
                     >
-                        {loading ? 'Adding...' : 'Add Selected Attendees'}
+                        {loading ? 'Ajout en cours...' : 'Ajouter les Participants Sélectionnés'}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -1463,7 +1487,7 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
         <>
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" fontWeight="bold">
-                    Meeting Agenda
+                    Ordre du Jour
                 </Typography>
 
                 {(meetingStatus === 'scheduled' || meetingStatus === 'in_progress') && (
@@ -1472,7 +1496,7 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
                         startIcon={<Add />}
                         onClick={() => setOpenAddDialog(true)}
                     >
-                        Add Agenda Item
+                        Ajouter un Point
                     </Button>
                 )}
             </Box>
@@ -1480,10 +1504,10 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
             {agendaItems.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 5 }}>
                     <Typography variant="h6" color="text.secondary" gutterBottom>
-                        No agenda items added yet
+                        Aucun point à l'ordre du jour pour le moment
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                        Add items to structure the meeting agenda
+                        Ajoutez des points pour structurer l'ordre du jour de la réunion
                     </Typography>
                     {(meetingStatus === 'scheduled' || meetingStatus === 'in_progress') && (
                         <Button
@@ -1491,7 +1515,7 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
                             startIcon={<Add />}
                             onClick={() => setOpenAddDialog(true)}
                         >
-                            Add Agenda Item
+                            Ajouter un Point
                         </Button>
                     )}
                 </Box>
@@ -1531,7 +1555,7 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
                                             <Chip
                                                 size="small"
                                                 icon={<Check fontSize="small" />}
-                                                label="Completed"
+                                                label="Terminé"
                                                 sx={{
                                                     bgcolor: alpha(theme.palette.success.main, 0.1),
                                                     color: theme.palette.success.main,
@@ -1561,7 +1585,7 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
                                         size="small"
                                         startIcon={<Check />}
                                     >
-                                        Mark Complete
+                                        Marquer Terminé
                                     </Button>
                                 )}
                             </Box>
@@ -1582,16 +1606,16 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
                 }}
             >
                 <DialogTitle id="add-agenda-dialog-title">
-                    Add Agenda Item
+                    Ajouter un Point à l'Ordre du Jour
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>
-                        Add a new item to the meeting agenda.
+                        Ajoutez un nouveau point à l'ordre du jour de la réunion.
                     </DialogContentText>
 
                     {/* Agenda item form would go here */}
                     <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                        [Agenda item form would be here in the actual implementation]
+                        [Le formulaire d'ajout de point serait ici dans l'implémentation réelle]
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
@@ -1599,13 +1623,13 @@ const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
                         onClick={() => setOpenAddDialog(false)}
                         color="inherit"
                     >
-                        Cancel
+                        Annuler
                     </Button>
                     <Button
                         color="primary"
                         variant="contained"
                     >
-                        Add Agenda Item
+                        Ajouter le Point
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -1621,7 +1645,7 @@ const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => 
         <>
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" fontWeight="bold">
-                    Meeting Reports
+                    Rapports de Réunion
                 </Typography>
 
                 {meetingStatus === 'completed' && reports.length === 0 && (
@@ -1630,7 +1654,7 @@ const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => 
                         startIcon={<PictureAsPdf />}
                         onClick={onGenerateReport}
                     >
-                        Generate Report
+                        Générer un Rapport
                     </Button>
                 )}
             </Box>
@@ -1638,12 +1662,12 @@ const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => 
             {reports.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 5 }}>
                     <Typography variant="h6" color="text.secondary" gutterBottom>
-                        No reports available
+                        Aucun rapport disponible
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
                         {meetingStatus === 'completed' ?
-                            'Generate a report to document this completed meeting' :
-                            'Reports can be generated after the meeting is completed'}
+                            'Générez un rapport pour documenter cette réunion terminée' :
+                            'Les rapports peuvent être générés après la fin de la réunion'}
                     </Typography>
                     {meetingStatus === 'completed' && (
                         <Button
@@ -1651,7 +1675,7 @@ const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => 
                             startIcon={<PictureAsPdf />}
                             onClick={onGenerateReport}
                         >
-                            Generate Report
+                            Générer un Rapport
                         </Button>
                     )}
                 </Box>
@@ -1674,7 +1698,7 @@ const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => 
                                             <Chip
                                                 size="small"
                                                 icon={<CheckCircle fontSize="small" />}
-                                                label="Approved"
+                                                label="Approuvé"
                                                 sx={{
                                                     ml: 1,
                                                     bgcolor: alpha(theme.palette.success.main, 0.1),
@@ -1687,7 +1711,7 @@ const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => 
                                 secondary={
                                     <>
                                         <Typography variant="body2" component="span" display="block">
-                                            Created: {new Date(report.created_at).toLocaleDateString()} by {report.created_by_details?.full_name || 'Unknown'}
+                                            Créé le: {new Date(report.created_at).toLocaleDateString()} par {report.created_by_details?.full_name || 'Inconnu'}
                                         </Typography>
                                         <Typography variant="body2" component="span" display="block">
                                             {report.summary}
@@ -1696,18 +1720,18 @@ const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => 
                                 }
                             />
                             <ListItemSecondaryAction>
-                                <Tooltip title="View Report">
+                                <Tooltip title="Voir le Rapport">
                                     <IconButton color="primary">
                                         <Visibility />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Download Report">
+                                <Tooltip title="Télécharger le Rapport">
                                     <IconButton color="primary">
                                         <Download />
                                     </IconButton>
                                 </Tooltip>
                                 {!report.is_approved && (
-                                    <Tooltip title="Approve Report">
+                                    <Tooltip title="Approuver le Rapport">
                                         <IconButton color="success">
                                             <CheckCircle />
                                         </IconButton>

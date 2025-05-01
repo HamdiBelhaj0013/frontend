@@ -35,6 +35,7 @@ import MyTextField from "./forms/MyTextField.jsx";
 import MySelectField from "./forms/MySelectField.jsx";
 
 // Icons
+import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import HomeIcon from '@mui/icons-material/Home';
@@ -199,6 +200,9 @@ const EditMember = () => {
     // Form validation schema
     const schema = yup.object({
         name: yup.string().required('Le nom est requis'),
+        cin: yup.string()
+            .matches(/^\d{8}$/, 'Le CIN doit contenir exactement 8 chiffres')
+            .required('Le CIN est requis'),
         address: yup.string().required('L\'adresse est requise'),
         email: yup.string().email('Email invalide').required('L\'email est requis'),
         nationality: yup.string().required('La nationalité est requise'),
@@ -213,11 +217,11 @@ const EditMember = () => {
             .required('La date d\'adhésion est requise'),
         role: yup.string().required('Le rôle est requis'),
     });
-
     const { handleSubmit, control, setValue, watch, formState: { errors, isValid, isDirty } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             name: '',
+            cin: '',
             address: '',
             email: '',
             nationality: '',
@@ -249,6 +253,7 @@ const EditMember = () => {
                 const data = response.data;
 
                 setValue("name", data.name);
+                setValue("cin", data.cin || '');
                 setValue("address", data.address);
                 setValue("email", data.email);
                 setValue("nationality", data.nationality);
@@ -722,6 +727,21 @@ const EditMember = () => {
                                                                 placeholder="Entrez l'adresse email"
                                                                 error={!!errors.email}
                                                                 helperText={errors.email?.message}
+                                                            />
+                                                        </FormBox>
+                                                    </Grid>
+                                                    <Grid item xs={12} md={6}>
+                                                        <FormBox>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                <PermIdentityIcon color="primary" sx={{ mr: 1 }} />
+                                                                <Typography variant="subtitle2">CIN</Typography>
+                                                            </Box>
+                                                            <MyTextField
+                                                                name="cin"
+                                                                control={control}
+                                                                placeholder="Entrez le numéro CIN (8 chiffres)"
+                                                                error={!!errors.cin}
+                                                                helperText={errors.cin?.message}
                                                             />
                                                         </FormBox>
                                                     </Grid>

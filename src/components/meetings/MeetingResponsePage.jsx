@@ -23,12 +23,12 @@ const MeetingResponse = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                console.log(`Loading data for attendee: ${attendeeId}, token: ${token}`);
+                console.log(`Chargement des données pour le participant: ${attendeeId}, token: ${token}`);
 
                 // Get meeting and attendee details
                 const response = await AxiosInstance.get(`/meetings/attendees/${attendeeId}/response/${token}/`);
 
-                console.log('Response data:', response.data);
+                console.log('Données de réponse:', response.data);
                 setMeeting(response.data.meeting);
                 setAttendee(response.data.attendee);
 
@@ -41,9 +41,9 @@ const MeetingResponse = () => {
 
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching meeting data:', error);
-                setError(`Unable to load meeting information. The link may be invalid or expired. 
-                          Details: ${error.response?.data?.error || error.message}`);
+                console.error('Erreur lors de la récupération des données de réunion:', error);
+                setError(`Impossible de charger les informations de la réunion. Le lien peut être invalide ou expiré. 
+                          Détails: ${error.response?.data?.error || error.message}`);
                 setLoading(false);
             }
         };
@@ -54,13 +54,13 @@ const MeetingResponse = () => {
     // Submit response
     const handleSubmit = async () => {
         if (!status) {
-            setError('Please select your attendance status.');
+            setError('Veuillez sélectionner votre statut de présence.');
             return;
         }
 
         try {
             setLoading(true);
-            console.log(`Submitting response for attendee: ${attendeeId}, token: ${token}, status: ${status}`);
+            console.log(`Soumission de la réponse pour le participant: ${attendeeId}, token: ${token}, statut: ${status}`);
 
             const response = await AxiosInstance.post(
                 `/meetings/attendees/${attendeeId}/response/${token}/`,
@@ -70,13 +70,13 @@ const MeetingResponse = () => {
                 }
             );
 
-            console.log('Response submitted successfully:', response.data);
+            console.log('Réponse soumise avec succès:', response.data);
             setSubmitted(true);
             setLoading(false);
         } catch (error) {
-            console.error('Error submitting response:', error);
-            setError(`Failed to submit your response. Please try again later. 
-                      Details: ${error.response?.data?.error || error.message}`);
+            console.error('Erreur lors de la soumission de la réponse:', error);
+            setError(`Échec de la soumission de votre réponse. Veuillez réessayer plus tard. 
+                      Détails: ${error.response?.data?.error || error.message}`);
             setLoading(false);
         }
     };
@@ -84,7 +84,7 @@ const MeetingResponse = () => {
     // Handle direct response buttons
     useEffect(() => {
         if (responseType && !loading && !error && attendee && !submitted) {
-            console.log(`Auto-submitting response: ${responseType} (${status})`);
+            console.log(`Soumission automatique de la réponse: ${responseType} (${status})`);
             // Auto-submit if response type is provided in URL
             handleSubmit();
         }
@@ -95,7 +95,7 @@ const MeetingResponse = () => {
             <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
                 <CircularProgress />
                 <Typography variant="h6" sx={{ mt: 2 }}>
-                    Processing your response...
+                    Traitement de votre réponse...
                 </Typography>
             </Container>
         );
@@ -109,16 +109,16 @@ const MeetingResponse = () => {
                 </Alert>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography variant="h5" gutterBottom>
-                        Error
+                        Erreur
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        There was a problem processing your meeting response.
+                        Un problème est survenu lors du traitement de votre réponse à la réunion.
                     </Typography>
                     <Button
                         variant="contained"
                         onClick={() => navigate('/')}
                     >
-                        Return to Dashboard
+                        Retour au Tableau de Bord
                     </Button>
                 </Paper>
             </Container>
@@ -133,15 +133,15 @@ const MeetingResponse = () => {
                         ✓
                     </Box>
                     <Typography variant="h5" gutterBottom>
-                        Response Submitted
+                        Réponse Soumise
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Thank you for responding to the meeting invitation.
+                        Merci d'avoir répondu à l'invitation à la réunion.
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Your status has been updated to: <strong>
-                        {status === 'present' ? 'Attending' :
-                            status === 'absent' ? 'Not Attending' : 'Excused'}
+                        Votre statut a été mis à jour en: <strong>
+                        {status === 'present' ? 'Présent' :
+                            status === 'absent' ? 'Absent' : 'Excusé'}
                     </strong>
                     </Typography>
                     {meeting && (
@@ -150,7 +150,7 @@ const MeetingResponse = () => {
                                 <strong>{meeting.title}</strong>
                             </Typography>
                             <Typography variant="body2">
-                                {new Date(meeting.start_date).toLocaleString('en-US', {
+                                {new Date(meeting.start_date).toLocaleString('fr-FR', {
                                     weekday: 'long',
                                     year: 'numeric',
                                     month: 'long',
@@ -165,7 +165,7 @@ const MeetingResponse = () => {
                         variant="contained"
                         onClick={() => navigate('/')}
                     >
-                        Return to Dashboard
+                        Retour au Tableau de Bord
                     </Button>
                 </Paper>
             </Container>
@@ -175,7 +175,7 @@ const MeetingResponse = () => {
     return (
         <Container maxWidth="md" sx={{ mt: 4 }}>
             <Typography variant="h4" gutterBottom>
-                Meeting Response
+                Réponse à la Réunion
             </Typography>
 
             {meeting && (
@@ -189,7 +189,7 @@ const MeetingResponse = () => {
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2">Date:</Typography>
                             <Typography variant="body1" gutterBottom>
-                                {new Date(meeting.start_date).toLocaleDateString('en-US', {
+                                {new Date(meeting.start_date).toLocaleDateString('fr-FR', {
                                     weekday: 'long',
                                     year: 'numeric',
                                     month: 'long',
@@ -199,13 +199,13 @@ const MeetingResponse = () => {
                         </Grid>
 
                         <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2">Time:</Typography>
+                            <Typography variant="subtitle2">Heure:</Typography>
                             <Typography variant="body1" gutterBottom>
-                                {new Date(meeting.start_date).toLocaleTimeString('en-US', {
+                                {new Date(meeting.start_date).toLocaleTimeString('fr-FR', {
                                     hour: '2-digit',
                                     minute: '2-digit'
                                 })} -
-                                {new Date(meeting.end_date).toLocaleTimeString('en-US', {
+                                {new Date(meeting.end_date).toLocaleTimeString('fr-FR', {
                                     hour: '2-digit',
                                     minute: '2-digit'
                                 })}
@@ -213,11 +213,11 @@ const MeetingResponse = () => {
                         </Grid>
 
                         <Grid item xs={12}>
-                            <Typography variant="subtitle2">Location:</Typography>
+                            <Typography variant="subtitle2">Lieu:</Typography>
                             <Typography variant="body1" gutterBottom>
                                 {meeting.is_virtual ?
-                                    (meeting.meeting_link || 'Virtual Meeting') :
-                                    (meeting.location || 'Location TBD')}
+                                    (meeting.meeting_link || 'Réunion Virtuelle') :
+                                    (meeting.location || 'Lieu à déterminer')}
                             </Typography>
                         </Grid>
 
@@ -235,11 +235,11 @@ const MeetingResponse = () => {
 
             <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                    Your Response
+                    Votre Réponse
                 </Typography>
 
                 <Typography variant="body1" paragraph>
-                    Will you attend this meeting?
+                    Participerez-vous à cette réunion ?
                 </Typography>
 
                 <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -249,7 +249,7 @@ const MeetingResponse = () => {
                             color="success"
                             onClick={() => setStatus('present')}
                         >
-                            Yes, I'll Attend
+                            Oui, je participerai
                         </Button>
                     </Grid>
 
@@ -259,7 +259,7 @@ const MeetingResponse = () => {
                             color="error"
                             onClick={() => setStatus('absent')}
                         >
-                            No, I Can't Attend
+                            Non, je ne peux pas participer
                         </Button>
                     </Grid>
 
@@ -269,7 +269,7 @@ const MeetingResponse = () => {
                             color="warning"
                             onClick={() => setStatus('excused')}
                         >
-                            Request Excused Absence
+                            Demande d'absence excusée
                         </Button>
                     </Grid>
                 </Grid>
@@ -278,11 +278,11 @@ const MeetingResponse = () => {
                     fullWidth
                     multiline
                     rows={3}
-                    label="Additional Notes (Optional)"
+                    label="Notes Supplémentaires (Optionnel)"
                     variant="outlined"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Add any comments or reasons for your response"
+                    placeholder="Ajoutez des commentaires ou des raisons pour votre réponse"
                     sx={{ mb: 3 }}
                 />
 
@@ -298,7 +298,7 @@ const MeetingResponse = () => {
                         onClick={handleSubmit}
                         disabled={!status}
                     >
-                        Submit Response
+                        Soumettre la Réponse
                     </Button>
                 </Box>
             </Paper>

@@ -39,6 +39,7 @@ import { usePermissions } from '../contexts/PermissionsContext.jsx';
 import { secureApi } from '../utils/secureApi.js';
 
 // Icons
+import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import InfoIcon from '@mui/icons-material/Info';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import EditIcon from '@mui/icons-material/Edit';
@@ -367,6 +368,11 @@ const Members = () => {
                             <Typography variant="caption" color="text.secondary">
                                 {row.original.email}
                             </Typography>
+                            {row.original.cin && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                    CIN: {row.original.cin}
+                                </Typography>
+                            )}
                             {row.original.needs_profile_completion && (
                                 <Chip
                                     label="Complétion nécessaire"
@@ -938,6 +944,21 @@ const Members = () => {
                                             </Typography>
                                             <Typography variant="body1">
                                                 {selectedMember.nationality || 'Not provided'}
+                                            </Typography>
+                                        </Box>
+                                    </DetailItem>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <DetailItem>
+                                        <DetailIcon>
+                                            <PermIdentityIcon color="inherit" />
+                                        </DetailIcon>
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                CIN
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {selectedMember.cin || 'Non renseigné'}
                                             </Typography>
                                         </Box>
                                     </DetailItem>
