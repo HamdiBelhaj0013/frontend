@@ -1,96 +1,58 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Box,
-    Typography,
-    Button,
-    Paper,
-    Container,
-    Grid,
-    Divider,
-    Chip,
-    Avatar,
-    CircularProgress,
-    Alert,
-    Tabs,
-    Tab,
-    IconButton,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemAvatar,
-    ListItemSecondaryAction,
-    Card,
-    CardContent,
-    LinearProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Tooltip,
-    TextField,
-    Badge
+    Box, Container, Typography, Paper, Button, Tabs, Tab, CircularProgress,
+    Alert, Divider, Chip, Dialog, DialogTitle, DialogContent, DialogContentText,
+    DialogActions, TextField, List, ListItem, ListItemText, ListItemAvatar,
+    Avatar, ListItemSecondaryAction, IconButton, Badge, Tooltip, Grid,
+    FormControlLabel, Switch, FormControl, InputLabel, Select, MenuItem, Checkbox
 } from '@mui/material';
 import { styled, useTheme, alpha } from '@mui/material/styles';
 import {
-    Event,
-    EventAvailable,
-    EventBusy,
-    LocationOn,
-    AccessTime,
-    Groups,
-    Description,
-    Assignment,
-    ArrowBack,
-    PersonAdd,
-    Add,
-    Cancel,
-    CheckCircle,
-    VideoCall,
-    Download,
-    PictureAsPdf,
-    EditNote,
-    Delete,
-    Visibility,
-    Person,
-    Check,
-    Close
+    ArrowBack, Event, LocationOn, AccessTime, Groups, Description,
+    PersonAdd, EditNote, Cancel, Assignment, PictureAsPdf, Check, Close,
+    VideoCall, Add, CheckCircle, Visibility, Download, ListAlt, AttachFile,
+    Search
 } from '@mui/icons-material';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import AxiosInstance from '../Axios.jsx';
 import moment from 'moment';
-import { motion } from 'framer-motion';
-// Enhanced AttendeesTab Component
-import {Checkbox, InputAdornment} from '@mui/material';
-import {Search} from '@mui/icons-material';
-import { usePermissions } from '../../contexts/PermissionsContext';
-const HeaderContainer = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(3),
-    marginBottom: theme.spacing(3),
-    borderRadius: '12px',
-    background: 'linear-gradient(135deg, #4a6bd8, #3949AB)',
-    color: 'white',
-    position: 'relative',
-    overflow: 'hidden',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-}));
+import AxiosInstance from '../Axios.jsx';
+import { usePermissions } from '/src/contexts/PermissionsContext.jsx';
 
-const StyledCard = styled(Card)(({ theme }) => ({
-    borderRadius: '12px',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    height: '100%',
-    overflow: 'hidden',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
-    }
-}));
-
+// Styled components - IMPORTANT: Define all styled components outside the component function
 const StyledPaper = styled(Paper)(({ theme }) => ({
     borderRadius: '12px',
     boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
     overflow: 'hidden',
+}));
+
+const HeaderPaper = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #3252B2, #1a237e)', // Darker gradient for better contrast
+    color: 'white',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+    '& .MuiTypography-root': {
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)', // Text shadow for better readability
+    },
+    '& .MuiChip-root': {
+        fontWeight: 'bold',
+    },
+    '&::after': { // Add subtle texture for better contrast
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        opacity: 0.1,
+        backgroundImage: `radial-gradient(circle at 100% 150%, rgba(255, 255, 255, 0.1) 6px, transparent 8px),
+        radial-gradient(circle at 0% 150%, rgba(255, 255, 255, 0.1) 6px, transparent 8px)`,
+        backgroundSize: '40px 40px',
+        pointerEvents: 'none',
+    }
 }));
 
 const StyledTabs = styled(Tabs)(({ theme }) => ({
@@ -99,92 +61,87 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
         minWidth: 100,
         fontWeight: 500,
         textTransform: 'none',
-        '&.Mui-selected': {
-            color: theme.palette.primary.main,
-            fontWeight: 600,
-        }
     },
-    '& .MuiTabs-indicator': {
-        height: 3,
-        borderTopLeftRadius: 3,
-        borderTopRightRadius: 3,
+}));
+
+// Header components - must be defined OUTSIDE component
+const HeaderIconWrapper = styled(Box)(({ theme }) => ({
+    backgroundColor: alpha(theme.palette.common.white, 0.1),
+    borderRadius: '50%',
+    padding: theme.spacing(1.5),
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing(1.5),
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    width: 42,
+    height: 42,
+}));
+
+const HeaderButton = styled(Button)(({ theme }) => ({
+    fontWeight: 600,
+    padding: theme.spacing(1, 2),
+    textTransform: 'none',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+    textShadow: '0 1px 1px rgba(0,0,0,0.2)',
+    '&.MuiButton-outlined': {
+        borderColor: 'rgba(255,255,255,0.5)',
+        color: theme.palette.common.white,
+        '&:hover': {
+            backgroundColor: alpha(theme.palette.common.white, 0.1),
+            borderColor: theme.palette.common.white
+        }
     }
 }));
 
-const AttendeeItem = styled(ListItem)(({ theme }) => ({
-    borderRadius: '8px',
-    marginBottom: theme.spacing(1),
+const HeaderTypeChip = styled(Chip)(({ theme }) => ({
+    backgroundColor: alpha(theme.palette.common.white, 0.15),
+    color: theme.palette.common.white,
+    fontWeight: 600,
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(4px)',
+    textShadow: '0 1px 1px rgba(0,0,0,0.2)',
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.05),
+        backgroundColor: alpha(theme.palette.common.white, 0.25),
     }
 }));
 
-const AgendaItem = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(2),
-    marginBottom: theme.spacing(2),
-    borderRadius: '8px',
-    boxShadow: 'none',
-    border: `1px solid ${theme.palette.divider}`,
-    '&:hover': {
-        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-    }
-}));
-
-function TabPanel(props) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`meeting-tabpanel-${index}`}
-            aria-labelledby={`meeting-tab-${index}`}
-            {...other}
-        >
-            {value === index && (
-                <Box sx={{ p: 3 }}>
-                    {children}
-                </Box>
-            )}
-        </div>
-    );
-}
-
-// Status chip component
-const StatusChip = ({ status }) => {
+// Badge status components
+const EnhancedBadgeStatut = props => {
+    const { status, ...other } = props;
     const theme = useTheme();
-
-    let color, icon, label;
+    let color, backgroundColor, label;
 
     switch (status) {
         case 'scheduled':
-            color = theme.palette.success.main;
-            icon = <EventAvailable fontSize="small" />;
+            color = theme.palette.common.white;
+            backgroundColor = alpha(theme.palette.success.main, 0.8);
             label = 'Planifiée';
             break;
         case 'cancelled':
-            color = theme.palette.error.main;
-            icon = <EventBusy fontSize="small" />;
+            color = theme.palette.common.white;
+            backgroundColor = alpha(theme.palette.error.main, 0.8);
             label = 'Annulée';
             break;
         case 'completed':
-            color = theme.palette.text.secondary;
-            icon = <Event fontSize="small" />;
+            color = theme.palette.common.white;
+            backgroundColor = alpha(theme.palette.grey[600], 0.8);
             label = 'Terminée';
             break;
         case 'postponed':
-            color = theme.palette.warning.main;
-            icon = <Event fontSize="small" />;
+            color = theme.palette.common.white;
+            backgroundColor = alpha(theme.palette.warning.main, 0.8);
             label = 'Reportée';
             break;
         case 'in_progress':
-            color = theme.palette.info.main;
-            icon = <Event fontSize="small" />;
-            label = 'En Cours';
+            color = theme.palette.common.white;
+            backgroundColor = alpha(theme.palette.info.main, 0.8);
+            label = 'En cours';
             break;
         default:
-            color = theme.palette.primary.main;
-            icon = <Event fontSize="small" />;
+            color = theme.palette.common.white;
+            backgroundColor = alpha(theme.palette.primary.main, 0.8);
             label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Inconnu';
     }
 
@@ -192,49 +149,46 @@ const StatusChip = ({ status }) => {
         <Chip
             size="medium"
             label={label}
-            icon={icon}
             sx={{
                 color: color,
-                bgcolor: alpha(color, 0.1),
-                fontWeight: 500,
-                '& .MuiChip-icon': {
-                    color,
-                }
+                bgcolor: backgroundColor,
+                fontWeight: 600,
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
             }}
+            {...other}
         />
     );
 };
 
-// Type chip component
-const TypeChip = ({ type }) => {
+const BadgeStatut = ({ status }) => {
     const theme = useTheme();
-
     let color, label;
 
-    switch (type) {
-        case 'regular':
-            color = theme.palette.primary.main;
-            label = 'Réunion Ordinaire';
-            break;
-        case 'board':
+    switch (status) {
+        case 'scheduled':
             color = theme.palette.success.main;
-            label = 'Réunion du Conseil';
+            label = 'Planifiée';
             break;
-        case 'extraordinary':
+        case 'cancelled':
             color = theme.palette.error.main;
-            label = 'Réunion Extraordinaire';
+            label = 'Annulée';
             break;
-        case 'general_assembly':
+        case 'completed':
+            color = theme.palette.text.secondary;
+            label = 'Terminée';
+            break;
+        case 'postponed':
             color = theme.palette.warning.main;
-            label = 'Assemblée Générale';
+            label = 'Reportée';
             break;
-        case 'committee':
+        case 'in_progress':
             color = theme.palette.info.main;
-            label = 'Réunion de Comité';
+            label = 'En cours';
             break;
         default:
-            color = theme.palette.grey[600];
-            label = 'Autre';
+            color = theme.palette.primary.main;
+            label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Inconnu';
     }
 
     return (
@@ -244,16 +198,14 @@ const TypeChip = ({ type }) => {
             sx={{
                 color: color,
                 bgcolor: alpha(color, 0.1),
-                fontWeight: 500,
+                fontWeight: 500
             }}
         />
     );
 };
 
-// Attendance status chip
-const AttendanceStatusChip = ({ status }) => {
+const BadgeStatutPresence = ({ status }) => {
     const theme = useTheme();
-
     let color, label;
 
     switch (status) {
@@ -271,11 +223,15 @@ const AttendanceStatusChip = ({ status }) => {
             break;
         case 'late':
             color = theme.palette.info.main;
-            label = 'En Retard';
+            label = 'En retard';
+            break;
+        case 'pending':
+            color = theme.palette.info.light;
+            label = 'En attente';
             break;
         default:
             color = theme.palette.grey[600];
-            label = status ? status : 'Inconnu';
+            label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Inconnu';
     }
 
     return (
@@ -291,56 +247,149 @@ const AttendanceStatusChip = ({ status }) => {
     );
 };
 
-const MeetingDetail = () => {
+// Composant d'affichage de l'ordre du jour
+const AffichageOrdreJour = ({ agenda }) => {
+    if (!agenda) return <Typography>Aucun ordre du jour fourni.</Typography>;
+
+    // Vérifier si l'ordre du jour est une liste en texte brut ou en style markdown
+    const lines = agenda.split('\n');
+    const formattedLines = lines.map((line, index) => {
+        // Vérifier les listes numérotées (1. Item)
+        const numberedMatch = line.match(/^(\d+)\.\s+(.+)$/);
+        if (numberedMatch) {
+            return (
+                <Box key={index} sx={{ display: 'flex', mb: 1 }}>
+                    <Typography variant="body1" fontWeight="medium" sx={{ minWidth: '30px' }}>
+                        {numberedMatch[1]}.
+                    </Typography>
+                    <Typography variant="body1">{numberedMatch[2]}</Typography>
+                </Box>
+            );
+        }
+
+        // Vérifier les listes à puces (- Item ou • Item)
+        const bulletMatch = line.match(/^[-•]\s+(.+)$/);
+        if (bulletMatch) {
+            return (
+                <Box key={index} sx={{ display: 'flex', mb: 1, alignItems: 'center' }}>
+                    <Box sx={{ width: '6px', height: '6px', borderRadius: '50%', bgcolor: 'text.primary', mr: 1.5, ml: 1 }} />
+                    <Typography variant="body1">{bulletMatch[1]}</Typography>
+                </Box>
+            );
+        }
+
+        // Ligne de texte régulière
+        return <Typography key={index} variant="body1" paragraph={line.trim() !== ''}>{line}</Typography>;
+    });
+
+    return <Box>{formattedLines}</Box>;
+};
+
+// Composant auxiliaire pour les panneaux d'onglets
+function PanneauOnglet(props) {
+    const { children, value, index, ...other } = props;
+    return (
+        <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`meeting-tabpanel-${index}`}
+            aria-labelledby={`meeting-tab-${index}`}
+            {...other}
+        >
+            {value === index && (
+                <Box sx={{ p: 3 }}>
+                    {children}
+                </Box>
+            )}
+        </div>
+    );
+}
+
+const DetailReunion = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const theme = useTheme();
-    // Add the permissions hook
     const { can, RESOURCES, ACTIONS } = usePermissions();
 
-    // Check if user has edit permissions
+    // Vérifier si l'utilisateur a des autorisations de modification
     const canEditMeetings = can(ACTIONS.EDIT, RESOURCES.MEETINGS);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [meeting, setMeeting] = useState(null);
     const [attendees, setAttendees] = useState([]);
-    const [agendaItems, setAgendaItems] = useState([]);
     const [reports, setReports] = useState([]);
     const [tabValue, setTabValue] = useState(0);
-    const [openGenerateDialog, setOpenGenerateDialog] = useState(false);
-    const [openCancelDialog, setOpenCancelDialog] = useState(false);
-    const [openMinutesDialog, setOpenMinutesDialog] = useState(false);
-    const [minutes, setMinutes] = useState('');
-    const [generatingReport, setGeneratingReport] = useState(false);
 
-    // Fetch meeting data
+    // État de la boîte de dialogue Ajouter un participant
+    const [openAddAttendeeDialog, setOpenAddAttendeeDialog] = useState(false);
+    const [availableMembers, setAvailableMembers] = useState([]);
+    const [selectedMembers, setSelectedMembers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loadingMembers, setLoadingMembers] = useState(false);
+    const [addingAttendees, setAddingAttendees] = useState(false);
+
+    // États des boîtes de dialogue
+    const [openCancelDialog, setOpenCancelDialog] = useState(false);
+    const [openMarkCompleteDialog, setOpenMarkCompleteDialog] = useState(false);
+    const [success, setSuccess] = useState({ show: false, message: '', severity: 'success' });
+
+    // État de traitement
+    const [markingComplete, setMarkingComplete] = useState(false);
+
+    // État de la boîte de dialogue du procès-verbal
+    const [openPVDialog, setOpenPVDialog] = useState(false);
+    const [pvTitle, setPvTitle] = useState('');
+    const [pvContent, setPvContent] = useState('');
+    const [generatingPV, setGeneratingPV] = useState(false);
+    const [includeAttendance, setIncludeAttendance] = useState(true);
+
+    // Récupérer les données de la réunion
     useEffect(() => {
         const fetchMeetingData = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Fetch meeting details
+                // Récupérer les détails de la réunion
                 const meetingResponse = await AxiosInstance.get(`/meetings/meetings/${id}/`);
+
+                // Vérifier si la réunion a été récupérée avec succès
+                if (!meetingResponse.data) {
+                    throw new Error('Données de réunion introuvables');
+                }
+
                 setMeeting(meetingResponse.data);
 
-                // Fetch attendees
-                const attendeesResponse = await AxiosInstance.get(`/meetings/attendees/?meeting=${id}`);
-                setAttendees(attendeesResponse.data);
+                // Récupérer les participants avec le point d'accès et le paramètre de requête corrects
+                const attendeesResponse = await AxiosInstance.get(`/meetings/attendees/`, {
+                    params: { meeting: id }
+                });
 
-                // Fetch agenda items
-                const agendaResponse = await AxiosInstance.get(`/meetings/agenda-items/?meeting=${id}`);
-                setAgendaItems(agendaResponse.data);
+                // S'assurer que les participants ont été récupérés avec succès
+                if (attendeesResponse.data) {
+                    setAttendees(attendeesResponse.data);
+                }
 
-                // Fetch reports
-                const reportsResponse = await AxiosInstance.get(`/meetings/reports/?meeting=${id}`);
-                setReports(reportsResponse.data);
+                // Récupérer les rapports - S'ASSURER que nous ne récupérons que les rapports pour cette réunion
+                const reportsResponse = await AxiosInstance.get(`/meetings/reports/`, {
+                    params: { meeting: id }
+                });
+
+                if (reportsResponse.data) {
+                    setReports(reportsResponse.data);
+                    console.log(`${reportsResponse.data.length} rapports récupérés pour la réunion ${id}`);
+                }
+
+                // Définir le titre PV par défaut
+                if (meetingResponse.data) {
+                    setPvTitle(`Procès-Verbal: ${meetingResponse.data.title}`);
+                }
 
                 setLoading(false);
             } catch (err) {
                 console.error('Erreur lors de la récupération des données de réunion:', err);
-                setError('Échec du chargement des détails de la réunion. Veuillez réessayer.');
+                setError(`Échec du chargement des détails de la réunion: ${err.message || 'Veuillez réessayer.'}`);
                 setLoading(false);
             }
         };
@@ -350,104 +399,588 @@ const MeetingDetail = () => {
         }
     }, [id]);
 
-    // Handle tab change
+
+
+    // Récupérer les membres disponibles qui peuvent être ajoutés comme participants
+    const fetchAvailableMembers = async () => {
+        if (!meeting || !meeting.association) {
+            console.error("Impossible de récupérer les membres: ID de réunion ou d'association manquant");
+            setError("Informations de réunion manquantes. Veuillez actualiser la page.");
+            return;
+        }
+
+        try {
+            setLoadingMembers(true);
+            setError(null); // Effacer les erreurs précédentes
+
+            // Utiliser le point d'accès API correct pour récupérer les membres
+            const response = await AxiosInstance.get('/api/member/', {
+                params: { association: meeting.association }
+            });
+
+            // Obtenir les ID des membres participants actuels
+            const currentAttendeeIds = attendees.map(a =>
+                typeof a.member === 'number' ? a.member :
+                    (a.member_details?.id || a.member)
+            );
+
+            // Filtrer les membres qui sont déjà participants
+            const filteredMembers = Array.isArray(response.data)
+                ? response.data.filter(member => !currentAttendeeIds.includes(member.id))
+                : [];
+
+            if (filteredMembers.length === 0) {
+                setError("Tous les membres ont déjà été ajoutés à cette réunion");
+            }
+
+            setAvailableMembers(filteredMembers);
+            setLoadingMembers(false);
+        } catch (err) {
+            console.error('Erreur lors de la récupération des membres:', err);
+            setError('Échec du chargement des membres disponibles: ' +
+                (err.response?.data?.error || err.message || 'Erreur inconnue'));
+            setLoadingMembers(false);
+        }
+    };
+
+    // Ouvrir la boîte de dialogue Ajouter un participant
+    const handleOpenAddAttendeeDialog = () => {
+        setSelectedMembers([]);
+        setSearchTerm('');
+        setError(null);
+        setOpenAddAttendeeDialog(true);
+        fetchAvailableMembers();
+    };
+
+    // Gérer l'ajout des membres sélectionnés comme participants
+    const handleAddAttendees = async () => {
+        if (selectedMembers.length === 0) {
+            setError("Veuillez sélectionner au moins un membre à ajouter");
+            return;
+        }
+
+        try {
+            setAddingAttendees(true);
+
+            // Formater les données correctement pour l'API - en utilisant le point d'accès approprié
+            const attendeesData = selectedMembers.map(memberId => ({
+                member: memberId,
+                status: 'pending', // Définir comme en attente par défaut
+                attendance_mode: 'undecided' // Par défaut à indécis
+            }));
+
+            // Appeler le point d'accès correct avec le format de données approprié
+            const response = await AxiosInstance.post(`/meetings/meetings/${id}/add_attendees/`, {
+                attendees: attendeesData
+            });
+
+            // Actualiser la liste des participants
+            const attendeesResponse = await AxiosInstance.get(`/meetings/attendees/`, {
+                params: { meeting: id }
+            });
+
+            // Mettre à jour l'état avec les nouveaux participants
+            setAttendees(attendeesResponse.data);
+            setOpenAddAttendeeDialog(false);
+            setAddingAttendees(false);
+
+            // Afficher un message de succès
+            setSuccess({
+                show: true,
+                message: `${response.data.created?.length || 0} nouveaux participants ajoutés avec succès`,
+                severity: "success"
+            });
+
+            // Masquer le message de succès après 3 secondes
+            setTimeout(() => {
+                setSuccess(prev => ({ ...prev, show: false }));
+            }, 3000);
+        } catch (err) {
+            console.error('Erreur lors de l\'ajout des participants:', err);
+            setError('Échec de l\'ajout des participants: ' +
+                (err.response?.data?.error || err.message || 'Veuillez réessayer.'));
+            setAddingAttendees(false);
+        }
+    };
+
+    // Basculer la sélection des membres
+    const handleToggleMember = (memberId) => {
+        setSelectedMembers(prev => {
+            if (prev.includes(memberId)) {
+                return prev.filter(id => id !== memberId);
+            } else {
+                return [...prev, memberId];
+            }
+        });
+    };
+
+    // Filtrer les membres en fonction du terme de recherche
+    const filteredMembers = availableMembers.filter(member =>
+        member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Gérer le changement d'onglet
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
     };
 
-    // Format date for display
+    // Formater la date pour l'affichage
     const formatDate = (date) => {
-        return moment(date).format('dddd, D MMMM YYYY');
+        return moment(date).format('dddd D MMMM YYYY');
     };
 
-    // Format time for display
+    // Formater l'heure pour l'affichage
     const formatTime = (date) => {
         return moment(date).format('HH:mm');
     };
 
-    // Handle minutes submission
-    const handleSubmitMinutes = async () => {
+    // Nouvelle fonction directe marquer comme terminée et afficher la boîte de dialogue PV
+    const handleMarkComplete = async () => {
         try {
+            setMarkingComplete(true);
+            setOpenMarkCompleteDialog(false);
+
+            // Marquer la réunion comme terminée
             await AxiosInstance.post(`/meetings/meetings/${id}/mark_complete/`, {
-                minutes: minutes
+                summary: ""  // Résumé vide initialement
             });
 
-            // Update meeting data
-            const updatedMeeting = { ...meeting, minutes, status: 'completed' };
+            // Mettre à jour les données de la réunion
+            const updatedMeeting = { ...meeting, status: 'completed' };
             setMeeting(updatedMeeting);
-            setOpenMinutesDialog(false);
 
-            // Show generate report dialog
-            setOpenGenerateDialog(true);
+            // Afficher un message de succès
+            setSuccess({
+                show: true,
+                message: "La réunion a été marquée comme terminée",
+                severity: "success"
+            });
+
+            // Masquer le message de succès après 3 secondes et ouvrir la boîte de dialogue PV
+            setTimeout(() => {
+                setSuccess(prev => ({ ...prev, show: false }));
+                // Ouvrir la boîte de dialogue PV directement après avoir terminé la réunion
+                setOpenPVDialog(true);
+            }, 1500);
+
+            setMarkingComplete(false);
         } catch (err) {
-            console.error('Erreur lors de la soumission du procès-verbal:', err);
-            setError('Échec de la soumission du procès-verbal. Veuillez réessayer.');
+            console.error('Erreur lors du marquage de la réunion comme terminée:', err);
+            setError('Échec du marquage de la réunion comme terminée. Veuillez réessayer.');
+            setMarkingComplete(false);
         }
     };
 
-    // Handle cancel meeting
+    // Gérer l'annulation de la réunion
     const handleCancelMeeting = async () => {
         try {
             await AxiosInstance.patch(`/meetings/meetings/${id}/`, {
                 status: 'cancelled'
             });
 
-            // Update meeting data
+            // Mettre à jour les données de la réunion
             const updatedMeeting = { ...meeting, status: 'cancelled' };
             setMeeting(updatedMeeting);
             setOpenCancelDialog(false);
+
+            // Afficher un message de succès
+            setSuccess({
+                show: true,
+                message: "La réunion a été annulée",
+                severity: "info"
+            });
+
+            // Masquer le message de succès après 3 secondes
+            setTimeout(() => {
+                setSuccess(prev => ({ ...prev, show: false }));
+            }, 3000);
         } catch (err) {
             console.error('Erreur lors de l\'annulation de la réunion:', err);
             setError('Échec de l\'annulation de la réunion. Veuillez réessayer.');
         }
     };
 
-    // Handle generate report
-    const handleGenerateReport = async () => {
+    // Gérer la mise à jour du statut de présence
+    const handleUpdateAttendanceStatus = async (attendeeId, newStatus) => {
         try {
-            setGeneratingReport(true);
-
-            await AxiosInstance.post(`/meetings/meetings/${id}/generate_report/`, {
-                include_attendance: true,
-                include_agenda_items: true,
-                include_minutes: true,
-                report_title: `Rapport de Réunion: ${meeting.title}`,
-                summary: 'Ce rapport résume les discussions, décisions et points d\'action de la réunion.'
+            await AxiosInstance.patch(`/meetings/attendees/${attendeeId}/`, {
+                status: newStatus
             });
 
-            // Fetch updated reports
-            const reportsResponse = await AxiosInstance.get(`/meetings/reports/?meeting=${id}`);
-            setReports(reportsResponse.data);
-
-            setGeneratingReport(false);
-            setOpenGenerateDialog(false);
-
-            // Switch to reports tab
-            setTabValue(3);
+            // Mettre à jour l'état local au lieu de recharger
+            const updatedAttendees = attendees.map(a =>
+                a.id === attendeeId ? { ...a, status: newStatus } : a
+            );
+            setAttendees(updatedAttendees);
         } catch (err) {
-            console.error('Erreur lors de la génération du rapport:', err);
-            setError('Échec de la génération du rapport de réunion. Veuillez réessayer.');
-            setGeneratingReport(false);
+            console.error('Erreur lors de la mise à jour du statut de présence:', err);
+            setError('Échec de la mise à jour du statut de présence. Veuillez réessayer.');
         }
     };
+// Handle report approval
+    const handleApproveReport = async (reportId) => {
+        try {
+            await AxiosInstance.patch(`/meetings/reports/${reportId}/`, {
+                is_approved: true
+            });
 
-    // Motion animation variants
-    const containerVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.5,
-                when: "beforeChildren",
-                staggerChildren: 0.1
+            // Update the reports list
+            const updatedReports = reports.map(report =>
+                report.id === reportId ? { ...report, is_approved: true } : report
+            );
+            setReports(updatedReports);
+
+            // Show success message
+            setSuccess({
+                show: true,
+                message: "Le rapport a été approuvé avec succès",
+                severity: "success"
+            });
+
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                setSuccess(prev => ({ ...prev, show: false }));
+            }, 3000);
+        } catch (err) {
+            console.error('Erreur lors de l\'approbation du rapport:', err);
+            setError('Échec de l\'approbation du rapport. Veuillez réessayer.');
+        }
+    };
+    // Gérer la création du PDF PV
+    const handleCreatePV = async () => {
+        try {
+            setGeneratingPV(true);
+
+            // Préparer les données PV
+            const pvData = {
+                meeting_id: id,
+                report_title: pvTitle,
+                summary: pvContent,
+                include_attendance: includeAttendance
+            };
+
+            // Appeler l'API pour générer le PV
+            const response = await AxiosInstance.post(`/meetings/meetings/${id}/generate_report/`, pvData);
+
+            // Récupérer la liste des rapports mise à jour
+            const reportsResponse = await AxiosInstance.get(`/meetings/reports/`, {
+                params: { meeting: id }
+            });
+
+            if (reportsResponse.data) {
+                setReports(reportsResponse.data);
             }
+
+            setGeneratingPV(false);
+            setOpenPVDialog(false);
+
+            // Fix the URL to use the backend server URL instead of frontend URL
+            // but DO NOT automatically open it
+            let pdfUrl = "";
+            if (response.data && response.data.report_file) {
+                // Get the path part of the URL (everything after the domain)
+                const urlPath = response.data.report_file.split('/').slice(3).join('/');
+
+                // Reconstruct with the correct domain
+                pdfUrl = `http://127.0.0.1:8000/media/${urlPath}`;
+            }
+
+            // Afficher un message de succès avec option de téléchargement
+            setSuccess({
+                show: true,
+                message: `Le procès-verbal a été généré avec succès. ${pdfUrl ?
+                    "Vous pouvez le télécharger depuis l'onglet Rapports." :
+                    ""}`,
+                severity: "success"
+            });
+
+            // Masquer le message de succès après 5 secondes (extended time)
+            setTimeout(() => {
+                setSuccess(prev => ({ ...prev, show: false }));
+            }, 5000);
+        } catch (err) {
+            console.error('Erreur lors de la création du PV:', err);
+            setError('Échec de la création du procès-verbal. Veuillez réessayer.');
+            setGeneratingPV(false);
         }
     };
+    // Rendu de la boîte de dialogue Ajouter des participants
+    const renderAddAttendeesDialog = () => {
+        return (
+            <Dialog
+                open={openAddAttendeeDialog}
+                onClose={() => setOpenAddAttendeeDialog(false)}
+                fullWidth
+                maxWidth="md"
+            >
+                <DialogTitle>
+                    Ajouter des participants
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="body1" paragraph>
+                            Sélectionnez les membres à ajouter comme participants à cette réunion.
+                        </Typography>
 
-    const itemVariants = {
-        hidden: { opacity: 0, y: 15 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+                        {/* Barre de recherche */}
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            label="Rechercher des membres"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            InputProps={{
+                                startAdornment: <Search color="action" sx={{ mr: 1 }} />,
+                            }}
+                            sx={{ mb: 2 }}
+                        />
+
+                        {/* Affichage des membres sélectionnés */}
+                        {selectedMembers.length > 0 && (
+                            <Box sx={{ mt: 2, mb: 2 }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    Sélectionnés ({selectedMembers.length}):
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                    {selectedMembers.map(memberId => {
+                                        const member = availableMembers.find(m => m.id === memberId);
+                                        return (
+                                            <Chip
+                                                key={memberId}
+                                                label={member ? (member.name || member.email) : `ID: ${memberId}`}
+                                                onDelete={() => handleToggleMember(memberId)}
+                                                color="primary"
+                                                variant="outlined"
+                                                size="small"
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            </Box>
+                        )}
+
+                        {/* Message d'erreur */}
+                        {error && (
+                            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+                                {error}
+                            </Alert>
+                        )}
+
+                        {/* Liste des membres */}
+                        <Box sx={{
+                            maxHeight: 400,
+                            overflow: 'auto',
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 1
+                        }}>
+                            {loadingMembers ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                                    <CircularProgress size={40} />
+                                </Box>
+                            ) : filteredMembers.length === 0 ? (
+                                <Box sx={{ p: 4, textAlign: 'center' }}>
+                                    <Typography variant="body1" color="text.secondary">
+                                        {searchTerm ? 'Aucun membre trouvé correspondant à votre recherche.' : 'Aucun membre disponible à ajouter.'}
+                                    </Typography>
+                                    {availableMembers.length === 0 && !loadingMembers && (
+                                        <Button
+                                            variant="text"
+                                            color="primary"
+                                            sx={{ mt: 2 }}
+                                            onClick={fetchAvailableMembers}
+                                        >
+                                            Réessayer de charger les membres
+                                        </Button>
+                                    )}
+                                </Box>
+                            ) : (
+                                <List>
+                                    {filteredMembers.map((member) => (
+                                        <ListItem
+                                            key={member.id}
+                                            divider
+                                            button
+                                            onClick={() => handleToggleMember(member.id)}
+                                            sx={{
+                                                bgcolor: selectedMembers.includes(member.id)
+                                                    ? alpha(theme.palette.primary.main, 0.1)
+                                                    : 'transparent'
+                                            }}
+                                        >
+                                            <ListItemAvatar>
+                                                <Avatar>
+                                                    {member.name ? member.name.charAt(0).toUpperCase() : '?'}
+                                                </Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={member.name || 'Membre sans nom'}
+                                                secondary={
+                                                    <>
+                                                        <Typography component="span" variant="body2" color="text.primary">
+                                                            {member.email || 'Pas d\'email'}
+                                                        </Typography>
+                                                        {member.role && (
+                                                            <Typography component="span" variant="body2" display="block">
+                                                                {member.role}
+                                                            </Typography>
+                                                        )}
+                                                    </>
+                                                }
+                                            />
+                                            <Checkbox
+                                                edge="end"
+                                                checked={selectedMembers.includes(member.id)}
+                                                onChange={() => handleToggleMember(member.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            )}
+                        </Box>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setOpenAddAttendeeDialog(false)}
+                        color="inherit"
+                        disabled={addingAttendees}
+                    >
+                        Annuler
+                    </Button>
+                    <Button
+                        onClick={handleAddAttendees}
+                        color="primary"
+                        variant="contained"
+                        disabled={selectedMembers.length === 0 || addingAttendees}
+                        startIcon={addingAttendees ? <CircularProgress size={20} /> : <PersonAdd />}
+                    >
+                        {addingAttendees ? 'Ajout en cours...' : `Ajouter les sélectionnés (${selectedMembers.length})`}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        );
+    };
+
+    // Boîte de dialogue de confirmation Marquer comme terminée
+    const renderMarkCompleteDialog = () => {
+        return (
+            <Dialog
+                open={openMarkCompleteDialog}
+                onClose={() => setOpenMarkCompleteDialog(false)}
+            >
+                <DialogTitle>Marquer la réunion comme terminée</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Êtes-vous sûr de vouloir marquer cette réunion comme terminée ? Après l'avoir marquée comme terminée, vous pourrez générer un rapport.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenMarkCompleteDialog(false)} color="inherit">
+                        Annuler
+                    </Button>
+                    <Button
+                        onClick={handleMarkComplete}
+                        color="primary"
+                        variant="contained"
+                        disabled={markingComplete}
+                        startIcon={markingComplete ? <CircularProgress size={20} /> : <Check />}
+                    >
+                        {markingComplete ? 'Marquage en cours...' : 'Marquer comme terminée'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        );
+    };
+
+    // Boîte de dialogue PV
+    const renderPVDialog = () => {
+        return (
+            <Dialog
+                open={openPVDialog}
+                onClose={() => setOpenPVDialog(false)}
+                fullWidth
+                maxWidth="md"
+            >
+                <DialogTitle>Générer un Procès-Verbal (PV)</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        fullWidth
+                        label="Titre du Procès-Verbal"
+                        value={pvTitle}
+                        onChange={(e) => setPvTitle(e.target.value)}
+                        placeholder={`Procès-Verbal: ${meeting?.title || ''}`}
+                        margin="normal"
+                    />
+
+                    <TextField
+                        fullWidth
+                        multiline
+                        rows={10}
+                        label="Contenu du Procès-Verbal"
+                        placeholder="Entrez le contenu du procès-verbal..."
+                        value={pvContent}
+                        onChange={(e) => setPvContent(e.target.value)}
+                        margin="normal"
+                    />
+
+                    {/* Cases à cocher pour les sections optionnelles */}
+                    <Box sx={{ mt: 3 }}>
+                        <Typography variant="subtitle1" gutterBottom>Sections à inclure</Typography>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={includeAttendance}
+                                    onChange={(e) => setIncludeAttendance(e.target.checked)}
+                                    color="primary"
+                                />
+                            }
+                            label="Liste de présence"
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenPVDialog(false)} color="inherit">
+                        Annuler
+                    </Button>
+                    <Button
+                        onClick={handleCreatePV}
+                        color="primary"
+                        variant="contained"
+                        disabled={generatingPV || !pvTitle.trim()}
+                        startIcon={generatingPV ? <CircularProgress size={20} /> : <PictureAsPdf />}
+                    >
+                        {generatingPV ? 'Génération en cours...' : 'Générer le PDF'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        );
+    };
+
+    // Boîte de dialogue Annuler la réunion
+    const renderCancelMeetingDialog = () => {
+        return (
+            <Dialog
+                open={openCancelDialog}
+                onClose={() => setOpenCancelDialog(false)}
+            >
+                <DialogTitle>Annuler la réunion</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Êtes-vous sûr de vouloir annuler cette réunion ? Tous les participants seront notifiés.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenCancelDialog(false)} color="inherit">
+                        Non, conserver la réunion
+                    </Button>
+                    <Button onClick={handleCancelMeeting} color="error" variant="contained">
+                        Oui, annuler la réunion
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        );
     };
 
     if (loading) {
@@ -463,7 +996,7 @@ const MeetingDetail = () => {
         );
     }
 
-    if (error) {
+    if (error && !meeting) {
         return (
             <Container>
                 <Alert severity="error" sx={{ mt: 2 }}>
@@ -475,7 +1008,7 @@ const MeetingDetail = () => {
                         startIcon={<ArrowBack />}
                         onClick={() => navigate('/meetings')}
                     >
-                        Retour aux Réunions
+                        Retour aux réunions
                     </Button>
                 </Box>
             </Container>
@@ -494,7 +1027,7 @@ const MeetingDetail = () => {
                         startIcon={<ArrowBack />}
                         onClick={() => navigate('/meetings')}
                     >
-                        Retour aux Réunions
+                        Retour aux réunions
                     </Button>
                 </Box>
             </Container>
@@ -503,1247 +1036,572 @@ const MeetingDetail = () => {
 
     return (
         <Container maxWidth="xl">
-            <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
+            {/* Bouton de retour */}
+            <Button
+                startIcon={<ArrowBack />}
+                onClick={() => navigate('/meetings')}
+                sx={{ mb: 2 }}
             >
-                {/* Back button */}
-                <motion.div variants={itemVariants}>
-                    <Button
-                        startIcon={<ArrowBack />}
-                        onClick={() => navigate('/meetings')}
-                        sx={{
-                            mb: 2,
-                            fontWeight: 500,
-                            color: theme.palette.text.secondary,
-                            '&:hover': {
-                                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                            }
-                        }}
-                    >
-                        Retour aux Réunions
-                    </Button>
-                </motion.div>
+                Retour aux réunions
+            </Button>
 
-                {/* Header */}
-                <motion.div variants={itemVariants}>
-                    <HeaderContainer elevation={0}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
-                            <Box>
-                                <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                    {meeting.title}
-                                </Typography>
-
-                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                                    <StatusChip status={meeting.status} />
-                                    <TypeChip type={meeting.meeting_type} />
-                                </Box>
-
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Event sx={{ mr: 1 }} />
-                                            <Box>
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    Date
-                                                </Typography>
-                                                <Typography variant="body1" fontWeight="medium">
-                                                    {formatDate(meeting.start_date)}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <AccessTime sx={{ mr: 1 }} />
-                                            <Box>
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    Heure
-                                                </Typography>
-                                                <Typography variant="body1" fontWeight="medium">
-                                                    {formatTime(meeting.start_date)} - {formatTime(meeting.end_date)}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-
-                                    {/* Location Information - Modified to handle hybrid meetings */}
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <LocationOn sx={{ mr: 1 }} />
-                                            <Box>
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    Lieu
-                                                </Typography>
-                                                <Typography variant="body1" fontWeight="medium">
-                                                    {meeting.location || 'Lieu non spécifié'}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-
-                                    {/* Only show if it's virtual or hybrid (has a meeting link) */}
-                                    {meeting.meeting_link && (
-                                        <Grid item xs={12} sm={6} md={3}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <VideoCall sx={{ mr: 1 }} />
-                                                <Box>
-                                                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                        Accès Virtuel
-                                                    </Typography>
-                                                    <Typography
-                                                        variant="body1"
-                                                        fontWeight="medium"
-                                                        component="a"
-                                                        href={meeting.meeting_link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        sx={{
-                                                            color: 'primary.main',
-                                                            textDecoration: 'none',
-                                                            '&:hover': { textDecoration: 'underline' }
-                                                        }}
-                                                    >
-                                                        Rejoindre la Réunion
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Grid>
-                                    )}
-
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Groups sx={{ mr: 1 }} />
-                                            <Box>
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    Participants
-                                                </Typography>
-                                                <Typography variant="body1" fontWeight="medium">
-                                                    {attendees.length} invités
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-                            </Box>
-
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                {meeting.status === 'scheduled' && canEditMeetings && (
-                                    <>
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => navigate(`/meetings/edit/${id}`)}
-                                            startIcon={<EditNote />}
-                                            sx={{
-                                                bgcolor: 'rgba(255,255,255,0.2)',
-                                                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
-                                            }}
-                                        >
-                                            Modifier la Réunion
-                                        </Button>
-
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() => setOpenCancelDialog(true)}
-                                            startIcon={<Cancel />}
-                                            sx={{
-                                                borderColor: 'rgba(255,255,255,0.3)',
-                                                color: 'white',
-                                                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                                            }}
-                                        >
-                                            Annuler la Réunion
-                                        </Button>
-                                    </>
-                                )}
-
-                                {meeting.status === 'completed' && reports.length === 0 && canEditMeetings && (
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => setOpenGenerateDialog(true)}
-                                        startIcon={<PictureAsPdf />}
-                                        sx={{
-                                            bgcolor: 'rgba(255,255,255,0.2)',
-                                            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
-                                        }}
-                                    >
-                                        Générer un Rapport
-                                    </Button>
-                                )}
-
-                                {meeting.status === 'in_progress' && canEditMeetings && (
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => setOpenMinutesDialog(true)}
-                                        startIcon={<Assignment />}
-                                        sx={{
-                                            bgcolor: 'rgba(255,255,255,0.2)',
-                                            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
-                                        }}
-                                    >
-                                        Finaliser & Ajouter le Procès-Verbal
-                                    </Button>
-                                )}
-                            </Box>
-                        </Box>
-
-                        {/* Decorative circles */}
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: -50,
-                                right: -50,
-                                width: 200,
-                                height: 200,
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.1)',
-                                zIndex: 0
-                            }}
-                        />
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: -30,
-                                right: 100,
-                                width: 100,
-                                height: 100,
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.1)',
-                                zIndex: 0
-                            }}
-                        />
-                    </HeaderContainer>
-                </motion.div>
-
-                {/* Content */}
-                <motion.div variants={itemVariants}>
-                    <StyledPaper elevation={0}>
-                        <StyledTabs
-                            value={tabValue}
-                            onChange={handleTabChange}
-                            aria-label="meeting tabs"
-                            variant="scrollable"
-                            scrollButtons="auto"
-                        >
-                            <Tab
-                                label="Détails"
-                                icon={<Description />}
-                                iconPosition="start"
-                            />
-                            <Tab
-                                label={
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        Participants
-                                        <Badge
-                                            badgeContent={attendees.length}
-                                            color="primary"
-                                            sx={{ ml: 1 }}
-                                        />
-                                    </Box>
-                                }
-                                icon={<Groups />}
-                                iconPosition="start"
-                            />
-                            <Tab
-                                label={
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        Ordre du Jour
-                                        <Badge
-                                            badgeContent={agendaItems.length}
-                                            color="primary"
-                                            sx={{ ml: 1 }}
-                                        />
-                                    </Box>
-                                }
-                                icon={<Assignment />}
-                                iconPosition="start"
-                            />
-                            <Tab
-                                label={
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        Rapports
-                                        <Badge
-                                            badgeContent={reports.length}
-                                            color="primary"
-                                            sx={{ ml: 1 }}
-                                        />
-                                    </Box>
-                                }
-                                icon={<PictureAsPdf />}
-                                iconPosition="start"
-                            />
-                        </StyledTabs>
-
-                        <TabPanel value={tabValue} index={0}>
-                            <DetailTab meeting={meeting} />
-                        </TabPanel>
-
-                        <TabPanel value={tabValue} index={1}>
-                            <AttendeesTab
-                                attendees={attendees}
-                                meetingId={id}
-                                meetingStatus={meeting.status}
-                            />
-                        </TabPanel>
-
-                        <TabPanel value={tabValue} index={2}>
-                            <AgendaTab
-                                agendaItems={agendaItems}
-                                meetingId={id}
-                                meetingStatus={meeting.status}
-                            />
-                        </TabPanel>
-
-                        <TabPanel value={tabValue} index={3}>
-                            <ReportsTab
-                                reports={reports}
-                                meetingId={id}
-                                meetingStatus={meeting.status}
-                                onGenerateReport={() => setOpenGenerateDialog(true)}
-                            />
-                        </TabPanel>
-                    </StyledPaper>
-                </motion.div>
-            </motion.div>
-
-            {/* Cancel Meeting Dialog */}
-            <Dialog
-                open={openCancelDialog}
-                onClose={() => setOpenCancelDialog(false)}
-                aria-labelledby="cancel-meeting-dialog-title"
-                PaperProps={{
-                    sx: { borderRadius: '12px' }
-                }}
-            >
-                <DialogTitle id="cancel-meeting-dialog-title">
-                    Annuler la Réunion
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Êtes-vous sûr de vouloir annuler cette réunion ? Cette action notifiera tous les participants et ne peut être annulée.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button
-                        onClick={() => setOpenCancelDialog(false)}
-                        color="primary"
-                    >
-                        Non, Maintenir la Réunion
-                    </Button>
-                    <Button
-                        onClick={handleCancelMeeting}
-                        color="error"
-                        variant="contained"
-                        startIcon={<Cancel />}
-                    >
-                        Oui, Annuler la Réunion
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Add Minutes Dialog */}
-            <Dialog
-                open={openMinutesDialog}
-                onClose={() => setOpenMinutesDialog(false)}
-                aria-labelledby="minutes-dialog-title"
-                fullWidth
-                maxWidth="md"
-                PaperProps={{
-                    sx: { borderRadius: '12px' }
-                }}
-            >
-                <DialogTitle id="minutes-dialog-title">
-                    Ajouter le Procès-Verbal
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ mb: 2 }}>
-                        Ajoutez le procès-verbal de cette réunion. Cela marquera la réunion comme terminée.
-                    </DialogContentText>
-                    <TextField
-                        autoFocus
-                        multiline
-                        rows={10}
-                        fullWidth
-                        label="Procès-Verbal de la Réunion"
-                        variant="outlined"
-                        value={minutes}
-                        onChange={(e) => setMinutes(e.target.value)}
-                    />
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button
-                        onClick={() => setOpenMinutesDialog(false)}
-                        color="inherit"
-                    >
-                        Annuler
-                    </Button>
-                    <Button
-                        onClick={handleSubmitMinutes}
-                        color="primary"
-                        variant="contained"
-                        disabled={!minutes.trim()}
-                        startIcon={<CheckCircle />}
-                    >
-                        Terminer la Réunion
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Generate Report Dialog */}
-            <Dialog
-                open={openGenerateDialog}
-                onClose={() => setOpenGenerateDialog(false)}
-                aria-labelledby="generate-report-dialog-title"
-                PaperProps={{
-                    sx: { borderRadius: '12px' }
-                }}
-            >
-                <DialogTitle id="generate-report-dialog-title">
-                    Générer un Rapport de Réunion
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Générez un rapport PDF pour cette réunion comprenant les présences, l'ordre du jour et le procès-verbal. Ce rapport sera enregistré et pourra être téléchargé ultérieurement.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button
-                        onClick={() => setOpenGenerateDialog(false)}
-                        color="inherit"
-                        disabled={generatingReport}
-                    >
-                        Annuler
-                    </Button>
-                    <Button
-                        onClick={handleGenerateReport}
-                        color="primary"
-                        variant="contained"
-                        disabled={generatingReport}
-                        startIcon={generatingReport ? <CircularProgress size={20} /> : <PictureAsPdf />}
-                    >
-                        {generatingReport ? 'Génération...' : 'Générer le Rapport'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
-    );
-};
-
-// Details Tab Content
-const DetailTab = ({ meeting }) => {
-    return (
-        <Grid container spacing={3}>
-            {/* Description */}
-            <Grid item xs={12}>
-                <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                        Description
-                    </Typography>
-                    <Typography variant="body1">
-                        {meeting.description || 'Aucune description fournie.'}
-                    </Typography>
-                </Box>
-            </Grid>
-
-            {/* Details Cards */}
-            <Grid item xs={12} md={6}>
-                <StyledCard>
-                    <CardContent>
-                        <Typography variant="h6" fontWeight="bold" gutterBottom>
-                            Procès-Verbal
-                        </Typography>
-                        <Divider sx={{ mb: 2 }} />
-                        <Box sx={{ whiteSpace: 'pre-line' }}>
-                            {meeting.minutes ? (
-                                meeting.minutes
-                            ) : (
-                                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                    Le procès-verbal sera disponible après la fin de la réunion.
-                                </Typography>
-                            )}
-                        </Box>
-                    </CardContent>
-                </StyledCard>
-            </Grid>
-
-            {/* Meeting Properties */}
-            <Grid item xs={12}>
-                <StyledCard>
-                    <CardContent>
-                        <Typography variant="h6" fontWeight="bold" gutterBottom>
-                            Propriétés de la Réunion
-                        </Typography>
-                        <Divider sx={{ mb: 2 }} />
-
-                        <Grid container spacing={2}>
-                            {meeting.is_recurring && meeting.recurrence_pattern && (
-                                <Grid item xs={12} sm={6} md={4}>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Récurrence
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        {meeting.recurrence_pattern.frequency === 'monthly' ?
-                                            `Mensuelle le jour ${new Date(meeting.start_date).getDate()}` :
-                                            meeting.recurrence_pattern.frequency === 'weekly' ?
-                                                `Hebdomadaire le ${new Date(meeting.start_date).toLocaleDateString('fr-FR', { weekday: 'long' })}` :
-                                                meeting.recurrence_pattern.frequency === 'daily' ? 'Quotidienne' : ''}
-                                    </Typography>
-                                </Grid>
-                            )}
-
-                            <Grid item xs={12} sm={6} md={4}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Méthode de Notification
-                                </Typography>
-                                <Typography variant="body1">
-                                    {meeting.notification_method === 'email' ? 'Email Uniquement' :
-                                        meeting.notification_method === 'platform' ? 'Plateforme Uniquement' :
-                                            'Email et Plateforme'}
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} md={4}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Rappel
-                                </Typography>
-                                <Typography variant="body1">
-                                    {meeting.reminder_days_before} {meeting.reminder_days_before === 1 ? 'jour' : 'jours'} avant la réunion
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} md={4}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Créé Par
-                                </Typography>
-                                <Typography variant="body1">
-                                    {meeting.created_by_details ? meeting.created_by_details.full_name || meeting.created_by_details.email : 'Inconnu'}
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} md={4}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Date de Création
-                                </Typography>
-                                <Typography variant="body1">
-                                    {new Date(meeting.created_at).toLocaleDateString()}
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} md={4}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Dernière Mise à Jour
-                                </Typography>
-                                <Typography variant="body1">
-                                    {new Date(meeting.updated_at).toLocaleDateString()}
-                                </Typography>
-                            </Grid>
-                        </Grid>
-                    </CardContent>
-                </StyledCard>
-            </Grid>
-        </Grid>
-    );
-};
-
-
-const AttendeesTab = ({ attendees, meetingId, meetingStatus }) => {
-    const theme = useTheme();
-    const [openAddDialog, setOpenAddDialog] = useState(false);
-    const [selectedAttendees, setSelectedAttendees] = useState([]);
-    const [availableMembers, setAvailableMembers] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [loadingMembers, setLoadingMembers] = useState(false);
-    const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [attendeeRole, setAttendeeRole] = useState('');
-
-    // Fetch available members from API
-    const fetchAvailableMembers = async () => {
-        try {
-            setLoadingMembers(true);
-            setError(null);
-
-            // Fetch members from your API endpoint
-            const response = await AxiosInstance.get('/api/member/');
-            const members = response.data;
-
-            // Filter out already added attendees
-            const attendeeIds = attendees.map(a => a.member_details?.id);
-            const filteredMembers = members.filter(m => !attendeeIds.includes(m.id));
-
-            setAvailableMembers(filteredMembers);
-            setLoadingMembers(false);
-        } catch (err) {
-            console.error('Erreur lors de la récupération des membres:', err);
-            setError('Échec du chargement des membres disponibles. Veuillez réessayer.');
-            setLoadingMembers(false);
-        }
-    };
-
-    // Open dialog and fetch members
-    const handleOpenAddDialog = () => {
-        setOpenAddDialog(true);
-        fetchAvailableMembers();
-    };
-
-    // Add attendees function
-    const handleAddAttendees = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            // Format data for backend
-            const attendeesData = selectedAttendees.map(memberId => ({
-                member: memberId,
-                status: 'pending',  // Default status
-                special_role: attendeeRole || ''
-            }));
-
-            // Make API call with properly formatted data
-            await AxiosInstance.post(`/meetings/meetings/${meetingId}/add_attendees/`, {
-                attendees: attendeesData  // Match backend expected key
-            });
-
-            // Refresh the page to show updated attendees
-            window.location.reload();
-
-        } catch (err) {
-            console.error('Erreur lors de l\'ajout de participants:', err);
-            setError('Échec de l\'ajout de participants. Veuillez réessayer.');
-        } finally {
-            setLoading(false);
-            setOpenAddDialog(false);
-            setSelectedAttendees([]);
-        }
-    };
-
-    // Handle member selection
-    const handleToggleMember = (memberId) => {
-        if (selectedAttendees.includes(memberId)) {
-            setSelectedAttendees(selectedAttendees.filter(id => id !== memberId));
-        } else {
-            setSelectedAttendees([...selectedAttendees, memberId]);
-        }
-    };
-
-    // Filter members based on search term
-    const filteredMembers = availableMembers.filter(member => {
-        const fullName = member.name || '';
-        const email = member.email || '';
-        const role = member.role || '';
-
-        const searchLower = searchTerm.toLowerCase();
-        return fullName.toLowerCase().includes(searchLower) ||
-            email.toLowerCase().includes(searchLower) ||
-            role.toLowerCase().includes(searchLower);
-    });
-
-    // Group attendees by status
-    const presentAttendees = attendees.filter(a => a.status === 'present');
-    const absentAttendees = attendees.filter(a => a.status === 'absent');
-    const excusedAttendees = attendees.filter(a => a.status === 'excused');
-    const pendingAttendees = attendees.filter(a => a.status === 'pending' || !a.status);
-
-    return (
-        <>
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" fontWeight="bold">
-                    Participants à la Réunion
-                </Typography>
-
-                {meetingStatus === 'scheduled' && (
-                    <Button
-                        variant="contained"
-                        startIcon={<PersonAdd />}
-                        onClick={handleOpenAddDialog}
-                    >
-                        Ajouter des Participants
-                    </Button>
-                )}
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={3}>
-                        <Paper
-                            sx={{
-                                p: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                bgcolor: alpha(theme.palette.success.main, 0.1),
-                                color: theme.palette.success.main,
-                                borderRadius: '8px',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            Présents: {presentAttendees.length}
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <Paper
-                            sx={{
-                                p: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                bgcolor: alpha(theme.palette.error.main, 0.1),
-                                color: theme.palette.error.main,
-                                borderRadius: '8px',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            Absents: {absentAttendees.length}
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <Paper
-                            sx={{
-                                p: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                bgcolor: alpha(theme.palette.warning.main, 0.1),
-                                color: theme.palette.warning.main,
-                                borderRadius: '8px',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            Excusés: {excusedAttendees.length}
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <Paper
-                            sx={{
-                                p: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                bgcolor: alpha(theme.palette.info.main, 0.1),
-                                color: theme.palette.info.main,
-                                borderRadius: '8px',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            En Attente: {pendingAttendees.length}
-                        </Paper>
-                    </Grid>
-                </Grid>
-            </Box>
-
-            {attendees.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 5 }}>
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                        Aucun participant ajouté pour le moment
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                        Ajoutez des membres pour suivre les présences à cette réunion
-                    </Typography>
-                    {meetingStatus === 'scheduled' && (
-                        <Button
-                            variant="contained"
-                            startIcon={<PersonAdd />}
-                            onClick={handleOpenAddDialog}
-                        >
-                            Ajouter des Participants
-                        </Button>
-                    )}
-                </Box>
-            ) : (
-                <List sx={{ bgcolor: 'background.paper', borderRadius: '8px' }}>
-                    {attendees.map((attendee) => (
-                        <ListItem key={attendee.id} divider>
-                            <ListItemAvatar>
-                                <Avatar>
-                                    {attendee.member_details?.name ? attendee.member_details.name.charAt(0).toUpperCase() : '?'}
-                                </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                                primary={
-                                    <Typography variant="subtitle1" fontWeight="medium">
-                                        {attendee.member_details?.name || 'Membre Inconnu'}
-                                    </Typography>
-                                }
-                                secondary={
-                                    <>
-                                        <Typography variant="body2" component="span" display="block">
-                                            {attendee.member_details?.email || 'Aucun email fourni'}
-                                        </Typography>
-                                        <Typography variant="body2" component="span" display="block" color="text.secondary">
-                                            {attendee.member_details?.role || 'Membre'}
-                                            {attendee.special_role && ` • ${attendee.special_role}`}
-                                        </Typography>
-                                    </>
-                                }
-                            />
-                            <ListItemSecondaryAction>
-                                <AttendanceStatusChip status={attendee.status} />
-                                {meetingStatus === 'in_progress' && (
-                                    <Box sx={{ display: 'inline-flex', ml: 1 }}>
-                                        <Tooltip title="Marquer Présent">
-                                            <IconButton
-                                                size="small"
-                                                color="success"
-                                                onClick={async () => {
-                                                    try {
-                                                        await AxiosInstance.patch(`/meetings/attendees/${attendee.id}/`, {
-                                                            status: 'present'
-                                                        });
-                                                        window.location.reload();
-                                                    } catch (err) {
-                                                        console.error('Erreur lors de la mise à jour du statut:', err);
-                                                    }
-                                                }}
-                                            >
-                                                <Check />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Marquer Absent">
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                onClick={async () => {
-                                                    try {
-                                                        await AxiosInstance.patch(`/meetings/attendees/${attendee.id}/`, {
-                                                            status: 'absent'
-                                                        });
-                                                        window.location.reload();
-                                                    } catch (err) {
-                                                        console.error('Erreur lors de la mise à jour du statut:', err);
-                                                    }
-                                                }}
-                                            >
-                                                <Close />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </Box>
-                                )}
-                            </ListItemSecondaryAction>
-                        </ListItem>
-                    ))}
-                </List>
+            {/* Message de succès */}
+            {success.show && (
+                <Alert severity={success.severity} sx={{ mb: 3 }}>
+                    {success.message}
+                </Alert>
             )}
 
-            {/* Add Attendees Dialog */}
-            <Dialog
-                open={openAddDialog}
-                onClose={() => setOpenAddDialog(false)}
-                aria-labelledby="add-attendees-dialog-title"
-                fullWidth
-                maxWidth="md"
-                PaperProps={{
-                    sx: { borderRadius: '12px' }
-                }}
-            >
-                <DialogTitle id="add-attendees-dialog-title">
-                    Ajouter des Participants à la Réunion
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ mb: 2 }}>
-                        Sélectionnez les membres à ajouter comme participants à cette réunion.
-                    </DialogContentText>
+            {/* Message d'erreur */}
+            {error && meeting && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                    {error}
+                </Alert>
+            )}
 
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
+            {/* En-tête amélioré */}
+            <HeaderPaper>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+                    <Box>
+                        <Typography variant="h4" fontWeight="bold" gutterBottom>
+                            {meeting.title}
+                        </Typography>
 
-                    <Box sx={{ mb: 3 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} md={8}>
-                                <TextField
-                                    fullWidth
-                                    label="Rechercher des Membres"
-                                    variant="outlined"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    fullWidth
-                                    label="Rôle Spécial (Optionnel)"
-                                    variant="outlined"
-                                    value={attendeeRole}
-                                    onChange={(e) => setAttendeeRole(e.target.value)}
-                                    placeholder="ex., Président, Secrétaire"
-                                />
-                            </Grid>
-                        </Grid>
-                    </Box>
-
-                    {loadingMembers ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                            <CircularProgress />
+                        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+                            <EnhancedBadgeStatut status={meeting.status} />
+                            <HeaderTypeChip
+                                size="medium"
+                                label={meeting.meeting_type === 'regular' ? 'Réunion régulière' :
+                                    meeting.meeting_type === 'board' ? 'Réunion du conseil' :
+                                        meeting.meeting_type === 'extraordinary' ? 'Réunion extraordinaire' :
+                                            meeting.meeting_type === 'general_assembly' ? 'Assemblée générale' :
+                                                meeting.meeting_type === 'committee' ? 'Réunion de comité' : 'Autre'}
+                            />
                         </Box>
-                    ) : (
-                        <List sx={{
-                            bgcolor: 'background.paper',
-                            borderRadius: '8px',
-                            border: `1px solid ${theme.palette.divider}`,
-                            maxHeight: '350px',
-                            overflow: 'auto'
-                        }}>
-                            {filteredMembers.length === 0 ? (
-                                <Box sx={{ p: 3, textAlign: 'center' }}>
-                                    <Typography color="text.secondary">
-                                        {searchTerm ? 'Aucun membre ne correspond à votre recherche' : 'Aucun membre disponible trouvé'}
+
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mt: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <HeaderIconWrapper>
+                                    <Event />
+                                </HeaderIconWrapper>
+                                <Box>
+                                    <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                                        Date
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {formatDate(meeting.start_date)}
                                     </Typography>
                                 </Box>
-                            ) : (
-                                filteredMembers.map((member) => (
+                            </Box>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <HeaderIconWrapper>
+                                    <AccessTime />
+                                </HeaderIconWrapper>
+                                <Box>
+                                    <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                                        Heure
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {formatTime(meeting.start_date)} - {formatTime(meeting.end_date)}
+                                    </Typography>
+                                </Box>
+                            </Box>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <HeaderIconWrapper>
+                                    <LocationOn />
+                                </HeaderIconWrapper>
+                                <Box>
+                                    <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                                        Lieu
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {meeting.location || 'Lieu non spécifié'}
+                                    </Typography>
+                                </Box>
+                            </Box>
+
+                            {meeting.meeting_link && (
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <HeaderIconWrapper>
+                                        <VideoCall />
+                                    </HeaderIconWrapper>
+                                    <Box>
+                                        <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                                            Accès virtuel
+                                        </Typography>
+                                        <Typography
+                                            variant="body1"
+                                            fontWeight="medium"
+                                            component="a"
+                                            href={meeting.meeting_link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            sx={{
+                                                color: 'inherit',
+                                                textDecoration: 'none',
+                                                '&:hover': {
+                                                    textDecoration: 'underline',
+                                                    color: alpha(theme.palette.common.white, 0.9)
+                                                }
+                                            }}
+                                        >
+                                            Rejoindre la réunion
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            )}
+
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <HeaderIconWrapper>
+                                    <Groups />
+                                </HeaderIconWrapper>
+                                <Box>
+                                    <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                                        Participants
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {attendees.length} invités
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                    </Box>
+
+                    {/* Boutons d'action améliorés */}
+                    {canEditMeetings && (
+                        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'start' }}>
+                            {meeting.status === 'scheduled' && (
+                                <>
+                                    <HeaderButton
+                                        variant="contained"
+                                        color="success"
+                                        startIcon={<Check />}
+                                        onClick={() => setOpenMarkCompleteDialog(true)}
+                                        sx={{
+                                            backgroundColor: theme.palette.success.main,
+                                            '&:hover': { backgroundColor: theme.palette.success.dark }
+                                        }}
+                                    >
+                                        Marquer comme terminée
+                                    </HeaderButton>
+                                    <HeaderButton
+                                        variant="outlined"
+                                        startIcon={<Cancel />}
+                                        onClick={() => setOpenCancelDialog(true)}
+                                    >
+                                        Annuler la réunion
+                                    </HeaderButton>
+                                </>
+                            )}
+
+                            {meeting.status === 'completed' && (
+                                <HeaderButton
+                                    variant="contained"
+                                    startIcon={<PictureAsPdf />}
+                                    onClick={() => setOpenPVDialog(true)}
+                                    sx={{
+                                        backgroundColor: theme.palette.secondary.dark,
+                                        '&:hover': { backgroundColor: theme.palette.secondary.main }
+                                    }}
+                                >
+                                    Générer PV en PDF
+                                </HeaderButton>
+                            )}
+                        </Box>
+                    )}
+                </Box>
+            </HeaderPaper>
+            {/* Contenu principal */}
+            <StyledPaper>
+                <StyledTabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    aria-label="onglets de réunion"
+                    variant="scrollable"
+                    scrollButtons="auto"
+                >
+                    <Tab label="Aperçu" />
+                    <Tab label="Participants" />
+                    <Tab
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                Rapports
+                                {reports.length > 0 && (
+                                    <Badge
+                                        badgeContent={reports.length}
+                                        color="primary"
+                                        sx={{ ml: 1 }}
+                                    />
+                                )}
+                            </Box>
+                        }
+                    />
+                </StyledTabs>
+
+                {/* Onglet Aperçu */}
+                <PanneauOnglet value={tabValue} index={0}>
+                    <Grid container spacing={3}>
+                        {/* Description */}
+                        <Grid item xs={12} md={8}>
+                            <Typography variant="h6" gutterBottom>
+                                Description
+                            </Typography>
+                            <Typography variant="body1" paragraph>
+                                {meeting.description || 'Aucune description fournie.'}
+                            </Typography>
+
+                            {/* Section Ordre du jour */}
+                            {meeting.agenda && (
+                                <>
+                                    <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                                        Ordre du jour
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            p: 2,
+                                            borderRadius: 1,
+                                            bgcolor: 'background.default',
+                                            border: `1px solid ${theme.palette.divider}`
+                                        }}
+                                    >
+                                        <AffichageOrdreJour agenda={meeting.agenda} />
+                                    </Box>
+                                </>
+                            )}
+
+                            {/* Résumé (si terminée) */}
+                            {meeting.status === 'completed' && meeting.summary && (
+                                <>
+                                    <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                                        Résumé
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            p: 2,
+                                            borderRadius: 1,
+                                            bgcolor: 'background.default',
+                                            border: `1px solid ${theme.palette.divider}`
+                                        }}
+                                    >
+                                        <Typography variant="body1" whiteSpace="pre-wrap">
+                                            {meeting.summary}
+                                        </Typography>
+                                    </Box>
+                                </>
+                            )}
+                        </Grid>
+
+                        {/* Statistiques rapides */}
+                        <Grid item xs={12} md={4}>
+                            <StyledPaper
+                                elevation={0}
+                                sx={{
+                                    p: 2,
+                                    bgcolor: 'background.default',
+                                    border: `1px solid ${theme.palette.divider}`
+                                }}
+                            >
+                                <Typography variant="h6" gutterBottom>
+                                    Statistiques rapides
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    {/* Présence */}
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">
+                                            Présence
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                                            <Typography variant="body2">
+                                                Présent:
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {attendees.filter(a => a.status === 'present').length}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2">
+                                                Absent:
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {attendees.filter(a => a.status === 'absent').length}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2">
+                                                Excusé:
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {attendees.filter(a => a.status === 'excused').length}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2">
+                                                En attente:
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {attendees.filter(a => a.status === 'pending').length}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+
+                                    <Divider />
+
+                                    {/* Organisation */}
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">
+                                            Organisation
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                                            <Typography variant="body2">
+                                                Association:
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {meeting.association_name}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2">
+                                                Créé par:
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {meeting.created_by_details?.name || ""}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                </Box>
+                            </StyledPaper>
+                        </Grid>
+                    </Grid>
+                </PanneauOnglet>
+
+                {/* Onglet Participants */}
+                <PanneauOnglet value={tabValue} index={1}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+                        <Typography variant="h6">
+                            Participants à la réunion ({attendees.length})
+                        </Typography>
+                        {canEditMeetings && meeting.status === 'scheduled' && (
+                            <Button
+                                variant="outlined"
+                                startIcon={<PersonAdd />}
+                                onClick={handleOpenAddAttendeeDialog}
+                            >
+                                Ajouter des participants
+                            </Button>
+                        )}
+                    </Box>
+
+                    {/* Liste des participants */}
+                    {attendees.length === 0 ? (
+                        <Alert severity="info">
+                            Aucun participant n'a encore été ajouté à cette réunion.
+                        </Alert>
+                    ) : (
+                        <Box sx={{ overflowX: 'auto' }}>
+                            <List sx={{ bgcolor: 'background.paper' }}>
+                                {attendees.map(attendee => (
                                     <ListItem
-                                        key={member.id}
+                                        key={attendee.id}
                                         divider
                                         secondaryAction={
-                                            <Checkbox
-                                                edge="end"
-                                                checked={selectedAttendees.includes(member.id)}
-                                                onChange={() => handleToggleMember(member.id)}
-                                            />
+                                            canEditMeetings && meeting.status === 'scheduled' && (
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="Marquer comme présent">
+                                                        <IconButton
+                                                            color={attendee.status === 'present' ? "success" : "default"}
+                                                            onClick={() => handleUpdateAttendanceStatus(attendee.id, 'present')}
+                                                        >
+                                                            <Check />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Marquer comme absent">
+                                                        <IconButton
+                                                            color={attendee.status === 'absent' ? "error" : "default"}
+                                                            onClick={() => handleUpdateAttendanceStatus(attendee.id, 'absent')}
+                                                        >
+                                                            <Close />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Marquer comme excusé">
+                                                        <IconButton
+                                                            color={attendee.status === 'excused' ? "warning" : "default"}
+                                                            onClick={() => handleUpdateAttendanceStatus(attendee.id, 'excused')}
+                                                        >
+                                                            <Cancel />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            )
                                         }
-                                        sx={{
-                                            '&:hover': {
-                                                bgcolor: alpha(theme.palette.primary.main, 0.05),
-                                            }
-                                        }}
                                     >
                                         <ListItemAvatar>
                                             <Avatar>
-                                                {member.name ? member.name.charAt(0).toUpperCase() : '?'}
+                                                {attendee.member_details?.name?.charAt(0).toUpperCase() || '?'}
                                             </Avatar>
                                         </ListItemAvatar>
                                         <ListItemText
                                             primary={
-                                                <Typography variant="subtitle1" fontWeight="medium">
-                                                    {member.name || 'Membre Inconnu'}
-                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Typography variant="body1">
+                                                        {attendee.member_details?.name || `ID du membre: ${attendee.member}`}
+                                                    </Typography>
+                                                    <BadgeStatutPresence status={attendee.status} />
+                                                    {attendee.special_role && (
+                                                        <Chip
+                                                            size="small"
+                                                            label={attendee.special_role}
+                                                            variant="outlined"
+                                                            color="primary"
+                                                        />
+                                                    )}
+                                                </Box>
                                             }
                                             secondary={
                                                 <>
-                                                    <Typography variant="body2" component="span" display="block">
-                                                        {member.email || 'Aucun email fourni'}
+                                                    <Typography component="span" variant="body2" color="text.primary">
+                                                        {attendee.member_details?.email || 'Pas d\'email'}
                                                     </Typography>
-                                                    {member.role && (
-                                                        <Typography variant="body2" component="span" display="block" color="text.secondary">
-                                                            {member.role}
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Mode de présence: {attendee.attendance_mode === 'in_person' ? 'Présentiel' :
+                                                        attendee.attendance_mode === 'virtual' ? 'Virtuel' : 'Indécis'}
+                                                    </Typography>
+                                                    {attendee.notes && (
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Notes: {attendee.notes}
                                                         </Typography>
                                                     )}
                                                 </>
                                             }
                                         />
                                     </ListItem>
-                                ))
-                            )}
-                        </List>
+                                ))}
+                            </List>
+                        </Box>
                     )}
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Box sx={{ flex: 1, pl: 2 }}>
-                        {selectedAttendees.length > 0 && (
-                            <Typography variant="body2" color="primary">
-                                {selectedAttendees.length} membre{selectedAttendees.length !== 1 ? 's' : ''} sélectionné{selectedAttendees.length !== 1 ? 's' : ''}
-                            </Typography>
+                </PanneauOnglet>
+
+                {/* Onglet Rapports - SIMPLIFIÉ */}
+                <PanneauOnglet value={tabValue} index={2}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+                        <Typography variant="h6">
+                            Procès-Verbaux ({reports.length})
+                        </Typography>
+                        {canEditMeetings && meeting.status === 'completed' && (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<PictureAsPdf />}
+                                onClick={() => setOpenPVDialog(true)}
+                            >
+                                Générer PV en PDF
+                            </Button>
                         )}
                     </Box>
-                    <Button
-                        onClick={() => setOpenAddDialog(false)}
-                        color="inherit"
-                        disabled={loading}
-                    >
-                        Annuler
-                    </Button>
-                    <Button
-                        onClick={handleAddAttendees}
-                        color="primary"
-                        variant="contained"
-                        disabled={loading || selectedAttendees.length === 0}
-                        startIcon={loading ? <CircularProgress size={20} /> : <PersonAdd />}
-                    >
-                        {loading ? 'Ajout en cours...' : 'Ajouter les Participants Sélectionnés'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
-    );
-};
 
-// Agenda Tab Content
-const AgendaTab = ({ agendaItems, meetingId, meetingStatus }) => {
-    const theme = useTheme();
-    const [openAddDialog, setOpenAddDialog] = useState(false);
-
-    return (
-        <>
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" fontWeight="bold">
-                    Ordre du Jour
-                </Typography>
-
-                {(meetingStatus === 'scheduled' || meetingStatus === 'in_progress') && (
-                    <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={() => setOpenAddDialog(true)}
-                    >
-                        Ajouter un Point
-                    </Button>
-                )}
-            </Box>
-
-            {agendaItems.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 5 }}>
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                        Aucun point à l'ordre du jour pour le moment
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                        Ajoutez des points pour structurer l'ordre du jour de la réunion
-                    </Typography>
-                    {(meetingStatus === 'scheduled' || meetingStatus === 'in_progress') && (
-                        <Button
-                            variant="contained"
-                            startIcon={<Add />}
-                            onClick={() => setOpenAddDialog(true)}
-                        >
-                            Ajouter un Point
-                        </Button>
-                    )}
-                </Box>
-            ) : (
-                <Box>
-                    {agendaItems.map((item, index) => (
-                        <AgendaItem key={item.id} elevation={0}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <Box>
-                                    <Typography variant="h6">
-                                        {index + 1}. {item.title}
-                                    </Typography>
-
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 1 }}>
-                                        <Chip
-                                            size="small"
-                                            label={`${item.duration_minutes} minutes`}
-                                            sx={{
-                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                                color: theme.palette.primary.main,
-                                            }}
-                                        />
-
-                                        {item.presenter_details && (
-                                            <Chip
-                                                size="small"
-                                                icon={<Person fontSize="small" />}
-                                                label={item.presenter_details.name}
-                                                sx={{
-                                                    bgcolor: alpha(theme.palette.info.main, 0.1),
-                                                    color: theme.palette.info.main,
-                                                }}
-                                            />
-                                        )}
-
-                                        {item.is_completed && (
-                                            <Chip
-                                                size="small"
-                                                icon={<Check fontSize="small" />}
-                                                label="Terminé"
-                                                sx={{
-                                                    bgcolor: alpha(theme.palette.success.main, 0.1),
-                                                    color: theme.palette.success.main,
-                                                }}
-                                            />
-                                        )}
-                                    </Box>
-
-                                    <Typography variant="body1" sx={{ mt: 1 }}>
-                                        {item.description}
-                                    </Typography>
-
-                                    {item.notes && (
-                                        <Box sx={{ mt: 2, p: 1, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: '4px' }}>
-                                            <Typography variant="subtitle2" fontWeight="bold">Notes:</Typography>
-                                            <Typography variant="body2">
-                                                {item.notes}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                </Box>
-
-                                {meetingStatus === 'in_progress' && !item.is_completed && (
+                    {reports.length === 0 ? (
+                        <Box>
+                            <Alert severity="info" sx={{ mb: 3 }}>
+                                Aucun procès-verbal n'a été généré pour cette réunion.
+                            </Alert>
+                            {meeting.status === 'completed' && canEditMeetings && (
+                                <Box sx={{ textAlign: 'center', mt: 3 }}>
                                     <Button
-                                        variant="outlined"
-                                        color="success"
-                                        size="small"
-                                        startIcon={<Check />}
+                                        variant="contained"
+                                        color="primary"
+                                        size="large"
+                                        startIcon={<PictureAsPdf />}
+                                        onClick={() => setOpenPVDialog(true)}
                                     >
-                                        Marquer Terminé
+                                        Générer un Procès-Verbal (PV) en PDF
                                     </Button>
-                                )}
-                            </Box>
-                        </AgendaItem>
-                    ))}
-                </Box>
-            )}
+                                </Box>
+                            )}
+                        </Box>
+                    ) : (
+                        <Grid container spacing={3}>
+                            {reports.map(report => (
+                                <Grid item xs={12} md={6} key={report.id}>
+                                    <StyledPaper
+                                        sx={{
+                                            p: 3,
+                                            border: report.is_approved ? `1px solid ${theme.palette.success.main}` : `1px solid ${theme.palette.divider}`,
+                                        }}
+                                    >
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                                            <Typography variant="h6">
+                                                {report.title}
+                                            </Typography>
+                                            {report.is_approved && (
+                                                <Chip
+                                                    icon={<CheckCircle />}
+                                                    label="Approuvé"
+                                                    color="success"
+                                                    size="small"
+                                                />
+                                            )}
+                                        </Box>
 
-            {/* Add Agenda Item Dialog - In a real app, this would have a form */}
-            <Dialog
-                open={openAddDialog}
-                onClose={() => setOpenAddDialog(false)}
-                aria-labelledby="add-agenda-dialog-title"
-                fullWidth
-                maxWidth="md"
-                PaperProps={{
-                    sx: { borderRadius: '12px' }
-                }}
-            >
-                <DialogTitle id="add-agenda-dialog-title">
-                    Ajouter un Point à l'Ordre du Jour
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ mb: 2 }}>
-                        Ajoutez un nouveau point à l'ordre du jour de la réunion.
-                    </DialogContentText>
-
-                    {/* Agenda item form would go here */}
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                        [Le formulaire d'ajout de point serait ici dans l'implémentation réelle]
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button
-                        onClick={() => setOpenAddDialog(false)}
-                        color="inherit"
-                    >
-                        Annuler
-                    </Button>
-                    <Button
-                        color="primary"
-                        variant="contained"
-                    >
-                        Ajouter le Point
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
-    );
-};
-
-// Reports Tab Content
-const ReportsTab = ({ reports, meetingId, meetingStatus, onGenerateReport }) => {
-    const theme = useTheme();
-
-    return (
-        <>
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" fontWeight="bold">
-                    Rapports de Réunion
-                </Typography>
-
-                {meetingStatus === 'completed' && reports.length === 0 && (
-                    <Button
-                        variant="contained"
-                        startIcon={<PictureAsPdf />}
-                        onClick={onGenerateReport}
-                    >
-                        Générer un Rapport
-                    </Button>
-                )}
-            </Box>
-
-            {reports.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 5 }}>
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                        Aucun rapport disponible
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                        {meetingStatus === 'completed' ?
-                            'Générez un rapport pour documenter cette réunion terminée' :
-                            'Les rapports peuvent être générés après la fin de la réunion'}
-                    </Typography>
-                    {meetingStatus === 'completed' && (
-                        <Button
-                            variant="contained"
-                            startIcon={<PictureAsPdf />}
-                            onClick={onGenerateReport}
-                        >
-                            Générer un Rapport
-                        </Button>
-                    )}
-                </Box>
-            ) : (
-                <List sx={{ bgcolor: 'background.paper', borderRadius: '8px' }}>
-                    {reports.map((report) => (
-                        <ListItem key={report.id} divider>
-                            <ListItemAvatar>
-                                <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                                    <PictureAsPdf />
-                                </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                                primary={
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Typography variant="subtitle1" fontWeight="medium">
-                                            {report.title}
+                                        <Typography variant="body2" color="text.secondary" paragraph>
+                                            Créé le {moment(report.created_at).format('D MMM YYYY [à] HH:mm')}
+                                            {report.created_by_details && ` par ${report.created_by_details.name}`}
                                         </Typography>
-                                        {report.is_approved && (
-                                            <Chip
-                                                size="small"
-                                                icon={<CheckCircle fontSize="small" />}
-                                                label="Approuvé"
+
+                                        {report.summary && (
+                                            <Typography
+                                                variant="body1"
+                                                paragraph
                                                 sx={{
-                                                    ml: 1,
-                                                    bgcolor: alpha(theme.palette.success.main, 0.1),
-                                                    color: theme.palette.success.main,
+                                                    mt: 1,
+                                                    p: 1.5,
+                                                    bgcolor: 'background.default',
+                                                    borderRadius: 1,
+                                                    fontStyle: 'italic'
                                                 }}
-                                            />
+                                            >
+                                                {report.summary}
+                                            </Typography>
                                         )}
-                                    </Box>
-                                }
-                                secondary={
-                                    <>
-                                        <Typography variant="body2" component="span" display="block">
-                                            Créé le: {new Date(report.created_at).toLocaleDateString()} par {report.created_by_details?.full_name || 'Inconnu'}
-                                        </Typography>
-                                        <Typography variant="body2" component="span" display="block">
-                                            {report.summary}
-                                        </Typography>
-                                    </>
-                                }
-                            />
-                            <ListItemSecondaryAction>
-                                <Tooltip title="Voir le Rapport">
-                                    <IconButton color="primary">
-                                        <Visibility />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Télécharger le Rapport">
-                                    <IconButton color="primary">
-                                        <Download />
-                                    </IconButton>
-                                </Tooltip>
-                                {!report.is_approved && (
-                                    <Tooltip title="Approuver le Rapport">
-                                        <IconButton color="success">
-                                            <CheckCircle />
-                                        </IconButton>
-                                    </Tooltip>
-                                )}
-                            </ListItemSecondaryAction>
-                        </ListItem>
-                    ))}
-                </List>
-            )}
-        </>
+
+                                        <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+
+                                            {report.report_file && (
+                                                <Button
+                                                    variant="outlined"
+                                                    startIcon={<Download />}
+                                                    href={report.report_file}
+                                                    target="_blank"
+                                                >
+                                                    Télécharger PDF
+                                                </Button>
+                                            )}
+                                            {canEditMeetings && !report.is_approved && (
+                                                <Button
+                                                    variant="contained"
+                                                    color="success"
+                                                    startIcon={<Check />}
+                                                    onClick={() => handleApproveReport(report.id)}
+                                                >
+                                                    Approuver
+                                                </Button>
+                                            )}
+                                        </Box>
+                                    </StyledPaper>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    )}
+                </PanneauOnglet>
+            </StyledPaper>
+
+            {/* Rendu des boîtes de dialogue */}
+            {renderAddAttendeesDialog()}
+            {renderMarkCompleteDialog()}
+            {renderPVDialog()}
+            {renderCancelMeetingDialog()}
+        </Container>
     );
 };
 
-export default MeetingDetail;
+export default DetailReunion;

@@ -36,7 +36,7 @@ import DonorForm from './finance/DonorForm.jsx';
 import DonorList from './finance/DonorList';
 import DateRangeFilter from './finance/DateRangeFilter';
 import dayjs from 'dayjs';
-
+import { Link } from 'react-router-dom';
 // Tab panel component
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -423,6 +423,17 @@ const Finance = () => {
 
                                 {/* Reports Tab */}
                                 <TabPanel value={activeTab} index={4}>
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                                        <Button
+                                            component={Link}
+                                            to="/finances/foreign-donation-reports"
+                                            variant="outlined"
+                                            startIcon={<AssignmentTurnedIn />}
+                                        >
+                                            Rapports de Dons Étrangers
+                                        </Button>
+                                        {/* Other report buttons */}
+                                    </Box>
                                     <FinancialReports
                                         onRefresh={handleRefresh}
                                         dateFilter={dateFilter}

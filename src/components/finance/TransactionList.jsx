@@ -42,7 +42,8 @@ import {
     Check,
     Close,
     FileDownload,
-    Warning
+    Warning,
+    PublicOutlined // Added for foreign donation indicator
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -58,6 +59,15 @@ const formaterDevise = (montant) => {
         currency: 'TND',
         minimumFractionDigits: 2
     }).format(montant);
+};
+
+// Helper function to determine if a transaction is a foreign donation
+const isForeignDonation = (transaction) => {
+    return transaction &&
+        transaction.transaction_type === 'income' &&
+        transaction.donor_details &&
+        !transaction.donor_details.is_member &&
+        !transaction.donor_details.is_internal;
 };
 
 // Composant de dialogue pour vérifier une transaction
@@ -280,6 +290,32 @@ const ListeTransactions = ({ transactions, onRefresh, onAddTransaction }) => {
     });
     const [dialogueFiltresOuvert, setDialogueFiltresOuvert] = useState(false);
 
+    // Nouvel état pour les rapports de dons étrangers
+    const [foreignDonationReports, setForeignDonationReports] = useState({});
+
+    // Effet pour charger les rapports de dons étrangers
+    useEffect(() => {
+        if (!transactions || transactions.length === 0) return;
+
+        const fetchReports = async () => {
+            try {
+                const response = await AxiosInstance.get('/finances/foreign-donation-reports/');
+                const reportsMap = {};
+
+                // Transformer la liste en map pour un accès facile par ID de transaction
+                response.data.forEach(report => {
+                    reportsMap[report.transaction] = report;
+                });
+
+                setForeignDonationReports(reportsMap);
+            } catch (error) {
+                console.error('Erreur lors du chargement des rapports de dons étrangers:', error);
+            }
+        };
+
+        fetchReports();
+    }, [transactions]);
+
     // Effet pour filtrer les transactions basé sur la recherche et les filtres
     useEffect(() => {
         if (!transactions) return;
@@ -376,8 +412,6 @@ const ListeTransactions = ({ transactions, onRefresh, onAddTransaction }) => {
         setDialogueDetailOuvert(true);
         handleFermerMenu();
     };
-
-
 
     const handleDialogueSuppression = (transaction) => {
         setTransactionSelectionnee(transaction);
@@ -517,6 +551,47 @@ const ListeTransactions = ({ transactions, onRefresh, onAddTransaction }) => {
         );
     };
 
+    // Fonction pour obtenir l'indicateur de don étranger
+    const getForeignDonationIndicator = (transaction) => {
+        // Vérifier si c'est un don étranger
+        if (!isForeignDonation(transaction)) {
+            return null;
+        }
+
+        const report = foreignDonationReports[transaction.id];
+
+        // Si le rapport existe et est terminé, ne pas montrer d'avertissement
+        if (report && report.report_status === 'completed') {
+            return null;
+        }
+
+        // Déterminer la sévérité de l'avertissement
+        let color = 'warning';
+        let tooltipText = 'Don étranger - Déclaration requise';
+
+        if (report) {
+            const daysLeft = report.days_until_deadline;
+            const deadlinePassed = daysLeft < 0;
+
+            if (deadlinePassed) {
+                color = 'error';
+                tooltipText = `Don étranger - Déclaration en retard de ${Math.abs(daysLeft)} jours`;
+            } else {
+                tooltipText = `Don étranger - ${daysLeft} jours restants pour la déclaration`;
+            }
+        }
+
+        return (
+            <Tooltip title={tooltipText}>
+                <PublicOutlined
+                    fontSize="small"
+                    color={color}
+                    sx={{ ml: 1 }}
+                />
+            </Tooltip>
+        );
+    };
+
     return (
         <Box>
             {/* Barre d'outils de recherche et de filtre */}
@@ -619,90 +694,109 @@ const ListeTransactions = ({ transactions, onRefresh, onAddTransaction }) => {
                         ) : (
                             transactionsFiltrees
                                 .slice(page * lignesParPage, page * lignesParPage + lignesParPage)
-                                .map((transaction) => (
-                                    <TableRow key={transaction.id} hover>
-                                        <TableCell>{dayjs(transaction.date).format('DD/MM/YYYY')}</TableCell>
-                                        <TableCell>{getPuceType(transaction.transaction_type)}</TableCell>
-                                        <TableCell>
-                                            <Tooltip title={transaction.category}>
-                        <span>
-                          {transaction.category.split('_').map(word =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                          ).join(' ')}
-                        </span>
-                                            </Tooltip>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Tooltip title={transaction.description}>
+                                .map((transaction) => {
+                                    // Vérifier si c'est un don étranger avec rapport non complété
+                                    const isForeign = isForeignDonation(transaction) &&
+                                        (!foreignDonationReports[transaction.id] ||
+                                            foreignDonationReports[transaction.id].report_status !== 'completed');
+
+                                    return (
+                                        <TableRow
+                                            key={transaction.id}
+                                            hover
+                                            sx={{
+                                                bgcolor: isForeign ? 'rgba(255, 193, 7, 0.15)' : 'inherit',
+                                                '&:hover': {
+                                                    bgcolor: isForeign ? 'rgba(255, 193, 7, 0.2)' : undefined
+                                                }
+                                            }}
+                                        >
+                                            <TableCell>{dayjs(transaction.date).format('DD/MM/YYYY')}</TableCell>
+                                            <TableCell>{getPuceType(transaction.transaction_type)}</TableCell>
+                                            <TableCell>
+                                                <Tooltip title={transaction.category}>
+                                                    <span>
+                                                        {transaction.category.split('_').map(word =>
+                                                            word.charAt(0).toUpperCase() + word.slice(1)
+                                                        ).join(' ')}
+                                                    </span>
+                                                </Tooltip>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Tooltip title={transaction.description}>
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                maxWidth: 150,
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}
+                                                        >
+                                                            {transaction.description}
+                                                        </Typography>
+                                                    </Tooltip>
+                                                    {getForeignDonationIndicator(transaction)}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>
+                                                {transaction.project_details ? (
+                                                    <Tooltip title={transaction.project_details.name}>
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                maxWidth: 100,
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}
+                                                        >
+                                                            {transaction.project_details.name}
+                                                        </Typography>
+                                                    </Tooltip>
+                                                ) : '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {transaction.donor_details ? (
+                                                    <Tooltip title={transaction.donor_details.name}>
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                maxWidth: 100,
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}
+                                                        >
+                                                            {transaction.donor_details.name}
+                                                        </Typography>
+                                                    </Tooltip>
+                                                ) : '-'}
+                                            </TableCell>
+                                            <TableCell>
                                                 <Typography
-                                                    variant="body2"
                                                     sx={{
-                                                        maxWidth: 150,
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
+                                                        fontWeight: 'bold',
+                                                        color: transaction.transaction_type === 'income' ? 'success.main' : 'error.main'
                                                     }}
                                                 >
-                                                    {transaction.description}
+                                                    {transaction.transaction_type === 'income' ? '+' : '-'} {formaterDevise(transaction.amount)}
                                                 </Typography>
-                                            </Tooltip>
-                                        </TableCell>
-                                        <TableCell>
-                                            {transaction.project_details ? (
-                                                <Tooltip title={transaction.project_details.name}>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{
-                                                            maxWidth: 100,
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap'
-                                                        }}
-                                                    >
-                                                        {transaction.project_details.name}
-                                                    </Typography>
-                                                </Tooltip>
-                                            ) : '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {transaction.donor_details ? (
-                                                <Tooltip title={transaction.donor_details.name}>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{
-                                                            maxWidth: 100,
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap'
-                                                        }}
-                                                    >
-                                                        {transaction.donor_details.name}
-                                                    </Typography>
-                                                </Tooltip>
-                                            ) : '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography
-                                                sx={{
-                                                    fontWeight: 'bold',
-                                                    color: transaction.transaction_type === 'income' ? 'success.main' : 'error.main'
-                                                }}
-                                            >
-                                                {transaction.transaction_type === 'income' ? '+' : '-'} {formaterDevise(transaction.amount)}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>{getPuceStatut(transaction.status)}</TableCell>
-                                        <TableCell>
-                                            <IconButton
-                                                size="small"
-                                                onClick={(e) => handleOuvrirMenu(e, transaction)}
-                                                aria-label="options de transaction"
-                                            >
-                                                <MoreVert fontSize="small" />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                            </TableCell>
+                                            <TableCell>{getPuceStatut(transaction.status)}</TableCell>
+                                            <TableCell>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => handleOuvrirMenu(e, transaction)}
+                                                    aria-label="options de transaction"
+                                                >
+                                                    <MoreVert fontSize="small" />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                         )}
                     </TableBody>
                 </Table>
@@ -844,6 +938,10 @@ const ListeTransactions = ({ transactions, onRefresh, onAddTransaction }) => {
                     open={dialogueDetailOuvert}
                     onClose={() => setDialogueDetailOuvert(false)}
                     transaction={transactionSelectionnee}
+                    onVerify={handleSuccesVerification}
+                    onDelete={handleDialogueSuppression}
+                    onEdit={() => {}} // Implement if needed
+                    refreshData={onRefresh}
                 />
             )}
 

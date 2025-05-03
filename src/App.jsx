@@ -15,9 +15,8 @@ import MeetingResponse from './components/meetings/MeetingResponse.jsx';
 import DonorEditForm from './components/finance/DonorEditForm';
 
 // Notifications Components
-import NotificationDashboard from './components/NotificationDashboard';
-import EnhancedNotificationDashboard from './components/NotificationDashboard';
 
+import EnhancedNotificationDashboard from './components/NotificationDashboard';
 const PendingUsers = lazy(() => import("./components/PendingUsers"));
 const Home = lazy(() => import("./components/Home"));
 const About = lazy(() => import("./components/About"));

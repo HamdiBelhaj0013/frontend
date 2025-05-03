@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
+import AxiosInstance from '../Axios'; // Add this import for the API calls
 
 // Composants de style avec une approche inspirée de Tailwind
 import {
@@ -15,7 +16,9 @@ import {
     ListItem,
     ListItemText,
     Typography,
-    useTheme
+    useTheme,
+    Paper, // Add Paper component import
+    CircularProgress // Add CircularProgress component import
 } from '@mui/material';
 
 // Icônes
@@ -27,7 +30,8 @@ import {
     PieChart,
     ShowChart,
     TrendingDown,
-    TrendingUp
+    TrendingUp,
+    Warning // Add Warning icon import
 } from '@mui/icons-material';
 
 // Recharts pour les visualisations
@@ -96,8 +100,8 @@ const formatCategoryName = (name) => {
         .replace(/\b\w/g, letter => letter.toUpperCase());
 };
 
-// =============== DÉFINITIONS DES COMPOSANTS ===============
 
+import ForeignDonationsWidget from '/src/components/ForeignDonationsWidget.jsx';
 // Carte de Tableau de Bord - Composant de base pour afficher des données récapitulatives
 const DashboardCard = ({ title, icon, children, height = 'auto' }) => {
     const Icon = icon;
@@ -511,7 +515,7 @@ const TrendChart = ({ data, title, dateFilter }) => {
 };
 
 
-const EnhancedDashboard = ({ statistics, recentTransactions, dateFilter }) => {
+const EnhancedDashboard = ({ statistics, recentTransactions, dateFilter, setActiveTab }) => {
     const navigate = useNavigate();
     const theme = useTheme();
 
@@ -755,6 +759,9 @@ const EnhancedDashboard = ({ statistics, recentTransactions, dateFilter }) => {
                         title="Tendances Financières"
                         dateFilter={dateFilter}
                     />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <ForeignDonationsWidget onViewReports={() => setActiveTab && setActiveTab(2)} />
                 </Grid>
 
                 {/* Colonne droite - Transactions récentes */}

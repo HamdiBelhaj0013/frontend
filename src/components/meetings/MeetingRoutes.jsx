@@ -3,22 +3,17 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import MeetingsCalendar from './MeetingsCalendar';
 import MeetingDetail from './MeetingDetail';
 import MeetingCreateForm from './MeetingCreateForm';
-import MeetingResponse from './MeetingResponse';
-import ProtectedMeetingEdit from './ProtectedMeetingEdit';
-import { PermissionGuard } from '/src/contexts/ConditionalUI.jsx';
+import EnhancedMeetingResponse from './MeetingResponse'; // Using the enhanced component
+import { PermissionGuard } from '/src/contexts/PermissionGuard.jsx';
 import { RESOURCES, ACTIONS } from '/src/contexts/PermissionsContext.jsx';
 
-/**
- * Ce composant définit les routes pour le module de réunions
- * avec des gardes de permission appropriés
- */
 const MeetingRoutes = () => {
     return (
         <Routes>
-            {/* Voir le calendrier - Tous les utilisateurs peuvent voir */}
+            {/* View calendar - All users can view */}
             <Route path="/" element={<MeetingsCalendar />} />
 
-            {/* Créer une réunion - Uniquement les utilisateurs avec permission de création */}
+            {/* Create meeting - Only users with create permission */}
             <Route
                 path="/create"
                 element={
@@ -32,17 +27,28 @@ const MeetingRoutes = () => {
                 }
             />
 
-            {/* Modifier une réunion - Uniquement les utilisateurs avec permission de modification */}
-            <Route path="/edit/:id" element={<ProtectedMeetingEdit />} />
+            {/* Edit meeting - Only users with edit permission */}
+            <Route
+                path="/edit/:id"
+                element={
+                    <PermissionGuard
+                        resource={RESOURCES.MEETINGS}
+                        action={ACTIONS.EDIT}
+                        redirectTo="/meetings"
+                    >
+                        <MeetingCreateForm isEditMode={true} />
+                    </PermissionGuard>
+                }
+            />
 
-            {/* Réponse à une réunion - Quiconque avec le lien */}
-            <Route path="/response/:attendeeId/:token" element={<MeetingResponse />} />
-            <Route path="/response/:attendeeId/:token/:responseType" element={<MeetingResponse />} />
+            {/* Response routes - IMPORTANT: Keep these routes matching the backend paths */}
+            <Route path="/response/:attendeeId/:token" element={<EnhancedMeetingResponse />} />
+            <Route path="/response/:attendeeId/:token/:responseType" element={<EnhancedMeetingResponse />} />
 
-            {/* Voir les détails d'une réunion - Tous les utilisateurs peuvent voir (placer ceci après d'autres routes plus spécifiques) */}
+            {/* View meeting details - All users can view */}
             <Route path="/:id" element={<MeetingDetail />} />
 
-            {/* Redirection catch-all */}
+            {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/meetings" replace />} />
         </Routes>
     );

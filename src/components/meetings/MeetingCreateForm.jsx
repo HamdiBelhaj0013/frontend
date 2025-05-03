@@ -1,117 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
-    Box,
-    Typography,
-    Button,
-    Grid,
-    Paper,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    FormHelperText,
-    Switch,
-    FormControlLabel,
-    Divider,
-    Chip,
-    Alert,
-    Stepper,
-    Step,
-    StepLabel,
-    CircularProgress,
-    IconButton,
-    Tooltip,
-    Container,
-    Card,
-    CardContent,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    RadioGroup,
-    Radio,
+    Box, Container, Paper, Typography, TextField, Button, Grid,
+    FormControl, InputLabel, Select, MenuItem, FormHelperText,
+    FormControlLabel, Switch, Divider, CircularProgress, Alert,
+    RadioGroup, Radio, Stepper, Step, StepLabel
 } from '@mui/material';
-import { styled, useTheme, alpha } from '@mui/material/styles';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import moment from 'moment';
-import {
-    Event,
-    LocationOn,
-    AccessTime,
-    Description,
-    People,
-    ArrowBack,
-    Add,
-    Check,
-    CalendarMonth,
-    Save,
-    Loop,
-    Language,
-    Notifications,
-    Schedule,
-    VideoCall,
-    Edit,
-    DeleteOutline,
-    InfoOutlined,
-    HelpOutline
-} from '@mui/icons-material';
-import { useNavigate, Link, useParams } from 'react-router-dom';
+import { ArrowBack, Save } from '@mui/icons-material';
 import AxiosInstance from '../Axios.jsx';
-import { motion } from 'framer-motion';
-import { usePermissions } from '../../contexts/PermissionsContext';
+import { usePermissions } from '/src/contexts/PermissionsContext.jsx';
 
-// Styled components remain the same
-const HeaderContainer = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(3),
-    marginBottom: theme.spacing(3),
-    borderRadius: '12px',
-    background: 'linear-gradient(135deg, #4a6bd8, #3949AB)',
-    color: 'white',
-    position: 'relative',
-    overflow: 'hidden',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-}));
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(3),
-    borderRadius: '12px',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    height: '100%',
-}));
-
-const StyledCard = styled(Card)(({ theme }) => ({
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    height: '100%',
-    transition: 'all 0.2s ease',
-    '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 10px 20px rgba(0,0,0,0.12)',
-    }
-}));
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-    fontWeight: 'bold',
-    marginBottom: theme.spacing(2),
-    position: 'relative',
-    '&:after': {
-        content: '""',
-        position: 'absolute',
-        bottom: -4,
-        left: 0,
-        width: 40,
-        height: 3,
-        backgroundColor: theme.palette.primary.main,
-        borderRadius: 3
-    }
-}));
-
-const MEETING_TYPES = [
-    { value: 'regular', label: 'Réunion Mensuelle Ordinaire' },
+const TYPES_REUNION = [
+    { value: 'regular', label: 'Réunion Mensuelle Régulière' },
     { value: 'board', label: 'Réunion du Conseil' },
     { value: 'extraordinary', label: 'Réunion Extraordinaire' },
     { value: 'general_assembly', label: 'Assemblée Générale' },
@@ -119,22 +23,22 @@ const MEETING_TYPES = [
     { value: 'other', label: 'Autre' },
 ];
 
-const MEETING_FORMATS = [
+const FORMATS_REUNION = [
     { value: 'in_person', label: 'Présentiel Uniquement' },
     { value: 'virtual', label: 'Virtuel Uniquement' },
     { value: 'hybrid', label: 'Hybride (Présentiel & Virtuel)' },
 ];
 
-const NOTIFICATION_METHODS = [
+const METHODES_NOTIFICATION = [
     { value: 'email', label: 'Email Uniquement' },
     { value: 'platform', label: 'Plateforme Uniquement' },
     { value: 'both', label: 'Email et Plateforme' },
 ];
 
-const steps = ['Informations de Base', 'Horaire & Lieu', 'Options Supplémentaires', 'Révision & Création'];
+const etapes = ['Informations de Base', 'Horaire & Lieu', 'Options Supplémentaires', 'Vérification & Création'];
 
-const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
-    const theme = useTheme();
+const FormulaireCreationReunion = ({ isEditMode = false }) => {
+    const { id } = useParams();
     const navigate = useNavigate();
     const { can, RESOURCES, ACTIONS } = usePermissions();
     const [activeStep, setActiveStep] = useState(0);
@@ -142,18 +46,25 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
     const [initialLoading, setInitialLoading] = useState(isEditMode);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
-    const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-    const [helpDialogOpen, setHelpDialogOpen] = useState(false);
-    const [helpTopic, setHelpTopic] = useState('');
 
-    // Form fields state
+    // Données de formulaire par défaut avec modèle d'ordre du jour
+    const ordreJourDefaut = `1. Accueil et Introduction
+2. Approbation du Procès-verbal de la Réunion Précédente
+3. Mise à jour Financière
+4. Mises à jour des Projets
+5. Nouveaux Sujets
+6. Discussion Ouverte
+7. Révision des Actions à Entreprendre
+8. Date de la Prochaine Réunion`;
+
+    // État du formulaire
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         meeting_type: 'regular',
         start_date: moment().add(1, 'day').set({ hour: 10, minute: 0, second: 0 }),
         end_date: moment().add(1, 'day').set({ hour: 12, minute: 0, second: 0 }),
-        meeting_format: 'in_person', // New field for meeting format
+        meeting_format: 'in_person',
         location: '',
         meeting_link: '',
         agenda: '',
@@ -168,41 +79,27 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         reminder_days_before: 2
     });
 
-    // Default agenda template
-    const defaultAgenda = `1. Accueil et Introduction
-2. Approbation du Procès-Verbal de la Réunion Précédente
-3. Mise à Jour Financière
-4. Mises à Jour des Projets
-5. Nouveaux Sujets
-6. Discussion Ouverte
-7. Révision des Points d'Action
-8. Date de la Prochaine Réunion`;
-
-    // Field validation errors
+    // Erreurs de validation
     const [errors, setErrors] = useState({});
 
+    // Récupérer les données de la réunion en mode édition
     useEffect(() => {
-        if (isEditMode && meetingId) {
+        if (isEditMode && id) {
             const fetchMeetingData = async () => {
                 try {
                     setInitialLoading(true);
                     setError(null);
 
-                    console.log(`Récupération des données de la réunion pour ID: ${meetingId}`);
-
-                    // Fetch meeting data
-                    const response = await AxiosInstance.get(`/meetings/meetings/${meetingId}/`);
+                    // Point d'accès corrigé pour utiliser /meetings/meetings/
+                    const response = await AxiosInstance.get(`/meetings/meetings/${id}/`);
                     const meetingData = response.data;
 
-                    console.log("Données de réunion récupérées:", meetingData);
-
-                    // Determine meeting format from existing data
+                    // Déterminer le type de format à partir de is_virtual et location
                     let meetingFormat = 'in_person';
                     if (meetingData.is_virtual) {
                         meetingFormat = meetingData.location ? 'hybrid' : 'virtual';
                     }
 
-                    // Convert to form data format
                     setFormData({
                         title: meetingData.title || '',
                         description: meetingData.description || '',
@@ -226,56 +123,47 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
 
                     setInitialLoading(false);
                 } catch (err) {
-                    console.error('Erreur lors de la récupération des données de réunion:', err);
-
-                    // Log more detailed error info
-                    if (err.response) {
-                        console.error("Erreur de réponse:", err.response.status, err.response.data);
-                    } else if (err.request) {
-                        console.error("Erreur de requête:", err.request);
-                    } else {
-                        console.error("Message d'erreur:", err.message);
-                    }
-
-                    setError('Échec du chargement des données de réunion. Veuillez réessayer.');
+                    console.error('Erreur lors de la récupération des données de la réunion:', err);
+                    setError('Échec du chargement des données de la réunion. Veuillez réessayer.');
                     setInitialLoading(false);
                 }
             };
 
             fetchMeetingData();
         }
-    }, [isEditMode, meetingId]);
+    }, [isEditMode, id]);
 
-    // Handle text field changes
+    // Gérer les changements de champs texte
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        // Clear error when field is edited
+
+        // Effacer l'erreur pour ce champ
         if (errors[name]) {
             setErrors({ ...errors, [name]: null });
         }
     };
 
-    // Handle switch field changes
+    // Gérer les changements de champs interrupteur
     const handleSwitchChange = (e) => {
         const { name, checked } = e.target;
         setFormData({ ...formData, [name]: checked });
 
-        // Initialize agenda if empty
+        // Initialiser l'ordre du jour avec le modèle si on définit comme récurrent
         if (name === 'is_recurring' && checked && !formData.agenda) {
             setFormData({
                 ...formData,
                 [name]: checked,
-                agenda: defaultAgenda
+                agenda: ordreJourDefaut
             });
         }
     };
 
-    // Handle date changes
+    // Gérer les changements de date
     const handleDateChange = (name, value) => {
         setFormData({ ...formData, [name]: value });
 
-        // If start date changes, adjust end date to be 2 hours later
+        // Si la date de début change, ajuster la date de fin à 2 heures plus tard
         if (name === 'start_date') {
             const newEndDate = moment(value).add(2, 'hours');
             setFormData({
@@ -285,13 +173,12 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
             });
         }
 
-        // Clear error when field is edited
         if (errors[name]) {
             setErrors({ ...errors, [name]: null });
         }
     };
 
-    // Handle recurrence pattern changes
+    // Gérer les changements du modèle de récurrence
     const handleRecurrenceChange = (e) => {
         const { name, value } = e.target;
         setFormData({
@@ -303,12 +190,12 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         });
     };
 
-    // Validate form fields for current step
+    // Valider le formulaire pour l'étape courante
     const validateStep = () => {
         const newErrors = {};
         let isValid = true;
 
-        // Step 1 validation
+        // Étape 1: Informations de base
         if (activeStep === 0) {
             if (!formData.title.trim()) {
                 newErrors.title = 'Le titre de la réunion est requis';
@@ -320,7 +207,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
             }
         }
 
-        // Step 2 validation
+        // Étape 2: Horaire & Lieu
         else if (activeStep === 1) {
             if (!formData.start_date) {
                 newErrors.start_date = 'La date de début est requise';
@@ -330,12 +217,13 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 newErrors.end_date = 'La date de fin est requise';
                 isValid = false;
             }
-            if (formData.end_date && formData.start_date && moment(formData.end_date).isBefore(moment(formData.start_date))) {
-                newErrors.end_date = 'La date de fin doit être postérieure à la date de début';
+            if (formData.end_date && formData.start_date &&
+                moment(formData.end_date).isBefore(moment(formData.start_date))) {
+                newErrors.end_date = 'La date de fin doit être après la date de début';
                 isValid = false;
             }
 
-            // Validate based on meeting format
+            // Valider en fonction du format de réunion
             if (formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') {
                 if (!formData.location.trim()) {
                     newErrors.location = 'Le lieu est requis pour les réunions en présentiel ou hybrides';
@@ -351,7 +239,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
             }
         }
 
-        // Step 3 validation
+        // Étape 3: Options supplémentaires
         else if (activeStep === 2) {
             if (formData.is_recurring) {
                 const recurrence = formData.recurrence_pattern;
@@ -360,10 +248,11 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                     isValid = false;
                 }
                 if (!recurrence.interval || recurrence.interval < 1) {
-                    newErrors.interval = 'L\'intervalle doit être d\'au moins 1';
+                    newErrors.interval = 'L\'intervalle doit être au moins 1';
                     isValid = false;
                 }
-                if (recurrence.frequency === 'monthly' && (!recurrence.day_of_month || recurrence.day_of_month < 1 || recurrence.day_of_month > 28)) {
+                if (recurrence.frequency === 'monthly' &&
+                    (!recurrence.day_of_month || recurrence.day_of_month < 1 || recurrence.day_of_month > 28)) {
                     newErrors.day_of_month = 'Le jour du mois doit être entre 1 et 28';
                     isValid = false;
                 }
@@ -374,29 +263,29 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         return isValid;
     };
 
-    // Handle next step
+    // Gérer l'étape suivante
     const handleNext = () => {
         if (validateStep()) {
-            if (activeStep === steps.length - 1) {
-                setOpenConfirmDialog(true);
+            if (activeStep === etapes.length - 1) {
+                handleSubmit();
             } else {
-                setActiveStep((prevStep) => prevStep + 1);
+                setActiveStep(prevStep => prevStep + 1);
             }
         }
     };
 
-    // Handle back step
+    // Gérer l'étape précédente
     const handleBack = () => {
-        setActiveStep((prevStep) => prevStep - 1);
+        setActiveStep(prevStep => prevStep - 1);
     };
 
+    // Soumettre le formulaire
     const handleSubmit = async () => {
         try {
             setLoading(true);
             setError(null);
-            setOpenConfirmDialog(false);
 
-            // First try to get user from localStorage
+            // Obtenir l'association de l'utilisateur
             let associationId = null;
             const userStr = localStorage.getItem('user');
 
@@ -404,19 +293,17 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 try {
                     const user = JSON.parse(userStr);
                     associationId = user?.association?.id;
-                    console.log("ID d'association récupéré depuis localStorage:", associationId);
                 } catch (e) {
-                    console.error("Erreur d'analyse des données utilisateur depuis localStorage:", e);
+                    console.error("Erreur lors de l'analyse des données utilisateur depuis localStorage:", e);
                 }
             }
 
-            // If association ID is still not available, fetch user profile
+            // Si l'ID d'association n'est pas disponible, récupérer le profil utilisateur
             if (!associationId) {
                 try {
-                    console.log("ID d'association non trouvé dans localStorage, récupération du profil utilisateur...");
+                    // Point d'accès corrigé pour utiliser AxiosInstance et le chemin correct
                     const userProfileResponse = await AxiosInstance.get('/users/profile/');
                     associationId = userProfileResponse.data.association?.id;
-                    console.log("ID d'association récupéré depuis l'API de profil:", associationId);
                 } catch (profileErr) {
                     console.error("Erreur lors de la récupération du profil utilisateur:", profileErr);
                     throw new Error("Impossible de déterminer votre association. Veuillez vous reconnecter.");
@@ -427,7 +314,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 throw new Error("Votre compte n'est associé à aucune organisation. Veuillez contacter un administrateur.");
             }
 
-            // Prepare form data for API - convert meeting_format to is_virtual for API compatibility
+            // Convertir meeting_format en is_virtual pour la compatibilité API
             const requestData = {
                 ...formData,
                 start_date: formData.start_date.toISOString(),
@@ -435,41 +322,36 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                 association: associationId,
                 is_virtual: formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid'
             };
-
-            console.log("Envoi des données de requête:", requestData);
+            if (formData.is_recurring && formData.recurrence_pattern) {
+                console.log("Sending recurrence pattern:", formData.recurrence_pattern);
+                // Ensure all properties are of the correct type
+                requestData.recurrence_pattern = {
+                    frequency: String(formData.recurrence_pattern.frequency),
+                    interval: Number(formData.recurrence_pattern.interval),
+                    end_after: Number(formData.recurrence_pattern.end_after),
+                    day_of_month: formData.recurrence_pattern.day_of_month
+                        ? Number(formData.recurrence_pattern.day_of_month)
+                        : moment(formData.start_date).date()
+                };
+            }
 
             let response;
             if (isEditMode) {
-                // Update existing meeting
-                response = await AxiosInstance.put(`/meetings/meetings/${meetingId}/`, requestData);
-                console.log("Réunion mise à jour avec succès:", response.data);
+                // Point d'accès corrigé pour utiliser AxiosInstance et le chemin correct
+                response = await AxiosInstance.put(`/meetings/meetings/${id}/`, requestData);
             } else {
-                // Create new meeting
+                // Point d'accès corrigé pour utiliser AxiosInstance et le chemin correct
                 response = await AxiosInstance.post('/meetings/meetings/', requestData);
-                console.log("Réunion créée avec succès:", response.data);
             }
 
             setSuccess(true);
 
-            // Navigate to the meeting details after a brief delay
+            // Naviguer vers les détails de la réunion après un délai
             setTimeout(() => {
-                navigate(`/meetings/${isEditMode ? meetingId : response.data.id}`);
+                navigate(`/meetings/${isEditMode ? id : response.data.id}`);
             }, 1500);
         } catch (err) {
             console.error(`Erreur lors de ${isEditMode ? 'la mise à jour' : 'la création'} de la réunion:`, err);
-
-            // More detailed error logging
-            if (err.response) {
-                console.error("Le serveur a répondu avec une erreur:", {
-                    status: err.response.status,
-                    headers: err.response.headers,
-                    data: err.response.data
-                });
-            } else if (err.request) {
-                console.error("Aucune réponse reçue:", err.request);
-            } else {
-                console.error("Erreur de configuration de la requête:", err.message);
-            }
 
             let errorMessage;
             if (err.response?.data) {
@@ -492,289 +374,200 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
         }
     };
 
-    // Show help dialog for specific topics
-    const showHelp = (topic) => {
-        setHelpTopic(topic);
-        setHelpDialogOpen(true);
-    };
+    if (initialLoading) {
+        return (
+            <Container maxWidth="md">
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                    <CircularProgress size={60} thickness={4} />
+                    <Typography variant="h6" sx={{ mt: 2 }}>
+                        Chargement des détails de la réunion...
+                    </Typography>
+                </Box>
+            </Container>
+        );
+    }
 
-    // Get help content based on topic
-    const getHelpContent = () => {
-        switch (helpTopic) {
-            case 'recurrence':
-                return {
-                    title: 'Récurrence de Réunion',
-                    content: 'La configuration d\'une réunion récurrente créera automatiquement des réunions futures selon le modèle que vous définissez. Vous pouvez choisir la fréquence (mensuelle, hebdomadaire, etc.), l\'intervalle et le nombre d\'instances à créer. Ceci est utile pour les réunions régulières programmées comme les réunions du conseil ou les points d\'équipe.'
-                };
-            case 'virtual':
-                return {
-                    title: 'Réunions Virtuelles',
-                    content: 'Les réunions virtuelles nécessitent un lien de réunion où les participants peuvent se joindre à distance. Vous pouvez utiliser des services comme Zoom, Google Meet ou Microsoft Teams, et coller l\'URL de la réunion ici. Assurez-vous de tester votre lien avant de le partager avec les participants.'
-                };
-            case 'hybrid':
-                return {
-                    title: 'Réunions Hybrides',
-                    content: 'Les réunions hybrides combinent des éléments en présentiel et virtuels. Les participants en présentiel se réunissent à un emplacement physique, tandis que les participants à distance rejoignent via le lien de réunion. Ce format offre de la flexibilité pour les membres de l\'équipe qui ne peuvent pas assister en personne. Assurez-vous que votre lieu physique et votre lien de réunion sont clairement spécifiés pour accommoder tous les participants.'
-                };
-            case 'notifications':
-                return {
-                    title: 'Méthodes de Notification',
-                    content: 'Choisissez comment les participants seront notifiés de cette réunion. Les notifications par e-mail seront envoyées à leur adresse e-mail enregistrée. Les notifications de plateforme apparaîtront dans leur tableau de bord lorsqu\'ils se connecteront. Pour les réunions importantes, nous recommandons d\'utiliser les deux méthodes.'
-                };
-            default:
-                return {
-                    title: 'Aide',
-                    content: 'Ce formulaire vous permet de créer une nouvelle réunion pour votre association. Remplissez les informations requises à toutes les étapes, puis révisez et soumettez les détails de votre réunion.'
-                };
-        }
-    };
-
-    // Motion animation variants
-    const containerVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.5,
-                when: "beforeChildren",
-                staggerChildren: 0.1
-            }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 15 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-    };
-
-    // Render form steps
+    // Rendre un contenu différent selon l'étape courante
     const renderStepContent = () => {
         switch (activeStep) {
             case 0:
-                return renderBasicInfoStep();
+                return (
+                    <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                            <TextField
+                                name="title"
+                                label="Titre de la Réunion"
+                                value={formData.title}
+                                onChange={handleInputChange}
+                                fullWidth
+                                required
+                                error={!!errors.title}
+                                helperText={errors.title}
+                                placeholder="ex., Réunion Mensuelle du Conseil - Avril 2025"
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth required error={!!errors.meeting_type}>
+                                <InputLabel>Type de Réunion</InputLabel>
+                                <Select
+                                    name="meeting_type"
+                                    value={formData.meeting_type}
+                                    onChange={handleInputChange}
+                                    label="Type de Réunion"
+                                >
+                                    {TYPES_REUNION.map((type) => (
+                                        <MenuItem key={type.value} value={type.value}>
+                                            {type.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.meeting_type && <FormHelperText>{errors.meeting_type}</FormHelperText>}
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                name="description"
+                                label="Description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                                fullWidth
+                                multiline
+                                rows={4}
+                                placeholder="Brève description de l'objectif et des buts de la réunion"
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                name="agenda"
+                                label="Ordre du Jour"
+                                value={formData.agenda}
+                                onChange={handleInputChange}
+                                fullWidth
+                                multiline
+                                rows={6}
+                                placeholder="Saisissez les points de l'ordre du jour"
+                                helperText={
+                                    <Button
+                                        size="small"
+                                        onClick={() => setFormData({...formData, agenda: ordreJourDefaut})}
+                                        sx={{ mt: 1 }}
+                                    >
+                                        Utiliser le Modèle par Défaut
+                                    </Button>
+                                }
+                            />
+                        </Grid>
+                    </Grid>
+                );
+
             case 1:
-                return renderScheduleStep();
-            case 2:
-                return renderOptionsStep();
-            case 3:
-                return renderReviewStep();
-            default:
-                return null;
-        }
-    };
-
-    // Step 1: Basic information
-    const renderBasicInfoStep = () => {
-        return (
-            <Grid container spacing={3}>
-                <Grid item xs={12}>
-                    <TextField
-                        name="title"
-                        label="Titre de la Réunion"
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        fullWidth
-                        required
-                        error={!!errors.title}
-                        helperText={errors.title}
-                        placeholder="ex., Réunion Mensuelle du Conseil - Avril 2025"
-                    />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth required error={!!errors.meeting_type}>
-                        <InputLabel>Type de Réunion</InputLabel>
-                        <Select
-                            name="meeting_type"
-                            value={formData.meeting_type}
-                            onChange={handleInputChange}
-                            label="Type de Réunion"
-                        >
-                            {MEETING_TYPES.map((type) => (
-                                <MenuItem key={type.value} value={type.value}>
-                                    {type.label}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        {errors.meeting_type && <FormHelperText>{errors.meeting_type}</FormHelperText>}
-                    </FormControl>
-                </Grid>
-
-                <Grid item xs={12}>
-                    <TextField
-                        name="description"
-                        label="Description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        fullWidth
-                        multiline
-                        rows={4}
-                        placeholder="Brève description de l'objectif et des buts de la réunion"
-                    />
-                </Grid>
-
-                <Grid item xs={12}>
-                    <TextField
-                        name="agenda"
-                        label="Ordre du Jour"
-                        value={formData.agenda}
-                        onChange={handleInputChange}
-                        fullWidth
-                        multiline
-                        rows={6}
-                        placeholder="Saisissez les points de l'ordre du jour"
-                        helperText={
-                            <Button
-                                size="small"
-                                onClick={() => setFormData({...formData, agenda: defaultAgenda})}
-                                sx={{ mt: 1 }}
-                            >
-                                Utiliser le Modèle par Défaut
-                            </Button>
-                        }
-                    />
-                </Grid>
-            </Grid>
-        );
-    };
-
-    // Step 2: Schedule & Location
-    const renderScheduleStep = () => {
-        return (
-            <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterMoment}>
-                        <DateTimePicker
-                            label="Date & Heure de Début"
-                            value={formData.start_date}
-                            onChange={(newValue) => handleDateChange('start_date', newValue)}
-                            slotProps={{
-                                textField: {
-                                    fullWidth: true,
-                                    required: true,
-                                    error: !!errors.start_date,
-                                    helperText: errors.start_date
-                                }
-                            }}
-                        />
-                    </LocalizationProvider>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterMoment}>
-                        <DateTimePicker
-                            label="Date & Heure de Fin"
-                            value={formData.end_date}
-                            onChange={(newValue) => handleDateChange('end_date', newValue)}
-                            slotProps={{
-                                textField: {
-                                    fullWidth: true,
-                                    required: true,
-                                    error: !!errors.end_date,
-                                    helperText: errors.end_date
-                                }
-                            }}
-                        />
-                    </LocalizationProvider>
-                </Grid>
-
-                {/* Meeting Format Selection */}
-                <Grid item xs={12}>
-                    <FormControl component="fieldset" sx={{ width: '100%' }}>
-                        <Typography variant="subtitle1" fontWeight="medium" sx={{ mb: 1 }}>
-                            Format de Réunion
-                            <Tooltip title="Aide sur les formats de réunion">
-                                <IconButton size="small" onClick={() => showHelp('hybrid')} sx={{ ml: 1 }}>
-                                    <HelpOutline fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                        </Typography>
-
-                        <RadioGroup
-                            row
-                            name="meeting_format"
-                            value={formData.meeting_format}
-                            onChange={handleInputChange}
-                        >
-                            {MEETING_FORMATS.map((format) => (
-                                <FormControlLabel
-                                    key={format.value}
-                                    value={format.value}
-                                    control={<Radio />}
-                                    label={format.label}
+                return (
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} sm={6}>
+                            <LocalizationProvider dateAdapter={AdapterMoment}>
+                                <DateTimePicker
+                                    label="Date & Heure de Début"
+                                    value={formData.start_date}
+                                    onChange={(newValue) => handleDateChange('start_date', newValue)}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            required: true,
+                                            error: !!errors.start_date,
+                                            helperText: errors.start_date
+                                        }
+                                    }}
                                 />
-                            ))}
-                        </RadioGroup>
-                    </FormControl>
-                </Grid>
+                            </LocalizationProvider>
+                        </Grid>
 
-                {/* Conditionally show location field for in-person or hybrid meetings */}
-                {(formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') && (
-                    <Grid item xs={12}>
-                        <TextField
-                            name="location"
-                            label="Lieu de la Réunion"
-                            value={formData.location}
-                            onChange={handleInputChange}
-                            fullWidth
-                            required
-                            error={!!errors.location}
-                            helperText={errors.location}
-                            placeholder="ex., Salle de Conférence A, Bureau Principal"
-                            InputProps={{
-                                startAdornment: <LocationOn sx={{ color: 'action.active', mr: 1 }} />,
-                            }}
-                        />
-                    </Grid>
-                )}
+                        <Grid item xs={12} sm={6}>
+                            <LocalizationProvider dateAdapter={AdapterMoment}>
+                                <DateTimePicker
+                                    label="Date & Heure de Fin"
+                                    value={formData.end_date}
+                                    onChange={(newValue) => handleDateChange('end_date', newValue)}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            required: true,
+                                            error: !!errors.end_date,
+                                            helperText: errors.end_date
+                                        }
+                                    }}
+                                />
+                            </LocalizationProvider>
+                        </Grid>
 
-                {/* Conditionally show meeting link field for virtual or hybrid meetings */}
-                {(formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid') && (
-                    <Grid item xs={12}>
-                        <TextField
-                            name="meeting_link"
-                            label="Lien de Réunion"
-                            value={formData.meeting_link}
-                            onChange={handleInputChange}
-                            fullWidth
-                            required
-                            error={!!errors.meeting_link}
-                            helperText={errors.meeting_link}
-                            placeholder="ex., https://zoom.us/j/123456789"
-                            InputProps={{
-                                startAdornment: <Language sx={{ color: 'action.active', mr: 1 }} />,
-                            }}
-                        />
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                            {formData.meeting_format === 'hybrid'
-                                ? "Les participants à distance utiliseront ce lien tandis que les autres assisteront en personne."
-                                : "Tous les participants rejoindront la réunion via ce lien."}
-                        </Typography>
-                    </Grid>
-                )}
-            </Grid>
-        );
-    };
-
-    // Step 3: Additional Options
-    const renderOptionsStep = () => {
-        return (
-            <Grid container spacing={3}>
-                {/* Recurring Meeting Option */}
-                <Grid item xs={12}>
-                    <StyledCard>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Réunion Récurrente
+                        <Grid item xs={12}>
+                            <FormControl component="fieldset" sx={{ width: '100%' }}>
+                                <Typography variant="subtitle1" fontWeight="medium" sx={{ mb: 1 }}>
+                                    Format de Réunion
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Tooltip title="Aide sur les paramètres de récurrence">
-                                        <IconButton size="small" onClick={() => showHelp('recurrence')}>
-                                            <HelpOutline fontSize="small" />
-                                        </IconButton>
-                                    </Tooltip>
+                                <RadioGroup
+                                    row
+                                    name="meeting_format"
+                                    value={formData.meeting_format}
+                                    onChange={handleInputChange}
+                                >
+                                    {FORMATS_REUNION.map((format) => (
+                                        <FormControlLabel
+                                            key={format.value}
+                                            value={format.value}
+                                            control={<Radio />}
+                                            label={format.label}
+                                        />
+                                    ))}
+                                </RadioGroup>
+                            </FormControl>
+                        </Grid>
+
+                        {(formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') && (
+                            <Grid item xs={12}>
+                                <TextField
+                                    name="location"
+                                    label="Lieu de la Réunion"
+                                    value={formData.location}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    required
+                                    error={!!errors.location}
+                                    helperText={errors.location}
+                                    placeholder="ex., Salle de Conférence A, Bureau Principal"
+                                />
+                            </Grid>
+                        )}
+
+                        {(formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid') && (
+                            <Grid item xs={12}>
+                                <TextField
+                                    name="meeting_link"
+                                    label="Lien de la Réunion"
+                                    value={formData.meeting_link}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    required
+                                    error={!!errors.meeting_link}
+                                    helperText={errors.meeting_link}
+                                    placeholder="ex., https://zoom.us/j/123456789"
+                                />
+                            </Grid>
+                        )}
+                    </Grid>
+                );
+
+            case 2:
+                return (
+                    <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                            <Paper sx={{ p: 3, mb: 3 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h6" fontWeight="bold">
+                                        Réunion Récurrente
+                                    </Typography>
                                     <FormControlLabel
                                         control={
                                             <Switch
@@ -787,10 +580,8 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                         label=""
                                     />
                                 </Box>
-                            </Box>
 
-                            {formData.is_recurring && (
-                                <Box sx={{ mt: 2 }}>
+                                {formData.is_recurring && (
                                     <Grid container spacing={2}>
                                         <Grid item xs={12} sm={6}>
                                             <FormControl fullWidth required error={!!errors.frequency}>
@@ -836,7 +627,7 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                                     required
                                                     inputProps={{ min: 1, max: 28 }}
                                                     error={!!errors.day_of_month}
-                                                    helperText={errors.day_of_month || "Choisissez entre 1-28 pour garantir des dates valides pour tous les mois"}
+                                                    helperText={errors.day_of_month || "Choisissez entre 1-28 pour assurer des dates valides pour tous les mois"}
                                                 />
                                             </Grid>
                                         )}
@@ -855,482 +646,240 @@ const MeetingCreateForm = ({ isEditMode = false, meetingId = null }) => {
                                             />
                                         </Grid>
                                     </Grid>
-                                </Box>
-                            )}
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
+                                )}
+                            </Paper>
+                        </Grid>
 
-                {/* Notification Settings */}
-                <Grid item xs={12}>
-                    <StyledCard>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Typography variant="h6" fontWeight="bold">
+                        <Grid item xs={12}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" fontWeight="bold" gutterBottom>
                                     Paramètres de Notification
                                 </Typography>
-                                <Tooltip title="Aide sur les notifications">
-                                    <IconButton size="small" onClick={() => showHelp('notifications')}>
-                                        <HelpOutline fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                            </Box>
 
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Méthode de Notification</InputLabel>
-                                        <Select
-                                            name="notification_method"
-                                            value={formData.notification_method}
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth>
+                                            <InputLabel>Méthode de Notification</InputLabel>
+                                            <Select
+                                                name="notification_method"
+                                                value={formData.notification_method}
+                                                onChange={handleInputChange}
+                                                label="Méthode de Notification"
+                                            >
+                                                {METHODES_NOTIFICATION.map((method) => (
+                                                    <MenuItem key={method.value} value={method.value}>
+                                                        {method.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            name="reminder_days_before"
+                                            label="Rappel Jours Avant"
+                                            type="number"
+                                            value={formData.reminder_days_before}
                                             onChange={handleInputChange}
-                                            label="Méthode de Notification"
-                                        >
-                                            {NOTIFICATION_METHODS.map((method) => (
-                                                <MenuItem key={method.value} value={method.value}>
-                                                    {method.label}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                                            fullWidth
+                                            inputProps={{ min: 1, max: 14 }}
+                                            helperText={`Envoyer un rappel ${formData.reminder_days_before} jours avant la réunion`}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </Paper>
+                        </Grid>
+                    </Grid>
+                );
+
+            case 3:
+                return (
+                    <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                            <Alert severity="info" sx={{ mb: 3 }}>
+                                Veuillez vérifier les détails de la réunion ci-dessous avant {isEditMode ? 'la mise à jour' : 'la création'} de la réunion.
+                                Tous les participants seront notifiés selon vos paramètres de notification.
+                            </Alert>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                                    Informations de Base
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+
+                                <Typography variant="subtitle2" color="text.secondary">Titre</Typography>
+                                <Typography variant="body1" fontWeight="medium" gutterBottom>{formData.title}</Typography>
+
+                                <Typography variant="subtitle2" color="text.secondary">Type</Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {TYPES_REUNION.find(t => t.value === formData.meeting_type)?.label || formData.meeting_type}
+                                </Typography>
+
+                                {formData.description && (
+                                    <>
+                                        <Typography variant="subtitle2" color="text.secondary">Description</Typography>
+                                        <Typography variant="body2" paragraph>{formData.description}</Typography>
+                                    </>
+                                )}
+                            </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                                    Horaire & Lieu
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+
+                                <Typography variant="subtitle2" color="text.secondary">Date</Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {formData.start_date.format('dddd, MMMM D, YYYY')}
+                                </Typography>
+
+                                <Typography variant="subtitle2" color="text.secondary">Heure</Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {formData.start_date.format('h:mm A')} - {formData.end_date.format('h:mm A')}
+                                </Typography>
+
+                                <Typography variant="subtitle2" color="text.secondary">Format</Typography>
+                                <Typography variant="body1" gutterBottom>
+                                    {FORMATS_REUNION.find(f => f.value === formData.meeting_format)?.label || formData.meeting_format}
+                                </Typography>
+
+                                {(formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') && (
+                                    <>
+                                        <Typography variant="subtitle2" color="text.secondary">Lieu</Typography>
+                                        <Typography variant="body1" gutterBottom>{formData.location}</Typography>
+                                    </>
+                                )}
+
+                                {(formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid') && (
+                                    <>
+                                        <Typography variant="subtitle2" color="text.secondary">Lien de Réunion</Typography>
+                                        <Typography variant="body1" gutterBottom>{formData.meeting_link}</Typography>
+                                    </>
+                                )}
+                            </Paper>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                                    Options Supplémentaires
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={6}>
+                                        <Typography variant="subtitle2" color="text.secondary">Réunion Récurrente</Typography>
+                                        <Typography variant="body1" gutterBottom>
+                                            {formData.is_recurring ?
+                                                `Oui - ${formData.recurrence_pattern.frequency === 'daily' ? 'Quotidienne' :
+                                                    formData.recurrence_pattern.frequency === 'weekly' ? 'Hebdomadaire' : 'Mensuelle'} 
+                          (tous les ${formData.recurrence_pattern.interval} ${formData.recurrence_pattern.frequency === 'daily' ? 'jour' :
+                                                    formData.recurrence_pattern.frequency === 'weekly' ? 'semaine' : 'mois'}${formData.recurrence_pattern.interval > 1 ? 's' : ''})` :
+                                                'Non - Réunion Unique'}
+                                        </Typography>
+                                    </Grid>
+
+                                    <Grid item xs={12} sm={6}>
+                                        <Typography variant="subtitle2" color="text.secondary">Paramètres de Notification</Typography>
+                                        <Typography variant="body1" gutterBottom>
+                                            {METHODES_NOTIFICATION.find(m => m.value === formData.notification_method)?.label || formData.notification_method},
+                                            {` ${formData.reminder_days_before} ${formData.reminder_days_before === 1 ? 'jour' : 'jours'} avant la réunion`}
+                                        </Typography>
+                                    </Grid>
                                 </Grid>
 
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        name="reminder_days_before"
-                                        label="Jours de Rappel Avant"
-                                        type="number"
-                                        value={formData.reminder_days_before}
-                                        onChange={handleInputChange}
-                                        fullWidth
-                                        inputProps={{ min: 1, max: 14 }}
-                                        helperText={`Envoyer un rappel ${formData.reminder_days_before} jours avant la réunion`}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-            </Grid>
-        );
-    };
-
-    // Step 4: Review
-    const renderReviewStep = () => {
-        // Get the meeting format display label
-        const getMeetingFormatLabel = () => {
-            const format = MEETING_FORMATS.find(f => f.value === formData.meeting_format);
-            return format ? format.label : formData.meeting_format;
-        };
-
-        return (
-            <Grid container spacing={3}>
-                <Grid item xs={12}>
-                    <Alert severity="info" sx={{ mb: 3 }}>
-                        Veuillez vérifier les détails de la réunion ci-dessous avant de {isEditMode ? 'mettre à jour' : 'créer'} la réunion. Tous les participants seront notifiés selon vos paramètres de notification.
-                    </Alert>
-                </Grid>
-
-                {/* Basic Information */}
-                <Grid item xs={12} md={6}>
-                    <StyledCard>
-                        <CardContent>
-                            <SectionTitle variant="h6">
-                                Informations de Base
-                            </SectionTitle>
-                            <Divider sx={{ mb: 2 }} />
-
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Titre
-                                </Typography>
-                                <Typography variant="body1" fontWeight="medium">
-                                    {formData.title}
-                                </Typography>
-                            </Box>
-
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Type
-                                </Typography>
-                                <Typography variant="body1">
-                                    {MEETING_TYPES.find(t => t.value === formData.meeting_type)?.label || formData.meeting_type}
-                                </Typography>
-                            </Box>
-
-                            {formData.description && (
-                                <Box sx={{ mb: 1 }}>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Description
-                                    </Typography>
-                                    <Typography variant="body2">
-                                        {formData.description}
-                                    </Typography>
-                                </Box>
-                            )}
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-
-                {/* Schedule & Location */}
-                <Grid item xs={12} md={6}>
-                    <StyledCard>
-                        <CardContent>
-                            <SectionTitle variant="h6">
-                                Horaire & Lieu
-                            </SectionTitle>
-                            <Divider sx={{ mb: 2 }} />
-
-                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
-                                <CalendarMonth sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
-                                <Box>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Date
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        {formData.start_date.format('dddd, MMMM D, YYYY')}
-                                    </Typography>
-                                </Box>
-                            </Box>
-
-                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
-                                <AccessTime sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
-                                <Box>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Heure
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        {formData.start_date.format('h:mm A')} - {formData.end_date.format('h:mm A')}
-                                    </Typography>
-                                </Box>
-                            </Box>
-
-                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
-                                <Box>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Format de Réunion
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                        {getMeetingFormatLabel()}
-                                    </Typography>
-                                </Box>
-                            </Box>
-
-                            {(formData.meeting_format === 'in_person' || formData.meeting_format === 'hybrid') && (
-                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
-                                    <LocationOn sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
-                                    <Box>
-                                        <Typography variant="subtitle2" color="text.secondary">
-                                            Lieu
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {formData.location}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            )}
-
-                            {(formData.meeting_format === 'virtual' || formData.meeting_format === 'hybrid') && (
-                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'flex-start' }}>
-                                    <VideoCall sx={{ color: theme.palette.primary.main, mr: 1, mt: 0.5 }} fontSize="small" />
-                                    <Box>
-                                        <Typography variant="subtitle2" color="text.secondary">
-                                            Lien de Réunion
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {formData.meeting_link}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            )}
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-
-                {/* Additional Options */}
-                <Grid item xs={12}>
-                    <StyledCard>
-                        <CardContent>
-                            <SectionTitle variant="h6">
-                                Options Supplémentaires
-                            </SectionTitle>
-                            <Divider sx={{ mb: 2 }} />
-
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle2" color="text.secondary">
-                                            Réunion Récurrente
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {formData.is_recurring ? (
-                                                <>
-                                                    <Chip
-                                                        size="small"
-                                                        color="primary"
-                                                        label="Activée"
-                                                        sx={{ mr: 1 }}
-                                                    />
-                                                    {`Répète ${formData.recurrence_pattern.frequency === 'daily' ? 'quotidiennement' : formData.recurrence_pattern.frequency === 'weekly' ? 'hebdomadairement' : 'mensuellement'} (chaque ${formData.recurrence_pattern.interval} ${formData.recurrence_pattern.frequency === 'daily' ? 'jour' : formData.recurrence_pattern.frequency === 'weekly' ? 'semaine' : 'mois'}${formData.recurrence_pattern.interval > 1 ? 's' : ''})`}
-                                                </>
-                                            ) : (
-                                                <Chip size="small" label="Non récurrente" />
-                                            )}
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-
-                                <Grid item xs={12} sm={6}>
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle2" color="text.secondary">
-                                            Paramètres de Notification
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {NOTIFICATION_METHODS.find(m => m.value === formData.notification_method)?.label || formData.notification_method}
-                                            {`, ${formData.reminder_days_before} ${formData.reminder_days_before === 1 ? 'jour' : 'jours'} avant la réunion`}
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-
-                            {/* Agenda (if provided) */}
-                            {formData.agenda && (
-                                <>
-                                    <Box sx={{ mt: 3, mb: 2 }}>
-                                        <Typography variant="subtitle2" color="text.secondary">
-                                            Ordre du Jour
-                                        </Typography>
-                                        <Paper sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), mt: 1, borderRadius: 2 }}>
+                                {formData.agenda && (
+                                    <>
+                                        <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>Ordre du Jour</Typography>
+                                        <Paper sx={{ p: 2, bgcolor: '#f5f5f5', mt: 1 }}>
                                             <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
                                                 {formData.agenda}
                                             </Typography>
                                         </Paper>
-                                    </Box>
-                                </>
-                            )}
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-            </Grid>
-        );
-    };
+                                    </>
+                                )}
+                            </Paper>
+                        </Grid>
+                    </Grid>
+                );
 
-    if (initialLoading) {
-        return (
-            <Container maxWidth="md">
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: '60vh'
-                    }}
-                >
-                    <CircularProgress size={60} thickness={4} />
-                    <Typography variant="h6" sx={{ mt: 2 }}>
-                        Chargement des détails de la réunion...
-                    </Typography>
-                </Box>
-            </Container>
-        );
-    }
+            default:
+                return null;
+        }
+    };
 
     return (
         <Container maxWidth="xl">
-            <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
+            <Button
+                startIcon={<ArrowBack />}
+                onClick={() => navigate('/meetings')}
+                sx={{ mb: 2 }}
             >
-                {/* Back button */}
-                <motion.div variants={itemVariants}>
+                Retour aux Réunions
+            </Button>
+
+            <Paper sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h4" gutterBottom>
+                    {isEditMode ? 'Modifier la Réunion' : 'Créer une Nouvelle Réunion'}
+                </Typography>
+            </Paper>
+
+            {/* Message de Réussite */}
+            {success && (
+                <Alert severity="success" sx={{ mb: 3 }}>
+                    Réunion {isEditMode ? 'mise à jour' : 'créée'} avec succès ! Redirection vers les détails de la réunion...
+                </Alert>
+            )}
+
+            {/* Message d'Erreur */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                    {error}
+                </Alert>
+            )}
+
+            {/* Stepper */}
+            <Paper sx={{ p: 3, mb: 3 }}>
+                <Stepper activeStep={activeStep} alternativeLabel>
+                    {etapes.map((label) => (
+                        <Step key={label}>
+                            <StepLabel>{label}</StepLabel>
+                        </Step>
+                    ))}
+                </Stepper>
+            </Paper>
+
+            {/* Contenu du Formulaire */}
+            <Paper sx={{ p: 3, mb: 3 }}>
+                {renderStepContent()}
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
                     <Button
-                        startIcon={<ArrowBack />}
-                        onClick={() => navigate('/meetings')}
-                        sx={{
-                            mb: 2,
-                            fontWeight: 500,
-                            color: theme.palette.text.secondary,
-                            '&:hover': {
-                                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                            }
-                        }}
+                        disabled={activeStep === 0 || loading || success}
+                        onClick={handleBack}
+                        variant="outlined"
                     >
-                        Retour aux Réunions
-                    </Button>
-                </motion.div>
-
-                {/* Header */}
-                <motion.div variants={itemVariants}>
-                    <HeaderContainer elevation={0}>
-                        <Box sx={{ position: 'relative', zIndex: 1 }}>
-                            <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                {isEditMode ? 'Modifier la Réunion' : 'Créer une Nouvelle Réunion'}
-                            </Typography>
-                            <Typography variant="body1">
-                                {isEditMode
-                                    ? 'Mettre à jour les détails de la réunion et notifier tous les membres concernés'
-                                    : 'Planifier une nouvelle réunion et notifier tous les membres concernés'}
-                            </Typography>
-                        </Box>
-
-                        {/* Decorative circles */}
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: -50,
-                                right: -50,
-                                width: 200,
-                                height: 200,
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.1)',
-                                zIndex: 0
-                            }}
-                        />
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: -30,
-                                right: 100,
-                                width: 100,
-                                height: 100,
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.1)',
-                                zIndex: 0
-                            }}
-                        />
-                    </HeaderContainer>
-                </motion.div>
-
-                {/* Success Message */}
-                {success && (
-                    <motion.div variants={itemVariants}>
-                        <Alert
-                            severity="success"
-                            sx={{ mb: 3 }}
-                            action={
-                                <CircularProgress size={20} thickness={5} />
-                            }
-                        >
-                            Réunion {isEditMode ? 'mise à jour' : 'créée'} avec succès ! Redirection vers les détails de la réunion...
-                        </Alert>
-                    </motion.div>
-                )}
-
-                {/* Error Message */}
-                {error && (
-                    <motion.div variants={itemVariants}>
-                        <Alert severity="error" sx={{ mb: 3 }}>
-                            {error}
-                        </Alert>
-                    </motion.div>
-                )}
-
-                {/* Stepper */}
-                <motion.div variants={itemVariants}>
-                    <StyledPaper sx={{ mb: 3 }}>
-                        <Stepper activeStep={activeStep} alternativeLabel>
-                            {steps.map((label) => (
-                                <Step key={label}>
-                                    <StepLabel>{label}</StepLabel>
-                                </Step>
-                            ))}
-                        </Stepper>
-                    </StyledPaper>
-                </motion.div>
-
-                {/* Form Content */}
-                <motion.div variants={itemVariants}>
-                    <StyledPaper>
-                        <form>
-                            {renderStepContent()}
-
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-                                <Button
-                                    disabled={activeStep === 0 || loading || success}
-                                    onClick={handleBack}
-                                    variant="outlined"
-                                >
-                                    Retour
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    onClick={handleNext}
-                                    disabled={loading || success}
-                                    endIcon={activeStep === steps.length - 1 ? <Check /> : null}
-                                >
-                                    {activeStep === steps.length - 1 ? (isEditMode ? 'Mettre à Jour la Réunion' : 'Créer la Réunion') : 'Suivant'}
-                                </Button>
-                            </Box>
-                        </form>
-                    </StyledPaper>
-                </motion.div>
-            </motion.div>
-
-            {/* Confirmation Dialog */}
-            <Dialog
-                open={openConfirmDialog}
-                onClose={() => setOpenConfirmDialog(false)}
-                aria-labelledby="confirm-meeting-dialog-title"
-                PaperProps={{
-                    sx: { borderRadius: '12px' }
-                }}
-            >
-                <DialogTitle id="confirm-meeting-dialog-title">
-                    {isEditMode ? 'Mettre à Jour la Réunion' : 'Créer la Réunion'}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Êtes-vous sûr de vouloir {isEditMode ? 'mettre à jour' : 'créer'} cette réunion ?
-                        {formData.is_recurring && !isEditMode && ' Cela configurera une série de réunions récurrentes.'}
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button
-                        onClick={() => setOpenConfirmDialog(false)}
-                        color="inherit"
-                        disabled={loading}
-                    >
-                        Annuler
+                        Retour
                     </Button>
                     <Button
-                        onClick={handleSubmit}
-                        color="primary"
                         variant="contained"
-                        disabled={loading}
-                        startIcon={loading ? <CircularProgress size={20} /> : <Save />}
+                        onClick={handleNext}
+                        disabled={loading || success}
+                        endIcon={activeStep === etapes.length - 1 ? <Save /> : null}
                     >
-                        {loading ? (isEditMode ? 'Mise à jour...' : 'Création...') : (isEditMode ? 'Mettre à Jour' : 'Créer')}
+                        {activeStep === etapes.length - 1 ? (isEditMode ? 'Mettre à Jour la Réunion' : 'Créer la Réunion') : 'Suivant'}
+                        {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
                     </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Help Dialog */}
-            <Dialog
-                open={helpDialogOpen}
-                onClose={() => setHelpDialogOpen(false)}
-                aria-labelledby="help-dialog-title"
-                PaperProps={{
-                    sx: { borderRadius: '12px' }
-                }}
-            >
-                <DialogTitle id="help-dialog-title">
-                    {getHelpContent().title}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        {getHelpContent().content}
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setHelpDialogOpen(false)} color="primary">
-                        Fermer
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                </Box>
+            </Paper>
         </Container>
     );
 };
 
-export default MeetingCreateForm;
+export default FormulaireCreationReunion;
