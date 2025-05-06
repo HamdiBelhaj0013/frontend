@@ -173,17 +173,17 @@ const CreateMember = () => {
     const theme = useTheme();
 
     const schema = yup.object({
-        name: yup.string().required('Name is required'),
+        name: yup.string().required('Le nom est obligatoire'),
         cin: yup.string()
-            .matches(/^\d{8}$/, 'CIN must contain exactly 8 digits')
-            .required('CIN is required'),
-        address: yup.string().required('Address is required'),
-        email: yup.string().email('Invalid email').required('Email is required'),
-        nationality: yup.string().required('Nationality is required'),
-        birth_date: yup.date().nullable().required('Birth date is required'),
-        job: yup.string().required('Job is required'),
-        joining_date: yup.date().nullable().required('Joining date is required'),
-        role: yup.string().required('Role is required'),
+            .matches(/^\d{8}$/, 'La CIN doit contenir exactement 8 chiffres')
+            .required('La CIN est obligatoire'),
+        address: yup.string().required('L\'adresse est obligatoire'),
+        email: yup.string().email('Email invalide').required('L\'email est obligatoire'),
+        nationality: yup.string().required('La nationalité est obligatoire'),
+        birth_date: yup.date().nullable().required('La date de naissance est obligatoire'),
+        job: yup.string().required('Le métier est obligatoire'),
+        joining_date: yup.date().nullable().required('La date d\'adhésion est obligatoire'),
+        role: yup.string().required('Le rôle est obligatoire'),
     });
 
     const { handleSubmit, control, reset, watch, formState: { errors, isValid } } = useForm({
@@ -213,7 +213,7 @@ const CreateMember = () => {
             .substring(0, 2);
     };
 
-// Update the submission function in CreateMember.jsx
+    // Update the submission function in CreateMember.jsx
     const submission = async (data) => {
         setLoading(true);
         setError(null);
@@ -236,12 +236,12 @@ const CreateMember = () => {
                 navigate('/members', {
                     state: {
                         success: true,
-                        message: `Member "${data.name}" was created successfully`
+                        message: `Le membre "${data.name}" a été créé avec succès`
                     }
                 });
             }, 1500);
         } catch (err) {
-            console.error('Error creating member:', err);
+            console.error('Erreur lors de la création du membre:', err);
 
             // Handle different types of error responses
             let errorMessage;
@@ -262,10 +262,10 @@ const CreateMember = () => {
                     errorMessage = err.response.data;
                 } else {
                     // Default error
-                    errorMessage = 'An error occurred while creating the member. Please try again.';
+                    errorMessage = 'Une erreur est survenue lors de la création du membre. Veuillez réessayer.';
                 }
             } else {
-                errorMessage = 'Network error. Please check your connection and try again.';
+                errorMessage = 'Erreur de réseau. Veuillez vérifier votre connexion et réessayer.';
             }
 
             setError(errorMessage);
@@ -289,198 +289,198 @@ const CreateMember = () => {
 
     const countries = [
         { value: "Afghanistan", label: "Afghanistan" },
-        { value: "Albania", label: "Albania" },
-        { value: "Algeria", label: "Algeria" },
-        { value: "Andorra", label: "Andorra" },
+        { value: "Albania", label: "Albanie" },
+        { value: "Algeria", label: "Algérie" },
+        { value: "Andorra", label: "Andorre" },
         { value: "Angola", label: "Angola" },
-        { value: "Antigua and Barbuda", label: "Antigua and Barbuda" },
-        { value: "Argentina", label: "Argentina" },
-        { value: "Armenia", label: "Armenia" },
-        { value: "Australia", label: "Australia" },
-        { value: "Austria", label: "Austria" },
-        { value: "Azerbaijan", label: "Azerbaijan" },
+        { value: "Antigua and Barbuda", label: "Antigua-et-Barbuda" },
+        { value: "Argentina", label: "Argentine" },
+        { value: "Armenia", label: "Arménie" },
+        { value: "Australia", label: "Australie" },
+        { value: "Austria", label: "Autriche" },
+        { value: "Azerbaijan", label: "Azerbaïdjan" },
         { value: "Bahamas", label: "Bahamas" },
-        { value: "Bahrain", label: "Bahrain" },
+        { value: "Bahrain", label: "Bahreïn" },
         { value: "Bangladesh", label: "Bangladesh" },
-        { value: "Barbados", label: "Barbados" },
-        { value: "Belarus", label: "Belarus" },
-        { value: "Belgium", label: "Belgium" },
+        { value: "Barbados", label: "Barbade" },
+        { value: "Belarus", label: "Biélorussie" },
+        { value: "Belgium", label: "Belgique" },
         { value: "Belize", label: "Belize" },
-        { value: "Benin", label: "Benin" },
-        { value: "Bhutan", label: "Bhutan" },
-        { value: "Bolivia", label: "Bolivia" },
-        { value: "Bosnia and Herzegovina", label: "Bosnia and Herzegovina" },
+        { value: "Benin", label: "Bénin" },
+        { value: "Bhutan", label: "Bhoutan" },
+        { value: "Bolivia", label: "Bolivie" },
+        { value: "Bosnia and Herzegovina", label: "Bosnie-Herzégovine" },
         { value: "Botswana", label: "Botswana" },
-        { value: "Brazil", label: "Brazil" },
-        { value: "Brunei", label: "Brunei" },
-        { value: "Bulgaria", label: "Bulgaria" },
+        { value: "Brazil", label: "Brésil" },
+        { value: "Brunei", label: "Brunéi" },
+        { value: "Bulgaria", label: "Bulgarie" },
         { value: "Burkina Faso", label: "Burkina Faso" },
         { value: "Burundi", label: "Burundi" },
-        { value: "Cabo Verde", label: "Cabo Verde" },
-        { value: "Cambodia", label: "Cambodia" },
-        { value: "Cameroon", label: "Cameroon" },
+        { value: "Cabo Verde", label: "Cap-Vert" },
+        { value: "Cambodia", label: "Cambodge" },
+        { value: "Cameroon", label: "Cameroun" },
         { value: "Canada", label: "Canada" },
-        { value: "Central African Republic", label: "Central African Republic" },
-        { value: "Chad", label: "Chad" },
-        { value: "Chile", label: "Chile" },
-        { value: "China", label: "China" },
-        { value: "Colombia", label: "Colombia" },
-        { value: "Comoros", label: "Comoros" },
+        { value: "Central African Republic", label: "République centrafricaine" },
+        { value: "Chad", label: "Tchad" },
+        { value: "Chile", label: "Chili" },
+        { value: "China", label: "Chine" },
+        { value: "Colombia", label: "Colombie" },
+        { value: "Comoros", label: "Comores" },
         { value: "Congo", label: "Congo" },
-        { value: "Congo (Democratic Republic)", label: "Congo (Democratic Republic)" },
+        { value: "Congo (Democratic Republic)", label: "Congo (République démocratique)" },
         { value: "Costa Rica", label: "Costa Rica" },
-        { value: "Croatia", label: "Croatia" },
+        { value: "Croatia", label: "Croatie" },
         { value: "Cuba", label: "Cuba" },
-        { value: "Cyprus", label: "Cyprus" },
-        { value: "Czech Republic", label: "Czech Republic" },
-        { value: "Denmark", label: "Denmark" },
+        { value: "Cyprus", label: "Chypre" },
+        { value: "Czech Republic", label: "République tchèque" },
+        { value: "Denmark", label: "Danemark" },
         { value: "Djibouti", label: "Djibouti" },
-        { value: "Dominica", label: "Dominica" },
-        { value: "Dominican Republic", label: "Dominican Republic" },
-        { value: "Ecuador", label: "Ecuador" },
-        { value: "Egypt", label: "Egypt" },
-        { value: "El Salvador", label: "El Salvador" },
-        { value: "Equatorial Guinea", label: "Equatorial Guinea" },
-        { value: "Eritrea", label: "Eritrea" },
-        { value: "Estonia", label: "Estonia" },
+        { value: "Dominica", label: "Dominique" },
+        { value: "Dominican Republic", label: "République dominicaine" },
+        { value: "Ecuador", label: "Équateur" },
+        { value: "Egypt", label: "Égypte" },
+        { value: "El Salvador", label: "Salvador" },
+        { value: "Equatorial Guinea", label: "Guinée équatoriale" },
+        { value: "Eritrea", label: "Érythrée" },
+        { value: "Estonia", label: "Estonie" },
         { value: "Eswatini", label: "Eswatini" },
-        { value: "Ethiopia", label: "Ethiopia" },
-        { value: "Fiji", label: "Fiji" },
-        { value: "Finland", label: "Finland" },
+        { value: "Ethiopia", label: "Éthiopie" },
+        { value: "Fiji", label: "Fidji" },
+        { value: "Finland", label: "Finlande" },
         { value: "France", label: "France" },
         { value: "Gabon", label: "Gabon" },
-        { value: "Gambia", label: "Gambia" },
-        { value: "Georgia", label: "Georgia" },
-        { value: "Germany", label: "Germany" },
+        { value: "Gambia", label: "Gambie" },
+        { value: "Georgia", label: "Géorgie" },
+        { value: "Germany", label: "Allemagne" },
         { value: "Ghana", label: "Ghana" },
-        { value: "Greece", label: "Greece" },
-        { value: "Grenada", label: "Grenada" },
+        { value: "Greece", label: "Grèce" },
+        { value: "Grenada", label: "Grenade" },
         { value: "Guatemala", label: "Guatemala" },
-        { value: "Guinea", label: "Guinea" },
-        { value: "Guinea-Bissau", label: "Guinea-Bissau" },
+        { value: "Guinea", label: "Guinée" },
+        { value: "Guinea-Bissau", label: "Guinée-Bissau" },
         { value: "Guyana", label: "Guyana" },
-        { value: "Haiti", label: "Haiti" },
+        { value: "Haiti", label: "Haïti" },
         { value: "Honduras", label: "Honduras" },
-        { value: "Hungary", label: "Hungary" },
-        { value: "Iceland", label: "Iceland" },
-        { value: "India", label: "India" },
-        { value: "Indonesia", label: "Indonesia" },
+        { value: "Hungary", label: "Hongrie" },
+        { value: "Iceland", label: "Islande" },
+        { value: "India", label: "Inde" },
+        { value: "Indonesia", label: "Indonésie" },
         { value: "Iran", label: "Iran" },
-        { value: "Iraq", label: "Iraq" },
-        { value: "Ireland", label: "Ireland" },
+        { value: "Iraq", label: "Irak" },
+        { value: "Ireland", label: "Irlande" },
         { value: "Palestine", label: "Palestine" },
-        { value: "Italy", label: "Italy" },
-        { value: "Jamaica", label: "Jamaica" },
-        { value: "Japan", label: "Japan" },
-        { value: "Jordan", label: "Jordan" },
+        { value: "Italy", label: "Italie" },
+        { value: "Jamaica", label: "Jamaïque" },
+        { value: "Japan", label: "Japon" },
+        { value: "Jordan", label: "Jordanie" },
         { value: "Kazakhstan", label: "Kazakhstan" },
         { value: "Kenya", label: "Kenya" },
         { value: "Kiribati", label: "Kiribati" },
-        { value: "Korea (North)", label: "Korea (North)" },
-        { value: "Korea (South)", label: "Korea (South)" },
-        { value: "Kuwait", label: "Kuwait" },
-        { value: "Kyrgyzstan", label: "Kyrgyzstan" },
+        { value: "Korea (North)", label: "Corée du Nord" },
+        { value: "Korea (South)", label: "Corée du Sud" },
+        { value: "Kuwait", label: "Koweït" },
+        { value: "Kyrgyzstan", label: "Kirghizistan" },
         { value: "Laos", label: "Laos" },
-        { value: "Latvia", label: "Latvia" },
-        { value: "Lebanon", label: "Lebanon" },
+        { value: "Latvia", label: "Lettonie" },
+        { value: "Lebanon", label: "Liban" },
         { value: "Lesotho", label: "Lesotho" },
-        { value: "Liberia", label: "Liberia" },
-        { value: "Libya", label: "Libya" },
+        { value: "Liberia", label: "Libéria" },
+        { value: "Libya", label: "Libye" },
         { value: "Liechtenstein", label: "Liechtenstein" },
-        { value: "Lithuania", label: "Lithuania" },
+        { value: "Lithuania", label: "Lituanie" },
         { value: "Luxembourg", label: "Luxembourg" },
         { value: "Madagascar", label: "Madagascar" },
         { value: "Malawi", label: "Malawi" },
-        { value: "Malaysia", label: "Malaysia" },
+        { value: "Malaysia", label: "Malaisie" },
         { value: "Maldives", label: "Maldives" },
         { value: "Mali", label: "Mali" },
-        { value: "Malta", label: "Malta" },
-        { value: "Marshall Islands", label: "Marshall Islands" },
-        { value: "Mauritania", label: "Mauritania" },
-        { value: "Mauritius", label: "Mauritius" },
-        { value: "Mexico", label: "Mexico" },
-        { value: "Micronesia", label: "Micronesia" },
-        { value: "Moldova", label: "Moldova" },
+        { value: "Malta", label: "Malte" },
+        { value: "Marshall Islands", label: "Îles Marshall" },
+        { value: "Mauritania", label: "Mauritanie" },
+        { value: "Mauritius", label: "Maurice" },
+        { value: "Mexico", label: "Mexique" },
+        { value: "Micronesia", label: "Micronésie" },
+        { value: "Moldova", label: "Moldavie" },
         { value: "Monaco", label: "Monaco" },
-        { value: "Mongolia", label: "Mongolia" },
-        { value: "Montenegro", label: "Montenegro" },
-        { value: "Morocco", label: "Morocco" },
+        { value: "Mongolia", label: "Mongolie" },
+        { value: "Montenegro", label: "Monténégro" },
+        { value: "Morocco", label: "Maroc" },
         { value: "Mozambique", label: "Mozambique" },
         { value: "Myanmar", label: "Myanmar" },
-        { value: "Namibia", label: "Namibia" },
+        { value: "Namibia", label: "Namibie" },
         { value: "Nauru", label: "Nauru" },
-        { value: "Nepal", label: "Nepal" },
-        { value: "Netherlands", label: "Netherlands" },
-        { value: "New Zealand", label: "New Zealand" },
+        { value: "Nepal", label: "Népal" },
+        { value: "Netherlands", label: "Pays-Bas" },
+        { value: "New Zealand", label: "Nouvelle-Zélande" },
         { value: "Nicaragua", label: "Nicaragua" },
         { value: "Niger", label: "Niger" },
         { value: "Nigeria", label: "Nigeria" },
-        { value: "North Macedonia", label: "North Macedonia" },
-        { value: "Norway", label: "Norway" },
+        { value: "North Macedonia", label: "Macédoine du Nord" },
+        { value: "Norway", label: "Norvège" },
         { value: "Oman", label: "Oman" },
         { value: "Pakistan", label: "Pakistan" },
-        { value: "Palau", label: "Palau" },
+        { value: "Palau", label: "Palaos" },
         { value: "Panama", label: "Panama" },
-        { value: "Papua New Guinea", label: "Papua New Guinea" },
+        { value: "Papua New Guinea", label: "Papouasie-Nouvelle-Guinée" },
         { value: "Paraguay", label: "Paraguay" },
-        { value: "Peru", label: "Peru" },
+        { value: "Peru", label: "Pérou" },
         { value: "Philippines", label: "Philippines" },
-        { value: "Poland", label: "Poland" },
+        { value: "Poland", label: "Pologne" },
         { value: "Portugal", label: "Portugal" },
         { value: "Qatar", label: "Qatar" },
-        { value: "Romania", label: "Romania" },
-        { value: "Russia", label: "Russia" },
+        { value: "Romania", label: "Roumanie" },
+        { value: "Russia", label: "Russie" },
         { value: "Rwanda", label: "Rwanda" },
-        { value: "Saint Kitts and Nevis", label: "Saint Kitts and Nevis" },
-        { value: "Saint Lucia", label: "Saint Lucia" },
-        { value: "Saint Vincent and the Grenadines", label: "Saint Vincent and the Grenadines" },
+        { value: "Saint Kitts and Nevis", label: "Saint-Christophe-et-Niévès" },
+        { value: "Saint Lucia", label: "Sainte-Lucie" },
+        { value: "Saint Vincent and the Grenadines", label: "Saint-Vincent-et-les-Grenadines" },
         { value: "Samoa", label: "Samoa" },
-        { value: "San Marino", label: "San Marino" },
-        { value: "Sao Tome and Principe", label: "Sao Tome and Principe" },
-        { value: "Saudi Arabia", label: "Saudi Arabia" },
-        { value: "Senegal", label: "Senegal" },
-        { value: "Serbia", label: "Serbia" },
+        { value: "San Marino", label: "Saint-Marin" },
+        { value: "Sao Tome and Principe", label: "Sao Tomé-et-Principe" },
+        { value: "Saudi Arabia", label: "Arabie saoudite" },
+        { value: "Senegal", label: "Sénégal" },
+        { value: "Serbia", label: "Serbie" },
         { value: "Seychelles", label: "Seychelles" },
         { value: "Sierra Leone", label: "Sierra Leone" },
-        { value: "Singapore", label: "Singapore" },
-        { value: "Slovakia", label: "Slovakia" },
-        { value: "Slovenia", label: "Slovenia" },
-        { value: "Solomon Islands", label: "Solomon Islands" },
-        { value: "Somalia", label: "Somalia" },
-        { value: "South Africa", label: "South Africa" },
-        { value: "South Sudan", label: "South Sudan" },
-        { value: "Spain", label: "Spain" },
+        { value: "Singapore", label: "Singapour" },
+        { value: "Slovakia", label: "Slovaquie" },
+        { value: "Slovenia", label: "Slovénie" },
+        { value: "Solomon Islands", label: "Îles Salomon" },
+        { value: "Somalia", label: "Somalie" },
+        { value: "South Africa", label: "Afrique du Sud" },
+        { value: "South Sudan", label: "Soudan du Sud" },
+        { value: "Spain", label: "Espagne" },
         { value: "Sri Lanka", label: "Sri Lanka" },
-        { value: "Sudan", label: "Sudan" },
+        { value: "Sudan", label: "Soudan" },
         { value: "Suriname", label: "Suriname" },
-        { value: "Sweden", label: "Sweden" },
-        { value: "Switzerland", label: "Switzerland" },
-        { value: "Syria", label: "Syria" },
-        { value: "Taiwan", label: "Taiwan" },
-        { value: "Tajikistan", label: "Tajikistan" },
-        { value: "Tanzania", label: "Tanzania" },
-        { value: "Thailand", label: "Thailand" },
-        { value: "Timor-Leste", label: "Timor-Leste" },
+        { value: "Sweden", label: "Suède" },
+        { value: "Switzerland", label: "Suisse" },
+        { value: "Syria", label: "Syrie" },
+        { value: "Taiwan", label: "Taïwan" },
+        { value: "Tajikistan", label: "Tadjikistan" },
+        { value: "Tanzania", label: "Tanzanie" },
+        { value: "Thailand", label: "Thaïlande" },
+        { value: "Timor-Leste", label: "Timor oriental" },
         { value: "Togo", label: "Togo" },
         { value: "Tonga", label: "Tonga" },
-        { value: "Trinidad and Tobago", label: "Trinidad and Tobago" },
-        { value: "Tunisia", label: "Tunisia" },
-        { value: "Turkey", label: "Turkey" },
-        { value: "Turkmenistan", label: "Turkmenistan" },
+        { value: "Trinidad and Tobago", label: "Trinité-et-Tobago" },
+        { value: "Tunisia", label: "Tunisie" },
+        { value: "Turkey", label: "Turquie" },
+        { value: "Turkmenistan", label: "Turkménistan" },
         { value: "Tuvalu", label: "Tuvalu" },
-        { value: "Uganda", label: "Uganda" },
+        { value: "Uganda", label: "Ouganda" },
         { value: "Ukraine", label: "Ukraine" },
-        { value: "United Arab Emirates", label: "United Arab Emirates" },
-        { value: "United Kingdom", label: "United Kingdom" },
-        { value: "United States", label: "United States" },
+        { value: "United Arab Emirates", label: "Émirats arabes unis" },
+        { value: "United Kingdom", label: "Royaume-Uni" },
+        { value: "United States", label: "États-Unis" },
         { value: "Uruguay", label: "Uruguay" },
-        { value: "Uzbekistan", label: "Uzbekistan" },
+        { value: "Uzbekistan", label: "Ouzbékistan" },
         { value: "Vanuatu", label: "Vanuatu" },
-        { value: "Vatican City", label: "Vatican City" },
+        { value: "Vatican City", label: "Cité du Vatican" },
         { value: "Venezuela", label: "Venezuela" },
         { value: "Vietnam", label: "Vietnam" },
-        { value: "Yemen", label: "Yemen" },
-        { value: "Zambia", label: "Zambia" },
+        { value: "Yemen", label: "Yémen" },
+        { value: "Zambia", label: "Zambie" },
         { value: "Zimbabwe", label: "Zimbabwe" }
     ];
 
@@ -526,7 +526,7 @@ const CreateMember = () => {
                             }
                         }}
                     >
-                        Back to Members
+                        Retour à la liste des membres
                     </Button>
 
                     {/* Header */}
@@ -535,10 +535,10 @@ const CreateMember = () => {
                             <PersonIcon sx={{ mr: 2, fontSize: 28 }} />
                             <Box sx={{ zIndex: 1 }}>
                                 <Typography variant="h5" component="h1" fontWeight="bold">
-                                    Create New Member
+                                    Créer un nouveau membre
                                 </Typography>
                                 <Typography variant="subtitle2">
-                                    Add a new member to your organization
+                                    Ajouter un nouveau membre à votre organisation
                                 </Typography>
                             </Box>
                             {/* Decorative circles */}
@@ -576,12 +576,12 @@ const CreateMember = () => {
                                 <Tabs
                                     value={tabValue}
                                     onChange={handleTabChange}
-                                    aria-label="member creation tabs"
+                                    aria-label="onglets de création de membre"
                                     indicatorColor="primary"
                                     textColor="primary"
                                 >
-                                    <StyledTab label="Personal Information" icon={<PersonIcon />} iconPosition="start" />
-                                    <StyledTab label="Professional & Dates" icon={<WorkIcon />} iconPosition="start" />
+                                    <StyledTab label="Informations personnelles" icon={<PersonIcon />} iconPosition="start" />
+                                    <StyledTab label="Professionnel & Dates" icon={<WorkIcon />} iconPosition="start" />
                                 </Tabs>
                             </Box>
 
@@ -603,12 +603,12 @@ const CreateMember = () => {
                                                     <FormBox>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                             <PersonIcon color="primary" sx={{ mr: 1 }} />
-                                                            <Typography variant="subtitle2">Full Name</Typography>
+                                                            <Typography variant="subtitle2">Nom complet</Typography>
                                                         </Box>
                                                         <MyTextField
                                                             name="name"
                                                             control={control}
-                                                            placeholder="Enter full name"
+                                                            placeholder="Entrez le nom complet"
                                                             error={!!errors.name}
                                                             helperText={errors.name?.message}
                                                         />
@@ -624,7 +624,7 @@ const CreateMember = () => {
                                                         <MyTextField
                                                             name="email"
                                                             control={control}
-                                                            placeholder="Enter email address"
+                                                            placeholder="Entrez l'adresse email"
                                                             error={!!errors.email}
                                                             helperText={errors.email?.message}
                                                         />
@@ -639,7 +639,7 @@ const CreateMember = () => {
                                                         <MyTextField
                                                             name="cin"
                                                             control={control}
-                                                            placeholder="Enter CIN (8 digits)"
+                                                            placeholder="Entrez la CIN (8 chiffres)"
                                                             error={!!errors.cin}
                                                             helperText={errors.cin?.message}
                                                         />
@@ -650,12 +650,12 @@ const CreateMember = () => {
                                                     <FormBox>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                             <HomeIcon color="primary" sx={{ mr: 1 }} />
-                                                            <Typography variant="subtitle2">Address</Typography>
+                                                            <Typography variant="subtitle2">Adresse</Typography>
                                                         </Box>
                                                         <MyTextField
                                                             name="address"
                                                             control={control}
-                                                            placeholder="Enter residential address"
+                                                            placeholder="Entrez l'adresse résidentielle"
                                                             error={!!errors.address}
                                                             helperText={errors.address?.message}
                                                         />
@@ -673,7 +673,7 @@ const CreateMember = () => {
                                                     <FormBox>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                             <PublicIcon color="primary" sx={{ mr: 1 }} />
-                                                            <Typography variant="subtitle2">Nationality</Typography>
+                                                            <Typography variant="subtitle2">Nationalité</Typography>
                                                         </Box>
                                                         <MySelectField
                                                             name="nationality"
@@ -689,12 +689,12 @@ const CreateMember = () => {
                                                     <FormBox>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                             <WorkIcon color="primary" sx={{ mr: 1 }} />
-                                                            <Typography variant="subtitle2">Job</Typography>
+                                                            <Typography variant="subtitle2">Métier</Typography>
                                                         </Box>
                                                         <MyTextField
                                                             name="job"
                                                             control={control}
-                                                            placeholder="Enter job title"
+                                                            placeholder="Entrez le métier"
                                                             error={!!errors.job}
                                                             helperText={errors.job?.message}
                                                         />
@@ -705,7 +705,7 @@ const CreateMember = () => {
                                                     <FormBox>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                             <AdminPanelSettingsIcon color="primary" sx={{ mr: 1 }} />
-                                                            <Typography variant="subtitle2">Role</Typography>
+                                                            <Typography variant="subtitle2">Rôle</Typography>
                                                         </Box>
                                                         <MySelectField
                                                             name="role"
@@ -721,7 +721,7 @@ const CreateMember = () => {
                                                     <FormBox>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                             <CakeIcon color="primary" sx={{ mr: 1 }} />
-                                                            <Typography variant="subtitle2">Birth Date</Typography>
+                                                            <Typography variant="subtitle2">Date de naissance</Typography>
                                                         </Box>
                                                         <MyDatePickerField
                                                             name="birth_date"
@@ -736,7 +736,7 @@ const CreateMember = () => {
                                                     <FormBox>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                             <EventIcon color="primary" sx={{ mr: 1 }} />
-                                                            <Typography variant="subtitle2">Joining Date</Typography>
+                                                            <Typography variant="subtitle2">Date d'adhésion</Typography>
                                                         </Box>
                                                         <MyDatePickerField
                                                             name="joining_date"
@@ -755,7 +755,7 @@ const CreateMember = () => {
                                 <Box sx={{ mb: 3 }}>
                                     <InfoChip
                                         icon={<InfoOutlinedIcon />}
-                                        label="Fill in all required fields to create a new member"
+                                        label="Remplissez tous les champs obligatoires pour créer un nouveau membre"
                                     />
                                 </Box>
 
@@ -771,7 +771,7 @@ const CreateMember = () => {
                                         onClick={() => reset()}
                                         variant="outlined"
                                     >
-                                        Reset
+                                        Réinitialiser
                                     </ResetButton>
 
                                     <SubmitButton
@@ -780,7 +780,7 @@ const CreateMember = () => {
                                         disabled={loading || !isValid}
                                         startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                                     >
-                                        {loading ? 'Creating...' : success ? 'Created!' : 'Create Member'}
+                                        {loading ? 'Création en cours...' : success ? 'Créé !' : 'Créer le membre'}
                                     </SubmitButton>
                                 </Box>
                             </form>
@@ -825,7 +825,7 @@ const CreateMember = () => {
                     severity="success"
                     sx={{ width: '100%', borderRadius: '8px' }}
                 >
-                    Member created successfully! Redirecting to members list...
+                    Membre créé avec succès ! Redirection vers la liste des membres...
                 </Alert>
             </Snackbar>
         </Container>

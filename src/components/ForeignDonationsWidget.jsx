@@ -54,11 +54,21 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
     useEffect(() => {
         const fetchPendingReports = async () => {
             try {
-                // Fetch both transactions and reports
-                const [transactionsResponse, reportsResponse] = await Promise.all([
-                    AxiosInstance.get('/finances/transactions/'),
-                    AxiosInstance.get('/finances/foreign-donation-reports/')
-                ]);
+                // Fetch all transactions without pagination limit
+                // If your API supports it, add a parameter to get all transactions
+                const transactionsResponse = await AxiosInstance.get('/finances/transactions/', {
+                    params: {
+                        limit: 1000, // Use a very high limit to get all transactions
+                        transaction_type: 'income' // Optionally filter to income only to improve performance
+                    }
+                });
+
+                // Fetch all foreign donation reports
+                const reportsResponse = await AxiosInstance.get('/finances/foreign-donation-reports/', {
+                    params: {
+                        limit: 1000 // Use a very high limit to get all reports
+                    }
+                });
 
                 const allTransactions = transactionsResponse.data;
                 const allReports = reportsResponse.data;
@@ -70,6 +80,8 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
 
                 // Identify foreign donations
                 const foreignDonations = allTransactions.filter(isForeignDonation);
+
+                console.log(`Found ${foreignDonations.length} foreign donations out of ${allTransactions.length} total transactions`);
 
                 // Process and categorize reports
                 const pending = foreignDonations
@@ -104,21 +116,24 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
                     0
                 );
 
-                // Sort reports - overdue first, then by deadline
+                // Sort all reports but only display top 3
                 const sortedReports = [
                     ...overdue.sort((a, b) => a.days_until_deadline - b.days_until_deadline),
                     ...pending
                         .filter(r => r.days_until_deadline >= 0)
                         .sort((a, b) => a.days_until_deadline - b.days_until_deadline)
-                ].slice(0, 3); // Only take top 3
+                ].slice(0, 3); // Only take top 3 for display
 
+                // Update state with ALL counts (not just the displayed ones)
                 setPendingReports(sortedReports);
                 setStats({
-                    totalCount: foreignDonations.length,
-                    pendingCount: pending.length,
-                    overdueCount: overdue.length,
+                    totalCount: foreignDonations.length, // This is the total count of ALL foreign donations
+                    pendingCount: pending.length,        // This is the count of ALL pending foreign donations
+                    overdueCount: overdue.length,        // This is the count of ALL overdue foreign donations
                     totalAmount
                 });
+
+                console.log(`Stats updated: total=${foreignDonations.length}, pending=${pending.length}, overdue=${overdue.length}`);
             } catch (error) {
                 console.error('Error fetching pending foreign donation reports:', error);
             } finally {
@@ -279,6 +294,24 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
                                     {index < pendingReports.length - 1 && <Divider component="li" />}
                                 </React.Fragment>
                             ))}
+
+                            {/* Show indicator if there are more reports than what's displayed */}
+                            {stats.pendingCount > pendingReports.length && (
+                                <ListItem
+                                    button
+                                    onClick={onViewReports}
+                                    sx={{
+                                        py: 1,
+                                        justifyContent: 'center',
+                                        color: 'primary.main',
+                                        '&:hover': { bgcolor: 'primary.lighter' }
+                                    }}
+                                >
+                                    <Typography variant="body2" color="primary">
+                                        {stats.pendingCount - pendingReports.length} rapport(s) supplémentaire(s) →
+                                    </Typography>
+                                </ListItem>
+                            )}
                         </List>
                     ) : (
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4, flexGrow: 1 }}>

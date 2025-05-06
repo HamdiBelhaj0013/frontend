@@ -261,18 +261,6 @@ const ReponseReunionAvancee = () => {
                         </Button>
                     </Box>
                 </Paper>
-
-                {/* Informations de débogage pour le développement */}
-                {process.env.NODE_ENV !== 'production' && debugInfo.length > 0 && (
-                    <Paper sx={{ p: 2, mt: 3, maxHeight: '300px', overflow: 'auto' }}>
-                        <Typography variant="subtitle2">Infos de Débogage:</Typography>
-                        {debugInfo.map((msg, i) => (
-                            <Typography key={i} variant="caption" component="div" sx={{ fontFamily: 'monospace' }}>
-                                {msg}
-                            </Typography>
-                        ))}
-                    </Paper>
-                )}
             </Container>
         );
     }
@@ -379,18 +367,6 @@ const ReponseReunionAvancee = () => {
                     </Button>
                 </Box>
             </Paper>
-
-            {/* Informations de débogage pour le développement */}
-            {process.env.NODE_ENV !== 'production' && debugInfo.length > 0 && (
-                <Paper sx={{ p: 2, mt: 3, maxHeight: '300px', overflow: 'auto' }}>
-                    <Typography variant="subtitle2">Infos de Débogage:</Typography>
-                    {debugInfo.map((msg, i) => (
-                        <Typography key={i} variant="caption" component="div" sx={{ fontFamily: 'monospace' }}>
-                            {msg}
-                        </Typography>
-                    ))}
-                </Paper>
-            )}
         </Container>
     );
 };

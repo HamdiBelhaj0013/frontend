@@ -440,7 +440,7 @@ const Projects = () => {
                 }}
             >
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Tooltip title="Grid View">
+                    <Tooltip title="Vue Grille">
                         <IconButton
                             color={viewMode === 'grid' ? 'primary' : 'default'}
                             onClick={() => setViewMode('grid')}
@@ -452,7 +452,7 @@ const Projects = () => {
                             <GridViewIcon />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Table View">
+                    <Tooltip title="Vue Tableau">
                         <IconButton
                             color={viewMode === 'table' ? 'primary' : 'default'}
                             onClick={() => setViewMode('table')}
@@ -464,7 +464,7 @@ const Projects = () => {
                             <ViewListIcon />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Refresh Projects">
+                    <Tooltip title="Actualiser">
                         <IconButton
                             onClick={fetchData}
                             disabled={refreshing}
@@ -534,7 +534,7 @@ const Projects = () => {
                             to="/CreateProject"
                             startIcon={<AddIcon />}
                         >
-                            Create New Project
+                            Créer un nouveau projet
                         </ActionButton>
                     </PermissionRequired>
                 </Paper>
@@ -828,7 +828,7 @@ const Projects = () => {
                         variant="outlined"
                         sx={{ borderRadius: '8px' }}
                     >
-                        Close
+                        Fermer
                     </Button>
 
                     {/* Edit button in dialog with permission check */}
@@ -847,7 +847,7 @@ const Projects = () => {
                                 px: 3
                             }}
                         >
-                            Edit Project
+                            Modifier le projet
                         </Button>
                     </PermissionRequired>
                 </DialogActions>

@@ -78,7 +78,7 @@ const commonExpenseRecipients = [
     { id: 'cnss', name: 'CNSS (Sécurité Sociale)' },
     { id: 'internet', name: 'Fournisseur Internet' },
     { id: 'rent', name: 'Loyer de Bureau' },
-    { id: 'attaysir', name: 'Attaysir Rent Car' },
+    { id: 'Transport', name: 'Transport' },
     { id: 'vendor', name: 'Vendeur/Fournisseur' },
     { id: 'utility', name: 'Paiement de Services Publics' },
     { id: 'tax_authority', name: 'Administration Fiscale' },

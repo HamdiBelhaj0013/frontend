@@ -985,21 +985,6 @@ export default function NavBar(props) {
                                         </Typography>
                                     </Box>
                                 </Box>
-                                <Box sx={{ py: 1 }}>
-                                    <MenuItemStyled onClick={handleUserMenuClose}>
-                                        <ListItemIcon>
-                                            <PersonIcon fontSize="small" color="primary" />
-                                        </ListItemIcon>
-                                        <Typography>My Profile</Typography>
-                                    </MenuItemStyled>
-                                    <MenuItemStyled onClick={handleUserMenuClose}>
-                                        <ListItemIcon>
-                                            <SettingsIcon fontSize="small" color="primary" />
-                                        </ListItemIcon>
-                                        <Typography>Account Settings</Typography>
-                                    </MenuItemStyled>
-                                </Box>
-                                <Divider sx={{ mx: 2, my: 1 }} />
                                 <MenuItemStyled
                                     onClick={handleLogout}
                                     sx={{
@@ -1017,8 +1002,6 @@ export default function NavBar(props) {
                     </Box>
                 </Toolbar>
             </GlassAppBar>
-
-            {/* Side drawer - SwipeableDrawer for mobile */}
             {isMobile ? (
                 <SwipeableDrawer
                     anchor="left"

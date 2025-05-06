@@ -131,7 +131,7 @@ const DateRangeFilter = ({ onFilterChange }) => {
         handleCloseFilter();
     };
 
-    // Get display label for the current filter
+
     const getDisplayLabel = (start, end, type) => {
         switch (type) {
             case 'today':
@@ -145,21 +145,23 @@ const DateRangeFilter = ({ onFilterChange }) => {
             case 'year':
                 return "365 derniers jours";
             case 'current_month':
-                return `${start.format('MMMM YYYY')}`;
+                return start && start.isValid() ? `${start.format('MMMM YYYY')}` : 'Mois courant';
             case 'current_quarter':
-                return `T${Math.floor(start.month() / 3) + 1} ${start.year()}`;
+                return start && start.isValid() ? `T${Math.floor(start.month() / 3) + 1} ${start.year()}` : 'Trimestre courant';
             case 'current_year':
-                return `${start.year()}`;
+                return start && start.isValid() ? `${start.year()}` : 'Année courante';
             case 'previous_month':
-                return `${start.format('MMMM YYYY')}`;
+                return start && start.isValid() ? `${start.format('MMMM YYYY')}` : 'Mois précédent';
             case 'previous_quarter':
-                return `T${Math.floor(start.month() / 3) + 1} ${start.year()}`;
+                return start && start.isValid() ? `T${Math.floor(start.month() / 3) + 1} ${start.year()}` : 'Trimestre précédent';
             case 'previous_year':
-                return `${start.year()}`;
+                return start && start.isValid() ? `${start.year()}` : 'Année précédente';
             case 'specific_month':
-                return `${start.format('MMMM YYYY')}`;
+                return start && start.isValid() ? `${start.format('MMMM YYYY')}` : 'Mois spécifique';
             case 'custom':
-                return `${start.format('DD/MM/YYYY')} - ${end.format('DD/MM/YYYY')}`;
+                return (start && end && start.isValid() && end.isValid())
+                    ? `${start.format('DD/MM/YYYY')} - ${end.format('DD/MM/YYYY')}`
+                    : 'Période personnalisée';
             default:
                 return "30 derniers jours";
         }
@@ -192,7 +194,6 @@ const DateRangeFilter = ({ onFilterChange }) => {
     // Get current filter label
     const [currentFilterLabel, setCurrentFilterLabel] = useState("30 derniers jours");
 
-    // Update current filter label when filter changes
     useEffect(() => {
         const start = filterType === 'custom' ? startDate :
             filterType === 'specific_month' ? dayjs().year(currentYear).month(currentMonth).startOf('month') :
