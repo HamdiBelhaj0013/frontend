@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import AxiosInstance from '../Axios'; // Add this import for the API calls
+import AxiosInstance from '../Axios';
 
 // Composants de style avec une approche inspirée de Tailwind
 import {
@@ -17,8 +17,8 @@ import {
     ListItemText,
     Typography,
     useTheme,
-    Paper, // Add Paper component import
-    CircularProgress // Add CircularProgress component import
+    Paper,
+    CircularProgress
 } from '@mui/material';
 
 // Icônes
@@ -31,7 +31,7 @@ import {
     ShowChart,
     TrendingDown,
     TrendingUp,
-    Warning // Add Warning icon import
+    Warning
 } from '@mui/icons-material';
 
 // Recharts pour les visualisations
@@ -48,6 +48,8 @@ import {
     XAxis,
     YAxis
 } from 'recharts';
+
+import ForeignDonationsWidget from '/src/components/ForeignDonationsWidget.jsx';
 
 // =============== FONCTIONS UTILITAIRES ===============
 
@@ -100,8 +102,6 @@ const formatCategoryName = (name) => {
         .replace(/\b\w/g, letter => letter.toUpperCase());
 };
 
-
-import ForeignDonationsWidget from '/src/components/ForeignDonationsWidget.jsx';
 // Carte de Tableau de Bord - Composant de base pour afficher des données récapitulatives
 const DashboardCard = ({ title, icon, children, height = 'auto' }) => {
     const Icon = icon;
@@ -514,10 +514,18 @@ const TrendChart = ({ data, title, dateFilter }) => {
     );
 };
 
-
 const EnhancedDashboard = ({ statistics, recentTransactions, dateFilter, setActiveTab }) => {
     const navigate = useNavigate();
     const theme = useTheme();
+
+    // DEBUG: Add detailed logging to diagnose the issue
+    console.log("Statistics received:", statistics);
+
+    // The issue appears to be with serialization of the Decimal object from Django
+    // We'll apply multiple strategies to extract the membership fee value
+
+    // Create state for corrected membership fees value
+    const [correctedMembershipFees, setCorrectedMembershipFees] = useState(0);
 
     const [incomeChartData, setIncomeChartData] = useState([]);
     const [expenseChartData, setExpenseChartData] = useState([]);
@@ -525,9 +533,158 @@ const EnhancedDashboard = ({ statistics, recentTransactions, dateFilter, setActi
     const [incomeTrend, setIncomeTrend] = useState(null);
     const [expenseTrend, setExpenseTrend] = useState(null);
 
+    // Dedicated effect to properly extract the membership fees value
+    useEffect(() => {
+        if (!statistics) return;
+
+        // Extract the membership fees using multiple approaches
+        let membershipValue = 0;
+
+        // 1. Try direct extraction from total_membership_fees with type handling
+        if (statistics.total_membership_fees !== undefined && statistics.total_membership_fees !== null) {
+            const rawValue = statistics.total_membership_fees;
+            console.log("Raw membership fees:", rawValue, typeof rawValue);
+
+            try {
+                // Handle different possible types
+                if (typeof rawValue === 'string') {
+                    membershipValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
+                } else if (typeof rawValue === 'number') {
+                    membershipValue = rawValue;
+                } else {
+                    // Handle potential serialized objects
+                    membershipValue = Number(rawValue);
+                }
+
+                console.log("Parsed membership value:", membershipValue);
+            } catch (error) {
+                console.error("Error parsing membership fees:", error);
+            }
+        }
+
+        // 2. If that didn't work, check income_by_category
+        if ((membershipValue === 0 || isNaN(membershipValue)) && statistics.income_by_category) {
+            console.log("Checking income categories:", statistics.income_by_category);
+
+            // Look for keys that might represent membership fees
+            const membershipKeys = ['membership_fee', 'membership', 'cotisation', 'cotisations'];
+
+            for (const key of membershipKeys) {
+                if (statistics.income_by_category[key]) {
+                    try {
+                        let categoryValue = statistics.income_by_category[key];
+                        console.log(`Found category ${key} with value:`, categoryValue, typeof categoryValue);
+
+                        // Parse the value based on its type
+                        if (typeof categoryValue === 'string') {
+                            categoryValue = parseFloat(categoryValue.replace(/[^\d.-]/g, ''));
+                        } else if (typeof categoryValue !== 'number') {
+                            categoryValue = Number(categoryValue);
+                        }
+
+                        if (categoryValue > 0 && !isNaN(categoryValue)) {
+                            membershipValue = categoryValue;
+                            console.log(`Using membership fees from category '${key}':`, membershipValue);
+                            break;
+                        }
+                    } catch (error) {
+                        console.error(`Error processing category ${key}:`, error);
+                    }
+                }
+            }
+        }
+
+        // 3. Final fallback: manually extract from income data
+        if ((membershipValue === 0 || isNaN(membershipValue)) && statistics.recent_transactions) {
+            console.log("Searching recent transactions for membership fees");
+
+            // Look for membership fee transactions
+            const membershipTransactions = statistics.recent_transactions.filter(t =>
+                t.transaction_type === 'income' &&
+                (t.category === 'membership_fee' ||
+                    t.category === 'membership' ||
+                    t.category === 'cotisation' ||
+                    t.category === 'cotisations')
+            );
+
+            if (membershipTransactions.length > 0) {
+                membershipValue = membershipTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                console.log("Calculated membership fees from transactions:", membershipValue);
+            }
+        }
+
+        // Set the corrected value
+        console.log("Final membership value to use:", membershipValue);
+        setCorrectedMembershipFees(membershipValue);
+
+    }, [statistics]);
+
+    // Effect to handle chart data processing
+    useEffect(() => {
+        if (!statistics) return;
+
+        try {
+            // Process income data for pie chart
+            const incomeByCategory = { ...statistics?.income_by_category } || {};
+
+            // Make sure the membership fees are represented in the chart
+            if (correctedMembershipFees > 0) {
+                // Only add if not already present
+                const hasMembershipCategory = Object.keys(incomeByCategory).some(
+                    key => key.includes('membership') || key.includes('cotisation')
+                );
+
+                if (!hasMembershipCategory) {
+                    incomeByCategory['cotisations'] = correctedMembershipFees;
+                    console.log("Added cotisations category with value:", correctedMembershipFees);
+                }
+            }
+
+            // Format income data for chart
+            const incomeData = Object.entries(incomeByCategory)
+                .filter(([name, value]) => {
+                    const numValue = typeof value === 'string' ? parseFloat(value) : Number(value);
+                    return numValue > 0 && !isNaN(numValue);
+                })
+                .map(([name, value]) => ({
+                    name: formatCategoryName(name),
+                    value: typeof value === 'string' ? parseFloat(value) : Number(value)
+                }));
+            setIncomeChartData(incomeData);
+            console.log("Income chart data:", incomeData);
+
+            // Traiter les données de dépenses par catégorie pour le graphique circulaire
+            const expenseData = Object.entries(statistics?.expenses_by_category || {})
+                .filter(([name, value]) => {
+                    const numValue = typeof value === 'string' ? parseFloat(value) : Number(value);
+                    return numValue > 0 && !isNaN(numValue);
+                })
+                .map(([name, value]) => ({
+                    name: formatCategoryName(name),
+                    value: typeof value === 'string' ? parseFloat(value) : Number(value)
+                }));
+            setExpenseChartData(expenseData);
+
+            // Process trend data
+            const trendData = generateTrendDataFromDateRange();
+            if (trendData && trendData.length > 0) {
+                setMonthlyTrendData(trendData);
+                const { incomeTrend, expenseTrend } = calculateTrends(trendData);
+                setIncomeTrend(incomeTrend);
+                setExpenseTrend(expenseTrend);
+            } else {
+                setMonthlyTrendData([]);
+                setIncomeTrend(null);
+                setExpenseTrend(null);
+            }
+        } catch (error) {
+            console.error("Error processing chart data:", error);
+        }
+    }, [statistics, recentTransactions, dateFilter, correctedMembershipFees]);
+
     // Génère les données de tendance en fonction de la plage de dates filtrée
     const generateTrendDataFromDateRange = () => {
-        if (!dateFilter) return [];
+        if (!dateFilter || !recentTransactions) return [];
 
         // Convertir les dates du filtre en objets dayjs
         const startDate = dayjs(dateFilter.startDate);
@@ -638,49 +795,6 @@ const EnhancedDashboard = ({ statistics, recentTransactions, dateFilter, setActi
         return { incomeTrend, expenseTrend };
     };
 
-    // Traiter les données lorsque les statistiques, transactions ou date filter changent
-    useEffect(() => {
-        if (!statistics) return;
-
-        try {
-            // Traiter les données de revenus par catégorie pour le graphique circulaire
-            const incomeData = Object.entries(statistics?.income_by_category || {})
-                .filter(([name, value]) => parseFloat(value) > 0) // Filtrer les valeurs nulles
-                .map(([name, value]) => ({
-                    name: formatCategoryName(name),
-                    value: parseFloat(value)
-                }));
-            setIncomeChartData(incomeData);
-
-            // Traiter les données de dépenses par catégorie pour le graphique circulaire
-            const expenseData = Object.entries(statistics?.expenses_by_category || {})
-                .filter(([name, value]) => parseFloat(value) > 0) // Filtrer les valeurs nulles
-                .map(([name, value]) => ({
-                    name: formatCategoryName(name),
-                    value: parseFloat(value)
-                }));
-            setExpenseChartData(expenseData);
-
-            // Générer les données de tendance en fonction de la plage de dates filtrée
-            const trendData = generateTrendDataFromDateRange();
-
-            if (trendData && trendData.length > 0) {
-                setMonthlyTrendData(trendData);
-
-                // Calculer les tendances
-                const { incomeTrend, expenseTrend } = calculateTrends(trendData);
-                setIncomeTrend(incomeTrend);
-                setExpenseTrend(expenseTrend);
-            } else {
-                setMonthlyTrendData([]);
-                setIncomeTrend(null);
-                setExpenseTrend(null);
-            }
-        } catch (error) {
-            console.error("Erreur lors du traitement des données statistiques:", error);
-        }
-    }, [statistics, recentTransactions, dateFilter]);
-
     // Récupère le libellé approprié pour les cartes de statistiques
     const getStatCardSubtitle = () => {
         return dateFilter?.displayLabel || '30 derniers jours';
@@ -742,10 +856,11 @@ const EnhancedDashboard = ({ statistics, recentTransactions, dateFilter, setActi
                     />
                 </Grid>
 
+                {/* Use correctedMembershipFees instead of membershipFees */}
                 <Grid item xs={12} sm={6} md={4} lg={2.4}>
                     <StatCard
                         title="Cotisations"
-                        amount={formatCurrency(statistics?.total_membership_fees || 0)}
+                        amount={formatCurrency(correctedMembershipFees)}
                         icon={Person}
                         color="info"
                         subtitle={getStatCardSubtitle()}

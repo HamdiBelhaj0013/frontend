@@ -646,7 +646,7 @@ const NGOChatbot = () => {
         }
     };
 
-    // Handle speech recognition for voice input (if available)
+
     const startVoiceInput = () => {
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
