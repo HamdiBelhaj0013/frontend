@@ -366,7 +366,7 @@ const ForeignDonationWarning = ({ transaction, onRefresh }) => {
         );
     }
 
-    // Modified: Show simplified view for completed reports - WITHOUT "Voir détails" button
+
     if (report && report.report_status === 'completed') {
         return (
             <Paper
@@ -477,7 +477,7 @@ const ForeignDonationWarning = ({ transaction, onRefresh }) => {
                                 </Button>
                             )}
 
-                            {/* "Voir détails" button removed */}
+
                         </Box>
                     </Box>
                 </Collapse>

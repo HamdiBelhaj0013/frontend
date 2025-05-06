@@ -47,7 +47,6 @@ const TransactionDetail = ({
                                transaction,
                                onVerify,
                                onDelete,
-                               onEdit,
                                refreshData
                            }) => {
     const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
@@ -341,27 +340,6 @@ const TransactionDetail = ({
                 <Button onClick={onClose}>
                     Fermer
                 </Button>
-
-                {transaction.status === 'pending' && (
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        startIcon={<Visibility />}
-                        onClick={handleVerifyClick}
-                    >
-                        Vérifier
-                    </Button>
-                )}
-
-                <Button
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<Edit />}
-                    onClick={() => onEdit(transaction)}
-                >
-                    Modifier
-                </Button>
-
                 <Button
                     variant="outlined"
                     color="error"
