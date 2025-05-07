@@ -627,7 +627,7 @@ const RegisterAssociation = () => {
                         <Box component="ul" sx={{ pl: 3 }}>
                             <li>Matricule fiscal : <strong>{registeredAssociation?.matricule_fiscal || 'N/A'}</strong></li>
                             <li>Documents clairement lisibles</li>
-                            <li>Carte d'identité & RNE valides et à jour</li>
+                            <li>Pièce d'identité & RNE valides et à jour</li>
                         </Box>
                         <Typography variant="body2" sx={{ mt: 2, fontWeight: 500 }}>
                             ➡️ Veuillez créer une nouvelle demande avec des documents corrigés.
@@ -840,7 +840,7 @@ const RegisterAssociation = () => {
                         </DialogTitle>
                         <DialogContent dividers>
                             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                                Carte d'Identité Nationale (CIN)
+                                Pièce d'identité
                             </Typography>
 
                             <Typography variant="body2" paragraph>
@@ -1020,16 +1020,16 @@ const RegisterAssociation = () => {
             helpText: "Qu'est-ce que le matricule fiscal et où le trouver?"
         },
         {
-            label: 'Carte d\'identité (Recto)',
-            description: 'Téléchargez le recto de votre carte d\'identité',
+            label: 'Piéce d\'identité (Recto)',
+            description: 'Téléchargez le recto de votre Piéce d\'identité',
             fields: ['cin_recto'],
             icon: <ArticleOutlined />,
             helpTopic: 'documents',
             helpText: "Quels formats sont acceptés et comment préparer mes documents?"
         },
         {
-            label: 'Carte d\'identité (Verso)',
-            description: 'Téléchargez le verso de votre carte d\'identité',
+            label: 'Piéce d\'identité (Verso)',
+            description: 'Téléchargez le verso de votre Piéce d\'identité',
             fields: ['cin_verso'],
             icon: <ArticleOutlined />,
             helpTopic: 'documents',
@@ -1936,8 +1936,8 @@ const RegisterAssociation = () => {
                                             {index === 1 && (
                                                 <FileInput
                                                     name="cin_recto"
-                                                    label="Carte d'identité (Recto)"
-                                                    description="Téléchargez le recto de votre carte d'identité nationale"
+                                                    label="Pièce d'identité(Recto)"
+                                                    description="Téléchargez le recto de votre Pièce d'identité"
                                                     control={control}
                                                     errors={errors}
                                                 />
@@ -1946,8 +1946,8 @@ const RegisterAssociation = () => {
                                             {index === 2 && (
                                                 <FileInput
                                                     name="cin_verso"
-                                                    label="Carte d'identité (Verso)"
-                                                    description="Téléchargez le verso de votre carte d'identité nationale"
+                                                    label="Pièce d'identité (Verso)"
+                                                    description="Téléchargez le verso de votre Pièce d'identité"
                                                     control={control}
                                                     errors={errors}
                                                 />

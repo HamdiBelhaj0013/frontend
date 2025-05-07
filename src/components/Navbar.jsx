@@ -50,8 +50,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import logo from '../assets/logowhite.png';
 import Axios from './Axios';
 import {usePermissions} from "../contexts/PermissionsContext.jsx";
@@ -103,19 +101,13 @@ const GlassDrawer = styled(Box)(({ theme }) => ({
     },
 }));
 
-const DrawerHeader = styled(Box)(({ theme, isCollapsed }) => ({
+const DrawerHeader = styled(Box)(({ theme }) => ({
     background: 'linear-gradient(135deg, #00897B, #00695C)',
     padding: theme.spacing(3, 2),
     color: 'white',
     position: 'relative',
     overflow: 'hidden',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    ...(isCollapsed && {
-        padding: theme.spacing(3, 1),
-        display: 'flex',
-        justifyContent: 'center',
-    }),
     '&::after': {
         content: '""',
         position: 'absolute',
@@ -128,11 +120,10 @@ const DrawerHeader = styled(Box)(({ theme, isCollapsed }) => ({
     }
 }));
 
-const ActiveNavItem = styled(ListItemButton)(({ theme, isCollapsed }) => ({
+const ActiveNavItem = styled(ListItemButton)(({ theme }) => ({
     position: 'relative',
     borderRadius: '12px',
     margin: '4px 8px',
-    padding: isCollapsed ? '12px 8px' : '8px 16px',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     overflow: 'hidden',
     '&::before': {
@@ -287,37 +278,9 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
     },
 }));
 
-const ToggleCollapseButton = styled(IconButton)(({ theme }) => ({
-    position: 'absolute',
-    right: '-12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    backgroundColor: theme.palette.primary.main,
-    color: '#fff',
-    width: 24,
-    height: 24,
-    minWidth: 24,
-    minHeight: 24,
-    padding: 0,
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-    zIndex: 10,
-    '&:hover': {
-        backgroundColor: theme.palette.primary.dark,
-    },
-    '& .MuiSvgIcon-root': {
-        fontSize: '0.9rem',
-    }
-}));
-
-// New collapse transition animation
-const CollapseTransition = styled(Box)(({ theme, duration = 0.3 }) => ({
-    transition: `all ${duration}s cubic-bezier(0.4, 0, 0.2, 1)`,
-}));
-
 export default function NavBar(props) {
     const { content } = props;
-    const drawerExpandedWidth = 280;
-    const drawerCollapsedWidth = 72;
+    const drawerWidth = 280;
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -332,12 +295,6 @@ export default function NavBar(props) {
     // Get the dark mode state from the context
     const darkMode = colorMode.mode === 'dark';
 
-    // New state for drawer collapsed status
-    const [isCollapsed, setIsCollapsed] = useState(() => {
-        // Get initial state from localStorage if available
-        const savedState = localStorage.getItem('navbarCollapsed');
-        return savedState ? JSON.parse(savedState) : false;
-    });
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
     const [userName, setUserName] = useState('');
@@ -347,17 +304,6 @@ export default function NavBar(props) {
     const [scrolled, setScrolled] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const isUserMenuOpen = Boolean(userMenuAnchorEl);
-
-    // Calculate drawer width based on collapsed state
-    const drawerWidth = isCollapsed ? drawerCollapsedWidth : drawerExpandedWidth;
-
-    // Toggle drawer collapse state
-    const toggleCollapse = () => {
-        const newState = !isCollapsed;
-        setIsCollapsed(newState);
-        // Save state to localStorage
-        localStorage.setItem('navbarCollapsed', JSON.stringify(newState));
-    };
 
     // Handle scroll event for navbar appearance change
     useEffect(() => {
@@ -485,27 +431,12 @@ export default function NavBar(props) {
 
     const drawer = (
         <GlassDrawer>
-            {/* Collapsible Header with Logo and Association Name */}
-            <DrawerHeader
-                isCollapsed={isCollapsed}
-                sx={{
-                    display: 'flex',
-                    flexDirection: !isCollapsed ? 'column' : 'row',
-                    alignItems: 'center',
-                    position: 'relative'
-                }}
-            >
-                {/* Toggle collapse button (desktop only) */}
-                {!isMobile && (
-                    <ToggleCollapseButton
-                        onClick={toggleCollapse}
-                        size="small"
-                        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    >
-                        {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                    </ToggleCollapseButton>
-                )}
-
+            <DrawerHeader sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                position: 'relative'
+            }}>
                 {isMobile && (
                     <IconButton
                         sx={{
@@ -528,63 +459,51 @@ export default function NavBar(props) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    flexDirection: isCollapsed ? 'column' : 'column',
+                    flexDirection: 'column',
                     position: 'relative',
-                    zIndex: 1,
-                    width: '100%',
+                    zIndex: 1
                 }}>
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.5, type: "spring" }}
                     >
-                        <img
-                            src={logo}
-                            alt="Logo"
-                            style={{
-                                height: isCollapsed ? 45 : 70,
-                                marginBottom: isCollapsed ? 0 : 16,
-                                transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                            }}
-                        />
+                        <img src={logo} alt="Logo" style={{ height: 70, marginBottom: 16 }} />
                     </motion.div>
 
-                    {!isCollapsed && (
-                        <Typography
-                            variant="h5"
-                            sx={{
-                                fontWeight: 700,
-                                letterSpacing: 1,
-                                background: 'linear-gradient(90deg, #ffffff, #e0e0e0)',
-                                backgroundClip: 'text',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                textShadow: '0px 2px 4px rgba(0,0,0,0.1)',
-                                textAlign: 'center',
-                                width: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            {associationName}
-                        </Typography>
-                    )}
+                    <Typography
+                        variant="h5"
+                        sx={{
+                            fontWeight: 700,
+                            letterSpacing: 1,
+                            background: 'linear-gradient(90deg, #ffffff, #e0e0e0)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            textShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+                            textAlign: 'center',
+                            width: '100%',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {associationName}
+                    </Typography>
                 </Box>
             </DrawerHeader>
 
-            {/* User profile in sidebar - Only show full details when not collapsed */}
+            {/* User profile in sidebar */}
             <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                py: isCollapsed ? 2 : 3,
-                px: isCollapsed ? 1 : 2,
+                py: 3,
+                px: 2,
                 borderBottom: '1px solid ' + (darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
                 background: darkMode ?
                     'linear-gradient(180deg, rgba(0,105,92,0.2) 0%, rgba(30,30,30,0) 100%)' :
-                    'linear-gradient(180deg, rgba(0,105,92,0.05) 0%, rgba(255,255,255,0) 100%)',
-                transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    'linear-gradient(180deg, rgba(0,105,92,0.05) 0%, rgba(255,255,255,0) 100%)'
             }}>
                 <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -592,57 +511,46 @@ export default function NavBar(props) {
                 >
                     <Avatar
                         sx={{
-                            width: isCollapsed ? 48 : 72,
-                            height: isCollapsed ? 48 : 72,
-                            mb: isCollapsed ? 0 : 1.5,
+                            width: 72,
+                            height: 72,
+                            mb: 1.5,
                             border: '2px solid #00897B',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            background: 'linear-gradient(135deg, #00897B, #00695C)',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                            background: 'linear-gradient(135deg, #00897B, #00695C)'
                         }}
                     >
                         {userInitial}
                     </Avatar>
                 </motion.div>
 
-                {!isCollapsed && (
-                    <>
-                        <Typography variant="h6" sx={{
-                            fontWeight: 600,
-                            textAlign: 'center',
-                            width: '100%',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            mb: 0.5
-                        }}>
-                            {userName}
-                        </Typography>
+                <Typography variant="h6" sx={{
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    width: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    mb: 0.5
+                }}>
+                    {userName}
+                </Typography>
 
-                        <Chip
-                            label={userRole.charAt(0).toUpperCase() + userRole.slice(1)} // Capitalize first letter
-                            size="small"
-                            sx={{
-                                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                color: theme.palette.primary.main,
-                                fontWeight: 500,
-                                borderRadius: '50px',
-                                padding: '0 8px',
-                                height: '24px',
-                                '& .MuiChip-label': { padding: '0 8px' }
-                            }}
-                        />
-                    </>
-                )}
+                <Chip
+                    label={userRole.charAt(0).toUpperCase() + userRole.slice(1)} // Capitalize first letter
+                    size="small"
+                    sx={{
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.main,
+                        fontWeight: 500,
+                        borderRadius: '50px',
+                        padding: '0 8px',
+                        height: '24px',
+                        '& .MuiChip-label': { padding: '0 8px' }
+                    }}
+                />
             </Box>
 
-            <List sx={{
-                mt: 1,
-                px: isCollapsed ? 0.5 : 1,
-                flexGrow: 1,
-                overflowY: 'auto',
-                transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}>
+            <List sx={{ mt: 1, px: 1, flexGrow: 1, overflowY: 'auto' }}>
                 {isLoading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                         <CircularProgress />
@@ -650,91 +558,67 @@ export default function NavBar(props) {
                 ) : (
                     filteredNavItems.map((item) => (
                         <ListItem key={item.name} disablePadding sx={{ mb: 0.5 }}>
-                            <Tooltip
-                                title={isCollapsed ? item.name : ""}
-                                placement="right"
-                                arrow
-                                disableHoverListener={!isCollapsed}
+                            <ActiveNavItem
+                                component={Link}
+                                to={item.path}
+                                selected={item.path === location.pathname}
+                                onClick={isMobile ? handleDrawerToggle : undefined}
+                                disableRipple
+                                sx={{
+                                    transition: 'all 0.3s ease',
+                                    transform: 'scale(1)',
+                                    '&:hover': {
+                                        transform: 'scale(1.02) translateX(4px)'
+                                    }
+                                }}
                             >
-                                <ActiveNavItem
-                                    component={Link}
-                                    to={item.path}
-                                    selected={item.path === location.pathname}
-                                    onClick={isMobile ? handleDrawerToggle : undefined}
-                                    disableRipple
-                                    isCollapsed={isCollapsed}
-                                    sx={{
-                                        transition: 'all 0.3s ease',
-                                        transform: 'scale(1)',
-                                        justifyContent: isCollapsed ? 'center' : 'flex-start',
-                                        '&:hover': {
-                                            transform: 'scale(1.02) translateX(4px)'
-                                        }
+                                <ListItemIcon sx={{
+                                    minWidth: 40,
+                                    color: item.path === location.pathname ?
+                                        theme.palette.primary.main :
+                                        alpha(theme.palette.text.primary, 0.7)
+                                }}>
+                                    {item.icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={item.name}
+                                    primaryTypographyProps={{
+                                        fontSize: 15,
+                                        fontWeight: item.path === location.pathname ? 600 : 400
                                     }}
-                                >
-                                    <ListItemIcon sx={{
-                                        minWidth: isCollapsed ? 0 : 40,
-                                        mr: isCollapsed ? 0 : 2,
-                                        color: item.path === location.pathname ?
-                                            theme.palette.primary.main :
-                                            alpha(theme.palette.text.primary, 0.7),
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        transition: 'margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                    }}>
-                                        {item.hasNotification ? (
-                                            <Badge
-                                                color="error"
-                                                variant="dot"
-                                                sx={{
-                                                    '& .MuiBadge-dot': {
-                                                        transform: 'scale(1.2)',
-                                                        boxShadow: '0 0 0 2px ' + (darkMode ? '#2d2d2d' : '#ffffff')
-                                                    }
-                                                }}
-                                            >
-                                                {item.icon}
-                                            </Badge>
-                                        ) : item.icon}
-                                    </ListItemIcon>
+                                />
 
-                                    {!isCollapsed && (
-                                        <CollapseTransition
+                                {/* Show notification badge if the item has one */}
+                                {item.hasNotification && (
+                                    <Box component="span">
+                                        <Badge
+                                            color="error"
+                                            variant="dot"
                                             sx={{
-                                                opacity: isCollapsed ? 0 : 1,
-                                                maxWidth: isCollapsed ? 0 : '100%',
-                                                visibility: isCollapsed ? 'hidden' : 'visible',
+                                                '& .MuiBadge-dot': {
+                                                    transform: 'scale(1.2)',
+                                                    boxShadow: '0 0 0 2px ' + (darkMode ? '#2d2d2d' : '#ffffff')
+                                                }
                                             }}
-                                        >
-                                            <ListItemText
-                                                primary={item.name}
-                                                primaryTypographyProps={{
-                                                    fontSize: 15,
-                                                    fontWeight: item.path === location.pathname ? 600 : 400
-                                                }}
-                                            />
-                                        </CollapseTransition>
-                                    )}
-                                </ActiveNavItem>
-                            </Tooltip>
+                                        />
+                                    </Box>
+                                )}
+                            </ActiveNavItem>
                         </ListItem>
                     )))}
             </List>
 
             <Box sx={{
-                p: isCollapsed ? 1 : 2,
+                p: 2,
                 borderTop: '1px solid ' + (darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 2,
-                transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                gap: 2
             }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'space-between' }}>
-                    {!isCollapsed && (
-                        <Typography variant="body2" color="text.secondary">
-                            {darkMode ? 'Mode sombre' : 'Mode lumineux'}
-                        </Typography>
-                    )}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        {darkMode ? 'Mode sombre' : 'Mode lumineux'}
+                    </Typography>
                     <IconButton
                         onClick={toggleDarkMode}
                         sx={{
@@ -755,53 +639,31 @@ export default function NavBar(props) {
                     </IconButton>
                 </Box>
 
-                {!isCollapsed && (
-                    <Button
-                        onClick={handleLogout}
-                        variant="contained"
-                        startIcon={<LogoutIcon />}
-                        sx={{
-                            borderRadius: '12px',
-                            backgroundColor: alpha(theme.palette.error.main, 0.1),
-                            color: theme.palette.error.main,
-                            fontWeight: 500,
-                            padding: '10px 16px',
-                            textTransform: 'none',
-                            transition: 'all 0.3s ease',
-                            boxShadow: 'none',
-                            '&:hover': {
-                                backgroundColor: alpha(theme.palette.error.main, 0.2),
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 4px 12px rgba(211, 47, 47, 0.2)'
-                            },
-                            '&:active': {
-                                transform: 'translateY(0)'
-                            }
-                        }}
-                    >
-                        Déconnexion
-                    </Button>
-                )}
-
-                {isCollapsed && (
-                    <Tooltip title="Déconnexion" placement="right">
-                        <IconButton
-                            onClick={handleLogout}
-                            sx={{
-                                backgroundColor: alpha(theme.palette.error.main, 0.1),
-                                color: theme.palette.error.main,
-                                borderRadius: '12px',
-                                transition: 'all 0.3s ease',
-                                '&:hover': {
-                                    backgroundColor: alpha(theme.palette.error.main, 0.2),
-                                    transform: 'translateY(-2px)'
-                                },
-                            }}
-                        >
-                            <LogoutIcon />
-                        </IconButton>
-                    </Tooltip>
-                )}
+                <Button
+                    onClick={handleLogout}
+                    variant="contained"
+                    startIcon={<LogoutIcon />}
+                    sx={{
+                        borderRadius: '12px',
+                        backgroundColor: alpha(theme.palette.error.main, 0.1),
+                        color: theme.palette.error.main,
+                        fontWeight: 500,
+                        padding: '10px 16px',
+                        textTransform: 'none',
+                        transition: 'all 0.3s ease',
+                        boxShadow: 'none',
+                        '&:hover': {
+                            backgroundColor: alpha(theme.palette.error.main, 0.2),
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(211, 47, 47, 0.2)'
+                        },
+                        '&:active': {
+                            transform: 'translateY(0)'
+                        }
+                    }}
+                >
+                    Déconnexion
+                </Button>
             </Box>
         </GlassDrawer>
     );
@@ -1154,7 +1016,6 @@ export default function NavBar(props) {
                             boxSizing: 'border-box',
                             borderRight: 'none',
                             boxShadow: '4px 0 24px rgba(0, 0, 0, 0.15)',
-                            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                         },
                     }}
                     ModalProps={{
@@ -1175,7 +1036,6 @@ export default function NavBar(props) {
                             boxSizing: 'border-box',
                             borderRight: 'none',
                             boxShadow: '4px 0 24px rgba(0, 0, 0, 0.08)',
-                            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                         },
                     }}
                 >
@@ -1194,7 +1054,6 @@ export default function NavBar(props) {
                     flexGrow: 1,
                     p: { xs: 2, sm: 3 },
                     width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
-                    ml: { xs: 0, md: `${drawerWidth}px` },
                     backgroundColor: theme.palette.background.default,
                     minHeight: '100vh',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
