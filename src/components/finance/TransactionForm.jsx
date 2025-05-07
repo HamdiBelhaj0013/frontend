@@ -74,6 +74,7 @@ const nonProjectIncomeCategories = ['membership_fee', 'other_income'];
 // Destinataires de dépenses courants basés sur le rapport de dépenses
 const commonExpenseRecipients = [
     { id: 'team_member', name: 'Membre de l\'Équipe' },
+    { id: 'Toute l\'équipe', name: 'Toute l\'équipe' },
     { id: 'non_member', name: 'Non-Membre (Externe)' },
     { id: 'cnss', name: 'CNSS (Sécurité Sociale)' },
     { id: 'internet', name: 'Fournisseur Internet' },
@@ -819,18 +820,7 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                         />
                     )}
 
-                    {/* Case à cocher pour dépense à l'échelle du projet - afficher uniquement pour les transactions de dépenses */}
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={isProjectWide}
-                                onChange={handleProjectWideChange}
-                                name="is_project_wide"
-                            />
-                        }
-                        label="Cette dépense s'applique à l'ensemble du projet"
-                        sx={{ mt: 2, display: 'block' }}
-                    />
+
                 </>
             );
         }
@@ -998,7 +988,18 @@ const TransactionForm = ({ open, onClose, type = 'income', onSuccess }) => {
                                     )}
                                 />
                             </Grid>
-
+                            {/* Case à cocher pour dépense à l'échelle du projet - afficher uniquement pour les transactions de dépenses */}
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={isProjectWide}
+                                        onChange={handleProjectWideChange}
+                                        name="is_project_wide"
+                                    />
+                                }
+                                label="Cette dépense s'applique à l'ensemble du projet"
+                                sx={{ mt: 2, display: 'block' }}
+                            />
                             {/* Sélection de projet - conditionnelle basée sur le type de transaction et la catégorie */}
                             {(isProjectRequired || (!nonProjectIncomeCategories.includes(watchCategory) && watchTransactionType === 'income') || watchIsProjectWide) && (
                                 <Grid item xs={12}>

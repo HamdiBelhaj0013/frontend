@@ -92,13 +92,42 @@ const TransactionDetail = ({
         }
     };
 
-    const handleDownloadDocument = () => {
-        if (transaction.document) {
-            window.open(transaction.document, '_blank');
+    const handleDownloadDocument = async () => {
+        if (transaction && transaction.id) {
+            try {
+                // Use the new endpoint
+                const response = await AxiosInstance.get(
+                    `/finances/transactions/${transaction.id}/download_document/`,
+                    { responseType: 'blob' }
+                );
+
+                // Get filename from content-disposition or use a default
+                const contentDisposition = response.headers['content-disposition'];
+                let filename = 'document.pdf';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch.length === 2) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Create a blob URL and trigger download
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download failed:', error);
+                // You can add error notification here
+            }
         }
     };
 
-    // Function to refresh transactions (passed to ForeignDonationWarning)
+
     const handleRefresh = () => {
         if (refreshData) {
             refreshData();

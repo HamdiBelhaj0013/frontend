@@ -10,7 +10,8 @@ import {
     ListItem,
     ListItemText,
     ListItemIcon,
-    Badge
+    Badge,
+    IconButton
 } from '@mui/material';
 import {
     Warning,
@@ -19,11 +20,14 @@ import {
     HourglassEmpty,
     SendRounded,
     Article,
-    CheckCircle
+    CheckCircle,
+    ReceiptLong,
+    ArrowForward
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import AxiosInstance from './Axios';
-
+import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../contexts/PermissionsContext.jsx';
 // Format currency function
 const formatCurrency = (amount) => (
     new Intl.NumberFormat('fr-TN', {
@@ -41,7 +45,8 @@ const isForeignDonation = (transaction) => (
     !transaction.donor_details.is_internal
 );
 
-const ForeignDonationsWidget = ({ onViewReports }) => {
+const ForeignDonationsWidget = ({ onViewReports, userRole }) => {
+    const navigate = useNavigate();
     const [pendingReports, setPendingReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -50,6 +55,15 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
         overdueCount: 0,
         totalAmount: 0
     });
+
+    // Check if user has permission to access transaction features
+    // Member role users don't have access to transaction management
+    const hasTransactionAccess = userRole !== 'member';
+
+    // Handler to navigate to transactions tab
+    const handleViewTransactions = () => {
+        navigate('/finance?tab=1');
+    };
 
     useEffect(() => {
         const fetchPendingReports = async () => {
@@ -211,15 +225,30 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
                         Suivi des déclarations obligatoires
                     </Typography>
                 </Box>
-                <Badge
-                    badgeContent={stats.pendingCount}
-                    color={statusColor}
-                    invisible={!hasPending}
-                    max={99}
-                    sx={{ '& .MuiBadge-badge': { fontSize: '0.8rem', fontWeight: 'bold' } }}
-                >
-                    <PublicOutlined fontSize="large" color={statusColor} />
-                </Badge>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {/* Show transaction button only for non-member roles */}
+                    {hasTransactionAccess && (
+                        <Tooltip title="Voir toutes les transactions" arrow>
+                            <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleViewTransactions}
+                                sx={{ mr: 1 }}
+                            >
+                                <ReceiptLong />
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                    <Badge
+                        badgeContent={stats.pendingCount}
+                        color={statusColor}
+                        invisible={!hasPending}
+                        max={99}
+                        sx={{ '& .MuiBadge-badge': { fontSize: '0.8rem', fontWeight: 'bold' } }}
+                    >
+                        <PublicOutlined fontSize="large" color={statusColor} />
+                    </Badge>
+                </Box>
             </Box>
 
             {/* Content */}
@@ -240,13 +269,28 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
                             </Typography>
                         </Box>
                         <Divider orientation="vertical" flexItem />
-                        <Box sx={{ textAlign: 'center', flex: 1 }}>
+                        <Box sx={{ textAlign: 'center', flex: 1, position: 'relative' }}>
                             <Typography variant="h4" fontWeight="bold">
                                 {stats.totalCount}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                Total
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                    Total
+                                </Typography>
+                                {/* Show arrow button only for non-member roles */}
+                                {hasTransactionAccess && (
+                                    <Tooltip title="Voir toutes les transactions" arrow>
+                                        <IconButton
+                                            size="small"
+                                            color="primary"
+                                            onClick={handleViewTransactions}
+                                            sx={{ ml: 0.5, p: 0.3 }}
+                                        >
+                                            <ArrowForward fontSize="inherit" />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
+                            </Box>
                         </Box>
                     </Box>
                     <Divider />
@@ -296,7 +340,7 @@ const ForeignDonationsWidget = ({ onViewReports }) => {
                             ))}
 
                             {/* Show indicator if there are more reports than what's displayed */}
-                            {stats.pendingCount > pendingReports.length && (
+                            {stats.pendingCount > pendingReports.length && hasTransactionAccess && (
                                 <ListItem
                                     button
                                     onClick={onViewReports}

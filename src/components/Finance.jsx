@@ -25,7 +25,7 @@ import AxiosInstance from './Axios';
 // Import permission components
 import { PermissionRequired } from '../contexts/ConditionalUI.jsx';
 import { usePermissions } from '../contexts/PermissionsContext.jsx';
-
+import { useLocation } from 'react-router-dom';
 // Import child components
 import TransactionList from './finance/TransactionList.jsx';
 import TransactionForm from './finance/TransactionForm';
@@ -58,9 +58,24 @@ function TabPanel(props) {
 const Finance = () => {
     // Get permission context
     const { can, RESOURCES, ACTIONS, userRole } = usePermissions();
+    const location = useLocation(); // Get location object from React Router
+
+    // Get tab from URL query parameter
+    const queryParams = new URLSearchParams(location.search);
+    const tabParam = queryParams.get('tab');
 
     const theme = useTheme();
-    const [activeTab, setActiveTab] = useState(0);
+    // Initialize activeTab from either query parameter, location state, or default to 0
+    const [activeTab, setActiveTab] = useState(() => {
+        if (tabParam !== null) {
+            return parseInt(tabParam, 10);
+        } else if (location.state?.activeTab !== undefined) {
+            return location.state.activeTab;
+        }
+        return 0;
+    });
+
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [transactions, setTransactions] = useState([]);
@@ -146,15 +161,15 @@ const Finance = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger, can, ACTIONS, RESOURCES, userRole, dateFilter]);
 
-    // Handle tab change
+
     const handleTabChange = (event, newValue) => {
-        // Check permissions before allowing tab change
+
         const tabPermissionMap = {
-            0: true, // Dashboard - always visible
-            1: userRole !== 'member', // Transactions
-            2: userRole !== 'member', // Budgets
-            3: userRole !== 'member', // Donors
-            4: userRole !== 'member', // Reports
+            0: true,
+            1: userRole !== 'member',
+            2: userRole !== 'member',
+            3: userRole !== 'member',
+            4: userRole !== 'member',
         };
 
         // Only change tab if user has permission

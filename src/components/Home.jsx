@@ -48,7 +48,12 @@ import AxiosInstance from './Axios';
 import dayjs from 'dayjs';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import UpcomingMeetingsCalendar from './UpcomingMeetingsCalendar';
-// Styled components
+import { Fab, Zoom } from '@mui/material';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+
+import ForeignDonationsWidget from './ForeignDonationsWidget';
+import {usePermissions} from "../contexts/PermissionsContext.jsx";
+
 const SectionTitle = styled(Typography)(({ theme }) => ({
     fontWeight: 600,
     marginBottom: theme.spacing(2),
@@ -59,6 +64,7 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
     },
 }));
 
+// Rest of the styled components...
 const StatsCard = styled(Card)(({ theme }) => ({
     height: '100%',
     boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
@@ -139,6 +145,7 @@ const StatusChip = ({ status }) => {
 };
 
 const Home = () => {
+    const { userRole } = usePermissions();
     const theme = useTheme();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -241,10 +248,15 @@ const Home = () => {
         window.location.reload();
     };
 
+    // Handler for viewing all foreign donation reports
+    const handleViewForeignDonationReports = () => {
+        navigate('/finance', { state: { activeTab: 4 } }); // Assuming tab 4 is for foreign donations
+    };
+
     // Calculate statistics
     const memberCount = dashboardData.members.length;
     const projectCount = dashboardData.projects.length;
-    const activeProjectCount = dashboardData.projects.filter(p => p.status === 'In Progress').length;
+    const activeProjectCount = dashboardData.projects.filter(p => p.status === 'En cours').length;
 
     // Render loading state
     if (loading) {
@@ -460,7 +472,6 @@ const Home = () => {
                 </Grid>
             </Grid>
 
-            {/* Rest of the component remains the same */}
             {/* Quick Actions Section */}
             <SectionTitle variant="h6">
                 <Dashboard /> Actions Rapides
@@ -552,10 +563,86 @@ const Home = () => {
                     </ShortcutCard>
                 </Grid>
             </Grid>
-
             {/* Main Dashboard Content */}
             <Grid container spacing={3}>
-                {/* Recent Projects */}
+                {/* Top Row - Key Widgets */}
+                <Grid item xs={12} md={6}>
+                    <ForeignDonationsWidget onViewReports={handleViewForeignDonationReports}
+                                            userRole={userRole}
+                    />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                    <DashboardCard>
+                        <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <SectionTitle variant="h6" sx={{ mb: 0 }}>
+                                    <AccountBalance /> Utilisation des Budgets
+                                </SectionTitle>
+                                <Button
+                                    onClick={() => navigate('/finance', { state: { activeTab: 2 } })}
+                                    endIcon={<ArrowForward />}
+                                    size="small"
+                                >
+                                    Gérer les Budgets
+                                </Button>
+                            </Box>
+                            <Divider sx={{ mb: 2 }} />
+
+                            {!dashboardData.financialStats.budgetUtilization ||
+                            dashboardData.financialStats.budgetUtilization.length === 0 ? (
+                                <Box sx={{ py: 2, textAlign: 'center' }}>
+                                    <Typography color="text.secondary">
+                                        Aucune allocation budgétaire trouvée
+                                    </Typography>
+                                </Box>
+                            ) : (
+                                <Box>
+                                    {dashboardData.financialStats.budgetUtilization.slice(0, 4).map((budget, index) => {
+                                        // Determine color based on utilization percentage
+                                        let color = theme.palette.success.main;
+                                        if (budget.utilization > 75) color = theme.palette.error.main;
+                                        else if (budget.utilization > 50) color = theme.palette.warning.main;
+
+                                        return (
+                                            <Box key={index} sx={{ mb: 2 }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                                        {budget.project}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {Math.round(budget.utilization)}%
+                                                    </Typography>
+                                                </Box>
+                                                <LinearProgress
+                                                    variant="determinate"
+                                                    value={Math.min(budget.utilization, 100)}
+                                                    sx={{
+                                                        height: 8,
+                                                        borderRadius: 5,
+                                                        '& .MuiLinearProgress-bar': {
+                                                            backgroundColor: color
+                                                        }
+                                                    }}
+                                                />
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Utilisé: {formatCurrency(budget.used)}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Budget: {formatCurrency(budget.allocated)}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        );
+                                    })}
+                                </Box>
+                            )}
+                        </CardContent>
+                    </DashboardCard>
+                </Grid>
+
+                {/* Middle Row - Two Equal Columns */}
                 <Grid item xs={12} md={6}>
                     <DashboardCard>
                         <CardContent>
@@ -633,8 +720,93 @@ const Home = () => {
                     </DashboardCard>
                 </Grid>
 
-                {/* Recent Members */}
                 <Grid item xs={12} md={6}>
+                    <DashboardCard>
+                        <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <SectionTitle variant="h6" sx={{ mb: 0 }}>
+                                    <Receipt /> Transactions Récentes
+                                </SectionTitle>
+                                <Button
+                                    onClick={() => navigate('/finance', { state: { activeTab: 1 } })}
+                                    endIcon={<ArrowForward />}
+                                    size="small"
+                                >
+                                    Toutes les Transactions
+                                </Button>
+                            </Box>
+                            <Divider sx={{ mb: 2 }} />
+
+                            {!dashboardData.recentTransactions ||
+                            dashboardData.recentTransactions.length === 0 ? (
+                                <Box sx={{ py: 2, textAlign: 'center' }}>
+                                    <Typography color="text.secondary" sx={{ mb: 2 }}>
+                                        Aucune transaction trouvée
+                                    </Typography>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => navigate('/finance', { state: { activeTab: 1 } })}
+                                        startIcon={<Add />}
+                                    >
+                                        Ajouter une Transaction
+                                    </Button>
+                                </Box>
+                            ) : (
+                                <List>
+                                    {dashboardData.recentTransactions.map((transaction) => (
+                                        <ListItem key={transaction.id} divider sx={{ px: 0 }}>
+                                            <ListItemAvatar>
+                                                <Avatar sx={{
+                                                    bgcolor: transaction.transaction_type === 'income'
+                                                        ? 'success.light'
+                                                        : 'error.light'
+                                                }}>
+                                                    {transaction.transaction_type === 'income'
+                                                        ? <TrendingUp />
+                                                        : <TrendingDown />}
+                                                </Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={
+                                                    <Typography noWrap style={{ maxWidth: '180px' }}>
+                                                        {transaction.description}
+                                                    </Typography>
+                                                }
+                                                secondary={
+                                                    <>
+                                                        <Typography component="span" variant="body2">
+                                                            {dayjs(transaction.date).format('DD/MM/YYYY')}
+                                                        </Typography>
+                                                        <br />
+                                                        <Typography
+                                                            component="span"
+                                                            variant="body2"
+                                                            sx={{
+                                                                color: transaction.transaction_type === 'income'
+                                                                    ? 'success.main'
+                                                                    : 'error.main',
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                        >
+                                                            {transaction.transaction_type === 'income' ? '+' : '-'}
+                                                            {formatCurrency(transaction.amount)}
+                                                        </Typography>
+                                                    </>
+                                                }
+                                            />
+                                            <ListItemSecondaryAction>
+                                                <StatusChip status={transaction.status} />
+                                            </ListItemSecondaryAction>
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            )}
+                        </CardContent>
+                    </DashboardCard>
+                </Grid>
+
+                {/* Bottom Row - Full Width Members List */}
+                <Grid item xs={12}>
                     <DashboardCard>
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -667,50 +839,56 @@ const Home = () => {
                                     </Button>
                                 </Box>
                             ) : (
-                                <List>
-                                    {dashboardData.members.slice(0, 4).map((member) => (
-                                        <ListItem key={member.id} divider sx={{ px: 0 }}>
-                                            <ListItemAvatar>
-                                                <Avatar>
-                                                    {member.name ? member.name.charAt(0).toUpperCase() : '?'}
-                                                </Avatar>
-                                            </ListItemAvatar>
-                                            <ListItemText
-                                                primary={member.name}
-                                                secondary={
-                                                    <>
-                                                        <Typography component="span" variant="body2">
-                                                            {member.email}
-                                                        </Typography>
-                                                        <br />
-                                                        <Chip
-                                                            label={member.role || 'Membre'}
-                                                            size="small"
-                                                            color="primary"
-                                                            variant="outlined"
-                                                            sx={{ mt: 0.5 }}
-                                                        />
-                                                    </>
-                                                }
-                                            />
-                                            <ListItemSecondaryAction>
-                                                <Tooltip title="Voir détails">
-                                                    <IconButton
-                                                        edge="end"
-                                                        component={Link}
-                                                        to={`/member/editmember/${member.id}`}
-                                                    >
-                                                        <Visibility />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </ListItemSecondaryAction>
-                                        </ListItem>
+                                <Grid container spacing={2}>
+                                    {dashboardData.members.slice(0, 6).map((member) => (
+                                        <Grid item xs={12} sm={6} md={4} key={member.id}>
+                                            <Card sx={{
+                                                borderRadius: 2,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                                height: '100%'
+                                            }}>
+                                                <CardContent sx={{ p: 2 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Avatar sx={{ mr: 2 }}>
+                                                            {member.name ? member.name.charAt(0).toUpperCase() : '?'}
+                                                        </Avatar>
+                                                        <Box>
+                                                            <Typography variant="subtitle1" fontWeight="medium" noWrap>
+                                                                {member.name}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="text.secondary" noWrap>
+                                                                {member.email}
+                                                            </Typography>
+                                                            <Chip
+                                                                label={member.role || 'Membre'}
+                                                                size="small"
+                                                                color="primary"
+                                                                variant="outlined"
+                                                                sx={{ mt: 1 }}
+                                                            />
+                                                        </Box>
+                                                        <Box sx={{ ml: 'auto' }}>
+                                                            <Tooltip title="Voir détails">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    component={Link}
+                                                                    to={`/member/editmember/${member.id}`}
+                                                                >
+                                                                    <Visibility />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Box>
+                                                    </Box>
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
                                     ))}
-                                </List>
+                                </Grid>
                             )}
                         </CardContent>
                     </DashboardCard>
                 </Grid>
+            </Grid>
 
                 {/* Project Budget Utilization */}
                 <Grid item xs={12} md={6}>
@@ -868,7 +1046,75 @@ const Home = () => {
                         </CardContent>
                     </DashboardCard>
                 </Grid>
-            </Grid>
+
+
+            <Box
+                component={Link}
+                to="/chatbot"
+                sx={{
+                    position: 'fixed',
+                    bottom: 30,
+                    right: 30,
+                    zIndex: 1000,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: 'scale(1)',
+                    transition: 'transform 0.3s',
+                    '&:hover': {
+                        transform: 'scale(1.05)',
+                    }
+                }}
+            >
+                <Paper
+                    elevation={6}
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '12px 20px',
+                        borderRadius: 30,
+                        background: 'linear-gradient(135deg, #5C6BC0, #3949AB)',
+                        color: 'white',
+                        animation: 'pulse 2s infinite',
+                        boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+                        '@keyframes pulse': {
+                            '0%': {
+                                boxShadow: '0 0 0 0 rgba(92, 107, 192, 0.7)'
+                            },
+                            '70%': {
+                                boxShadow: '0 0 0 15px rgba(92, 107, 192, 0)'
+                            },
+                            '100%': {
+                                boxShadow: '0 0 0 0 rgba(92, 107, 192, 0)'
+                            }
+                        }
+                    }}
+                >
+                    <SmartToyIcon
+                        sx={{
+                            fontSize: 32,
+                            animation: 'float 3s ease-in-out infinite',
+                            mr: 1.5,
+                            '@keyframes float': {
+                                '0%': { transform: 'translateY(0px)' },
+                                '50%': { transform: 'translateY(-7px)' },
+                                '100%': { transform: 'translateY(0px)' }
+                            }
+                        }}
+                    />
+                    <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        sx={{
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        Assistant IA
+                    </Typography>
+                </Paper>
+            </Box>
 
             {/* Assistant AI */}
             <Paper
