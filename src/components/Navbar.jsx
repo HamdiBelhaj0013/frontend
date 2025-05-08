@@ -28,7 +28,7 @@ import {
 import { styled, alpha, useTheme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 // Import the ColorModeContext hook
 import { useColorMode } from '../contexts/ThemeContext';
 import NotificationMenu from './NotificationMenu';
@@ -54,7 +54,6 @@ import logo from '../assets/logowhite.png';
 import Axios from './Axios';
 import {usePermissions} from "../contexts/PermissionsContext.jsx";
 import {useNotifications} from "../contexts/NotificationContext.jsx";
-
 // Enhanced styled components for better appearance and smoothness
 const GlassAppBar = styled(AppBar)(({ theme }) => ({
     background: 'linear-gradient(135deg, rgba(0, 137, 123, 0.97), rgba(0, 105, 92, 0.95))',
@@ -981,10 +980,30 @@ export default function NavBar(props) {
                                                 backgroundColor: '#4caf50',
                                                 display: 'inline-block'
                                             }}/>
-                                            Active now • {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                                            Actif • {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
                                         </Typography>
                                     </Box>
                                 </Box>
+
+                                {/* Admin Dashboard - Only visible to presidents */}
+                                {userRole === 'president' && (
+                                    <MenuItemStyled
+                                        onClick={() => {
+                                            handleUserMenuClose();
+                                            navigate('/admin-dashboard');
+                                        }}
+                                        sx={{
+                                            color: theme.palette.primary.main,
+                                            mb: 1
+                                        }}
+                                    >
+                                        <ListItemIcon>
+                                            <AdminPanelSettingsIcon fontSize="small" color="primary" />
+                                        </ListItemIcon>
+                                        <Typography>Tableau d'Administration</Typography>
+                                    </MenuItemStyled>
+                                )}
+
                                 <MenuItemStyled
                                     onClick={handleLogout}
                                     sx={{

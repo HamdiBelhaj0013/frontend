@@ -38,6 +38,7 @@ import MeetingsCalendar from './components/meetings/MeetingsCalendar';
 import MeetingDetail from './components/meetings/MeetingDetail';
 import MeetingCreateForm from './components/meetings/MeetingCreateForm';
 import ProtectedMeetingEdit from './components/meetings/ProtectedMeetingEdit'; // Import the ProtectedMeetingEdit component
+import AdminDashboard from './components/AdminDashboard';
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -97,6 +98,14 @@ function App() {
                                                 <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
                                                 <Route path="/about" element={<AuthGuard><About /></AuthGuard>} />
 
+                                                {/* Admin Dashboard route - only for presidents */}
+                                                <Route path="/admin-dashboard" element={
+                                                    <AuthGuard>
+                                                        <PermissionGuard resource="members" action="validate_user">
+                                                            <AdminDashboard />
+                                                        </PermissionGuard>
+                                                    </AuthGuard>
+                                                } />
 
                                                 {/* Projects routes with permissions */}
                                                 <Route path="/CreateProject" element={
