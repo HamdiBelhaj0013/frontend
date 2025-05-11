@@ -21,7 +21,7 @@ export const ACTIONS = {
     VALIDATE_USER: 'validate_user'
 };
 
-// This maps frontend resource names to backend permission resource types
+
 const RESOURCE_MAPPING = {
     [RESOURCES.PROJECTS]: RESOURCES.PROJECTS,
     [RESOURCES.MEMBERS]: RESOURCES.MEMBERS,
@@ -29,12 +29,11 @@ const RESOURCE_MAPPING = {
     [RESOURCES.TASKS]: RESOURCES.TASKS,
     [RESOURCES.MEETINGS]: RESOURCES.MEETINGS,
     [RESOURCES.REPORTS]: RESOURCES.REPORTS,
-    [RESOURCES.NOTIFICATIONS]: RESOURCES.NOTIFICATIONS,  // Add this line
+    [RESOURCES.NOTIFICATIONS]: RESOURCES.NOTIFICATIONS,
     'pendingUsers': RESOURCES.MEMBERS,
     [RESOURCES.CHATBOT]: RESOURCES.CHATBOT
 };
 
-// Create the permissions context
 const PermissionsContext = createContext({
     userRole: null,
     isSuperuser: false,
@@ -54,7 +53,7 @@ export const PermissionsProvider = ({ children }) => {
     const [canValidateUsers, setCanValidateUsers] = useState(false);
     const [userId, setUserId] = useState(null);
 
-    // Fetch user profile and set permissions
+
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
@@ -98,15 +97,13 @@ export const PermissionsProvider = ({ children }) => {
                     });
                     setCanValidateUsers(true);
                 }
-                // For regular users, set role-based permissions
-                else if (userData.role) {
-                    // Set user validation permissions
-                    setCanValidateUsers(['president', 'treasurer', 'secretary'].includes(roleName));
 
-                    // Define role-based permissions
+                else if (userData.role) {
+                    setCanValidateUsers(['president', 'treasurer', 'secretary'].includes(roleName));
                     switch (roleName) {
                         case 'president':
-                            // President can do everything
+                        case 'treasurer':
+                        case 'secretary':
                             Object.values(RESOURCES).forEach(resource => {
                                 userPermissions[resource] = [
                                     ACTIONS.VIEW,
@@ -114,41 +111,6 @@ export const PermissionsProvider = ({ children }) => {
                                     ACTIONS.EDIT,
                                     ACTIONS.DELETE
                                 ];
-                            });
-                            break;
-
-                        case 'treasurer':
-                            // Basic view permissions for all resources
-                            Object.values(RESOURCES).forEach(resource => {
-                                userPermissions[resource].push(ACTIONS.VIEW);
-                            });
-
-                            // Full permissions for finance and reports
-                            [RESOURCES.FINANCE, RESOURCES.REPORTS].forEach(resource => {
-                                userPermissions[resource].push(
-                                    ACTIONS.CREATE,
-                                    ACTIONS.EDIT,
-                                    ACTIONS.DELETE
-                                );
-                            });
-
-                            // Can create meetings but not edit/delete
-                            userPermissions[RESOURCES.MEETINGS].push(ACTIONS.CREATE);
-                            break;
-
-                        case 'secretary':
-                            // Basic view permissions for all resources
-                            Object.values(RESOURCES).forEach(resource => {
-                                userPermissions[resource].push(ACTIONS.VIEW);
-                            });
-
-                            // Full permissions for tasks, meetings, and reports
-                            [RESOURCES.TASKS, RESOURCES.MEETINGS, RESOURCES.REPORTS].forEach(resource => {
-                                userPermissions[resource].push(
-                                    ACTIONS.CREATE,
-                                    ACTIONS.EDIT,
-                                    ACTIONS.DELETE
-                                );
                             });
                             break;
 
@@ -185,15 +147,15 @@ export const PermissionsProvider = ({ children }) => {
         fetchUserProfile();
     }, []);
 
-    // Helper function to check if a user has a specific permission
+
     const can = (action, resource) => {
-        // If permissions are still loading, deny access
+
         if (isLoading) {
             console.log('Permissions still loading, denying access');
             return false;
         }
 
-        // Superusers can do everything
+
         if (isSuperuser) {
             console.log(`Superuser access granted for ${action} on ${resource}`);
             return true;
