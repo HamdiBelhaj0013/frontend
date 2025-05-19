@@ -46,6 +46,9 @@ import FeedbackIcon from '@mui/icons-material/Feedback';
 import HistoryIcon from '@mui/icons-material/History';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import CachedIcon from '@mui/icons-material/Cached';
+import MemoryIcon from '@mui/icons-material/Memory';
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Axios from './Axios.jsx';
@@ -59,6 +62,9 @@ const loadingMessages = [
     "Je formule une réponse précise...",
     "Je vérifie les références légales...",
     "Je m'assure que ma réponse est claire et complète...",
+    "J'explore le décret-loi n° 2011-88...",
+    "J'évalue le contexte de votre question...",
+    "Je prépare des citations pertinentes..."
 ];
 
 // Styled components with refined aesthetics
@@ -79,7 +85,7 @@ const GlassHeader = styled(Paper)(({ theme }) => ({
     },
 }));
 
-const MessageBubble = styled(Paper)(({ isUser, theme }) => ({
+const MessageBubble = styled(Paper)(({ isUser, theme, isCached }) => ({
     maxWidth: '85%',
     padding: theme.spacing(2),
     borderRadius: isUser
@@ -87,9 +93,11 @@ const MessageBubble = styled(Paper)(({ isUser, theme }) => ({
         : '18px 18px 18px 0',
     backgroundColor: isUser
         ? theme.palette.primary.main
-        : theme.palette.mode === 'dark'
-            ? alpha(theme.palette.background.paper, 0.8)
-            : '#f5f5f5',
+        : isCached
+            ? alpha(theme.palette.info.light, 0.15)
+            : theme.palette.mode === 'dark'
+                ? alpha(theme.palette.background.paper, 0.8)
+                : '#f5f5f5',
     color: isUser
         ? 'white'
         : theme.palette.text.primary,
@@ -99,6 +107,9 @@ const MessageBubble = styled(Paper)(({ isUser, theme }) => ({
         boxShadow: '0 3px 8px rgba(0,0,0,0.15)',
     },
     transition: 'box-shadow 0.3s ease, transform 0.2s ease',
+    border: isCached
+        ? `1px solid ${alpha(theme.palette.info.main, 0.3)}`
+        : 'none',
     '& a': {
         color: isUser ? '#FFFFFF' : theme.palette.primary.main,
         textDecoration: 'underline',
@@ -279,6 +290,17 @@ const ScrollButton = styled(IconButton)(({ theme, visible }) => ({
     },
 }));
 
+// Context Badge - New component to show context retention
+const ContextBadge = styled(Chip)(({ theme }) => ({
+    margin: '0 4px',
+    height: 24,
+    fontSize: '0.7rem',
+    backgroundColor: alpha(theme.palette.warning.light, 0.2),
+    border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
+    color: theme.palette.warning.dark,
+    fontWeight: 600,
+}));
+
 // Enhanced NGO Chatbot Component
 const NGOChatbot = () => {
     const theme = useTheme();
@@ -307,6 +329,8 @@ const NGOChatbot = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [copiedMessageId, setCopiedMessageId] = useState(null);
     const [isInitializing, setIsInitializing] = useState(true);
+    const [conversationContext, setConversationContext] = useState(null);
+    const [similarQuestions, setSimilarQuestions] = useState([]);
 
     // Refs
     const messagesEndRef = useRef(null);
@@ -461,6 +485,8 @@ const NGOChatbot = () => {
             setMessages([]);
             setArticleHighlights([]);
             setErrorInfo(null);
+            setConversationContext(null);
+            setSimilarQuestions([]);
 
             return conversationIdValue;
         } catch (error) {
@@ -476,14 +502,62 @@ const NGOChatbot = () => {
         }
     };
 
-    // Extract article references from message
+    // Extract article references from message - enhanced to handle more formats
     const extractArticleReferences = (text) => {
-        // Match both "article X" and "Art. X" formats
-        const articleRegex = /(?:article|art\.)\s+(\d+)(?:\s+du\s+décret-loi|\s|$)/gi;
+        // Match both "article X" and "Art. X" formats, as well as "l'Article X"
+        const articleRegex = /(?:article|art\.|l'article)\s+(\d+)(?:\s+du\s+décret-loi|\s|$)/gi;
         const articleMatches = [...text.matchAll(articleRegex)];
 
         const articleNumbers = articleMatches.map(match => match[1]);
         return [...new Set(articleNumbers)]; // Remove duplicates
+    };
+
+    // Generate suggested questions based on the conversation context
+    const generateContextBasedSuggestions = (content) => {
+        // Check if the message is about a specific article
+        const articleRegex = /(?:article|art\.)\s+(\d+)/gi;
+        const articleMatches = [...content.matchAll(articleRegex)];
+
+        if (articleMatches.length > 0) {
+            const articleNum = articleMatches[0][1];
+            return [
+                `Quel est le rapport entre l'article ${articleNum} et la création d'association?`,
+                `Comment l'article ${articleNum} affecte-t-il le financement?`,
+                `Quelles sont les obligations liées à l'article ${articleNum}?`
+            ];
+        }
+
+        // Check for key topics in the message
+        if (content.toLowerCase().includes('créer') || content.toLowerCase().includes('création')) {
+            return [
+                "Quels documents sont nécessaires pour créer une association?",
+                "Combien de membres faut-il pour créer une association?",
+                "Quels sont les délais pour la création d'une association?"
+            ];
+        }
+
+        if (content.toLowerCase().includes('finance') || content.toLowerCase().includes('ressources')) {
+            return [
+                "Quelles sont les sources de financement autorisées?",
+                "Comment déclarer des dons étrangers?",
+                "Quelles sont les restrictions de financement?"
+            ];
+        }
+
+        if (content.toLowerCase().includes('dissoudre') || content.toLowerCase().includes('dissolution')) {
+            return [
+                "Quelle est la procédure de dissolution volontaire?",
+                "Dans quels cas une association peut-elle être dissoute par décision judiciaire?",
+                "Qu'advient-il des biens après la dissolution?"
+            ];
+        }
+
+        // Default suggestions
+        return [
+            "Comment modifier les statuts d'une association?",
+            "Quelles sont les obligations comptables?",
+            "Comment organiser une assemblée générale?"
+        ];
     };
 
     // Handle message submission
@@ -536,13 +610,15 @@ const NGOChatbot = () => {
             const responseTime = (endTime - requestStartTimeRef.current) / 1000;
 
             // Process response based on endpoint format
-            let content, sources, messageId;
+            let content, sources, messageId, isCached, isConversational;
 
             if (response.data.content) {
                 // Conversation endpoint format
                 content = response.data.content;
                 sources = response.data.relevant_documents || [];
                 messageId = response.data.message_id;
+                isCached = response.data.cached || false;
+                isConversational = response.data.is_conversational || false;
             } else if (response.data.response) {
                 // Direct-chat endpoint format
                 content = response.data.response;
@@ -552,6 +628,8 @@ const NGOChatbot = () => {
                         excerpt: chunk.content
                     })) : [];
                 messageId = `direct-${Date.now()}`;
+                isCached = response.data.cached || false;
+                isConversational = response.data.is_conversational || false;
             } else {
                 throw new Error("Unexpected response format");
             }
@@ -565,12 +643,29 @@ const NGOChatbot = () => {
                 });
             }
 
+            // Update conversation context if this is a non-conversational response
+            if (!isConversational) {
+                // Generate contextual suggestions based on the latest message
+                const newSuggestions = generateContextBasedSuggestions(content);
+                setSimilarQuestions(newSuggestions);
+
+                // Extract key context elements from the response
+                const contextRegex = /(?:Selon|selon|d'après|Dans le cadre de|conformément à|comme stipulé dans) (?:l'article|l'Article|l'art\.|le décret-loi|la loi)/g;
+                const hasContextualReferences = contextRegex.test(content);
+
+                if (hasContextualReferences || articleNumbers.length > 0) {
+                    setConversationContext("Législation associative");
+                }
+            }
+
             const assistantMessage = {
                 id: messageId || `assistant-${Date.now()}`,
                 role: 'assistant',
                 content: content,
                 sources: sources,
-                responseTime: responseTime.toFixed(2)
+                responseTime: responseTime.toFixed(2),
+                isCached: isCached,
+                isConversational: isConversational
             };
 
             setMessages(prev => [...prev, assistantMessage]);
@@ -646,7 +741,7 @@ const NGOChatbot = () => {
         }
     };
 
-
+    // Start voice input
     const startVoiceInput = () => {
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -678,14 +773,20 @@ const NGOChatbot = () => {
     ];
 
     // Render timestamp in a readable format
-    const renderTimestamp = (responseTime) => {
+    const renderTimestamp = (responseTime, isCached) => {
         if (!responseTime) return null;
 
         // Group response times into categories for better UX
         let speedCategory;
         let color;
 
-        if (responseTime < 5) {
+        if (isCached) {
+            speedCategory = "Mise en cache";
+            color = "info.main";
+        } else if (responseTime < 0.2) {
+            speedCategory = "Instantané";
+            color = "success.main";
+        } else if (responseTime < 5) {
             speedCategory = "Très rapide";
             color = "success.main";
         } else if (responseTime < 15) {
@@ -709,10 +810,40 @@ const NGOChatbot = () => {
                 fontSize: '0.75rem',
                 opacity: 0.8
             }}>
+                {isCached && (
+                    <CachedIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.9rem' }} />
+                )}
                 <Typography variant="caption" sx={{ fontWeight: 500, color: 'inherit' }}>
                     {speedCategory}
                 </Typography>
             </Box>
+        );
+    };
+
+    // Render context badge - shows when response is using conversation context
+    const renderContextBadge = (message) => {
+        // Only show context badge for non-error assistant messages that aren't the greeting
+        if (message.role !== 'assistant' || message.isError || message.id === 'greeting' || message.isConversational) {
+            return null;
+        }
+
+        // Need to have some conversation context established
+        if (!conversationContext) {
+            return null;
+        }
+
+        return (
+            <Tooltip
+                title="Cette réponse utilise le contexte de la conversation"
+                placement="top"
+                arrow
+            >
+                <ContextBadge
+                    size="small"
+                    label="Contexte"
+                    icon={<MemoryIcon sx={{ fontSize: '0.7rem' }} />}
+                />
+            </Tooltip>
         );
     };
 
@@ -872,6 +1003,60 @@ const NGOChatbot = () => {
                                 variant="outlined"
                                 color="primary"
                             />
+                        ))}
+                    </Box>
+                </Paper>
+            )}
+
+            {/* Contextual questions panel - shows suggestions based on conversation */}
+            {similarQuestions.length > 0 && messages.length > 2 && (
+                <Paper
+                    elevation={2}
+                    component={motion.div}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    sx={{
+                        p: 2,
+                        mb: 2,
+                        borderRadius: '14px',
+                        background: isDarkMode
+                            ? alpha(theme.palette.warning.dark, 0.1)
+                            : alpha(theme.palette.warning.light, 0.1),
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                        border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <FormatQuoteIcon sx={{ mr: 1, color: theme.palette.warning.main }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: theme.palette.warning.dark }}>
+                            Questions liées au contexte
+                        </Typography>
+                    </Box>
+                    <Divider sx={{ mb: 1.5 }} />
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {similarQuestions.map((question, index) => (
+                            <SuggestedQuestionButton
+                                key={index}
+                                variant="outlined"
+                                size="small"
+                                onClick={() => handleSuggestedQuestion(question)}
+                                component={motion.button}
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.98 }}
+                                sx={{
+                                    mb: 1,
+                                    borderColor: alpha(theme.palette.warning.main, 0.3),
+                                    color: theme.palette.warning.dark,
+                                    '&:hover': {
+                                        borderColor: theme.palette.warning.main,
+                                        backgroundColor: alpha(theme.palette.warning.main, 0.1),
+                                    }
+                                }}
+                            >
+                                {question}
+                            </SuggestedQuestionButton>
                         ))}
                     </Box>
                 </Paper>
@@ -1065,109 +1250,118 @@ const NGOChatbot = () => {
                                             width: 36,
                                             height: 36,
                                             mr: 1.5,
-                                            bgcolor: message.isError ? 'error.main' : 'primary.main',
+                                            bgcolor: message.isError ? 'error.main' : message.isCached ? 'info.main' : 'primary.main',
                                             boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                                         }}
                                     >
-                                        {message.isError
-                                            ? <BugReportIcon sx={{ fontSize: 20 }} />
-                                            : <SmartToyIcon sx={{ fontSize: 20 }} />
-                                        }
+                                        {message.isError ? (
+                                            <BugReportIcon sx={{ fontSize: 20 }} />
+                                        ) : message.isCached ? (
+                                            <CachedIcon sx={{ fontSize: 20 }} />
+                                        ) : (
+                                            <SmartToyIcon sx={{ fontSize: 20 }} />
+                                        )}
                                     </Avatar>
                                 )}
 
-                                <MessageBubble
-                                    isUser={message.role === 'user'}
-                                    elevation={1}
-                                    sx={{
-                                        minWidth: isMobile ? '60%' : message.role === 'user' ? '30%' : '40%',
-                                        position: 'relative'
-                                    }}
-                                >
-                                    <Markdown
-                                        remarkPlugins={[remarkGfm]}
-                                        components={{
-                                            // Customize markdown rendering
-                                            p: (props) => <Typography {...props} sx={{ mb: 1.5 }} />,
-                                            h1: (props) => <Typography variant="h5" {...props} sx={{ mt: 2, mb: 1.5, fontWeight: 600 }} />,
-                                            h2: (props) => <Typography variant="h6" {...props} sx={{ mt: 2, mb: 1.5, fontWeight: 600 }} />,
-                                            h3: (props) => <Typography variant="subtitle1" {...props} sx={{ mt: 1.5, mb: 1, fontWeight: 600 }} />,
-                                            ul: (props) => <Box component="ul" {...props} sx={{ mb: 1.5, pl: 2 }} />,
-                                            ol: (props) => <Box component="ol" {...props} sx={{ mb: 1.5, pl: 2 }} />,
-                                            li: (props) => <Box component="li" {...props} sx={{ mb: 0.5 }} />,
-                                            a: (props) => <Link {...props} target="_blank" rel="noopener" />,
+                                <Box sx={{ display: 'flex', flexDirection: 'column', maxWidth: '85%' }}>
+                                    {message.role === 'assistant' && !message.isError && !message.isConversational && renderContextBadge(message)}
+
+                                    <MessageBubble
+                                        isUser={message.role === 'user'}
+                                        isCached={message.isCached}
+                                        elevation={1}
+                                        sx={{
+                                            minWidth: isMobile ? '60%' : message.role === 'user' ? '30%' : '40%',
+                                            position: 'relative',
+                                            mt: message.role === 'assistant' && renderContextBadge(message) ? 1 : 0
                                         }}
                                     >
-                                        {message.content}
-                                    </Markdown>
-
-                                    {/* Response time indicator */}
-                                    {message.role === 'assistant' && message.responseTime && renderTimestamp(message.responseTime)}
-
-                                    {/* Message action buttons */}
-                                    {!message.isError && (
-                                        <Box
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 5,
-                                                right: 5,
-                                                opacity: 0.7,
-                                                transition: 'opacity 0.2s',
-                                                '&:hover': { opacity: 1 }
+                                        <Markdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                // Customize markdown rendering
+                                                p: (props) => <Typography {...props} sx={{ mb: 1.5 }} />,
+                                                h1: (props) => <Typography variant="h5" {...props} sx={{ mt: 2, mb: 1.5, fontWeight: 600 }} />,
+                                                h2: (props) => <Typography variant="h6" {...props} sx={{ mt: 2, mb: 1.5, fontWeight: 600 }} />,
+                                                h3: (props) => <Typography variant="subtitle1" {...props} sx={{ mt: 1.5, mb: 1, fontWeight: 600 }} />,
+                                                ul: (props) => <Box component="ul" {...props} sx={{ mb: 1.5, pl: 2 }} />,
+                                                ol: (props) => <Box component="ol" {...props} sx={{ mb: 1.5, pl: 2 }} />,
+                                                li: (props) => <Box component="li" {...props} sx={{ mb: 0.5 }} />,
+                                                a: (props) => <Link {...props} target="_blank" rel="noopener" />,
                                             }}
                                         >
-                                            <Tooltip title="Copier le texte">
-                                                <MessageActionButton
-                                                    size="small"
-                                                    onClick={() => handleCopyMessage(message.content)}
-                                                >
-                                                    {copiedMessageId === message.content.substring(0, 20) ? (
-                                                        <CheckCircleIcon fontSize="small" sx={{ color: 'success.main' }} />
-                                                    ) : (
-                                                        <ContentCopyIcon fontSize="small" />
-                                                    )}
-                                                </MessageActionButton>
-                                            </Tooltip>
-                                        </Box>
-                                    )}
+                                            {message.content}
+                                        </Markdown>
 
-                                    {/* Show sources if available and showSources is true */}
-                                    {showSources && message.sources && message.sources.length > 0 && (
-                                        <Box sx={{
-                                            mt: 1.5,
-                                            pt: 1.5,
-                                            borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                                            fontSize: '0.8rem',
-                                            color: message.role === 'user'
-                                                ? alpha(theme.palette.common.white, 0.8)
-                                                : theme.palette.text.secondary
-                                        }}>
-                                            <Typography
-                                                variant="subtitle2"
+                                        {/* Response time indicator */}
+                                        {message.role === 'assistant' && message.responseTime && renderTimestamp(message.responseTime, message.isCached)}
+
+                                        {/* Message action buttons */}
+                                        {!message.isError && (
+                                            <Box
                                                 sx={{
-                                                    mb: 1,
-                                                    fontSize: '0.8rem',
-                                                    display: 'flex',
-                                                    alignItems: 'center'
+                                                    position: 'absolute',
+                                                    top: 5,
+                                                    right: 5,
+                                                    opacity: 0.7,
+                                                    transition: 'opacity 0.2s',
+                                                    '&:hover': { opacity: 1 }
                                                 }}
                                             >
-                                                <InfoOutlinedIcon fontSize="small" sx={{ mr: 0.5, fontSize: '1rem' }} />
-                                                Sources utilisées:
-                                            </Typography>
-
-                                            <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                                                {message.sources.map((source, index) => (
-                                                    <Box component="li" key={index} sx={{ mb: 0.5 }}>
-                                                        <Typography component="span" sx={{ fontWeight: 600 }}>
-                                                            {source.title}
-                                                        </Typography>
-                                                        : {source.excerpt}
-                                                    </Box>
-                                                ))}
+                                                <Tooltip title="Copier le texte">
+                                                    <MessageActionButton
+                                                        size="small"
+                                                        onClick={() => handleCopyMessage(message.content)}
+                                                    >
+                                                        {copiedMessageId === message.content.substring(0, 20) ? (
+                                                            <CheckCircleIcon fontSize="small" sx={{ color: 'success.main' }} />
+                                                        ) : (
+                                                            <ContentCopyIcon fontSize="small" />
+                                                        )}
+                                                    </MessageActionButton>
+                                                </Tooltip>
                                             </Box>
-                                        </Box>
-                                    )}
-                                </MessageBubble>
+                                        )}
+
+                                        {/* Show sources if available and showSources is true */}
+                                        {showSources && message.sources && message.sources.length > 0 && (
+                                            <Box sx={{
+                                                mt: 1.5,
+                                                pt: 1.5,
+                                                borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                                                fontSize: '0.8rem',
+                                                color: message.role === 'user'
+                                                    ? alpha(theme.palette.common.white, 0.8)
+                                                    : theme.palette.text.secondary
+                                            }}>
+                                                <Typography
+                                                    variant="subtitle2"
+                                                    sx={{
+                                                        mb: 1,
+                                                        fontSize: '0.8rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <InfoOutlinedIcon fontSize="small" sx={{ mr: 0.5, fontSize: '1rem' }} />
+                                                    Sources utilisées:
+                                                </Typography>
+
+                                                <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                                                    {message.sources.map((source, index) => (
+                                                        <Box component="li" key={index} sx={{ mb: 0.5 }}>
+                                                            <Typography component="span" sx={{ fontWeight: 600 }}>
+                                                                {source.title}
+                                                            </Typography>
+                                                            : {source.excerpt}
+                                                        </Box>
+                                                    ))}
+                                                </Box>
+                                            </Box>
+                                        )}
+                                    </MessageBubble>
+                                </Box>
 
                                 {message.role === 'user' && (
                                     <Avatar
